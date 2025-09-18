@@ -19,8 +19,8 @@ import { APIPromise } from './core/api-promise';
 import {
   AdeExtractParams,
   AdeExtractResponse,
-  AdeParsetParams,
-  AdeParsetResponse,
+  AdeParseParams,
+  AdeParseResponse,
   AdeResource,
 } from './resources/ade';
 import { type Fetch } from './internal/builtin-types';
@@ -44,7 +44,7 @@ export interface ClientOptions {
    *
    * If using the EU endpoint, get your API key here: https://va.eu-west-1.landing.ai/settings/api-key.
    */
-  username?: string | undefined;
+  apikey?: string | undefined;
 
   /**
    * Override the default base URL for the API, e.g., "https://api.example.com/v2/"
@@ -119,7 +119,7 @@ export interface ClientOptions {
  * API Client for interfacing with the Ade API.
  */
 export class Ade {
-  username: string;
+  apikey: string;
 
   baseURL: string;
   maxRetries: number;
@@ -136,7 +136,7 @@ export class Ade {
   /**
    * API Client for interfacing with the Ade API.
    *
-   * @param {string | undefined} [opts.username=process.env['ADE_USERNAME'] ?? undefined]
+   * @param {string | undefined} [opts.apikey=process.env['ADE_API_KEY'] ?? undefined]
    * @param {string} [opts.baseURL=process.env['ADE_BASE_URL'] ?? https://api.va.landing.ai] - Override the default base URL for the API.
    * @param {number} [opts.timeout=1 minute] - The maximum amount of time (in milliseconds) the client will wait for a response before timing out.
    * @param {MergedRequestInit} [opts.fetchOptions] - Additional `RequestInit` options to be passed to `fetch` calls.
@@ -147,17 +147,17 @@ export class Ade {
    */
   constructor({
     baseURL = readEnv('ADE_BASE_URL'),
-    username = readEnv('ADE_USERNAME'),
+    apikey = readEnv('ADE_API_KEY'),
     ...opts
   }: ClientOptions = {}) {
-    if (username === undefined) {
+    if (apikey === undefined) {
       throw new Errors.AdeError(
-        "The ADE_USERNAME environment variable is missing or empty; either provide it, or instantiate the Ade client with an username option, like new Ade({ username: 'My Username' }).",
+        "The ADE_API_KEY environment variable is missing or empty; either provide it, or instantiate the Ade client with an apikey option, like new Ade({ apikey: 'My Apikey' }).",
       );
     }
 
     const options: ClientOptions = {
-      username,
+      apikey,
       ...opts,
       baseURL: baseURL || `https://api.va.landing.ai`,
     };
@@ -179,7 +179,7 @@ export class Ade {
 
     this._options = options;
 
-    this.username = username;
+    this.apikey = apikey;
   }
 
   /**
@@ -195,7 +195,7 @@ export class Ade {
       logLevel: this.logLevel,
       fetch: this.fetch,
       fetchOptions: this.fetchOptions,
-      username: this.username,
+      apikey: this.apikey,
       ...options,
     });
     return client;
@@ -217,7 +217,7 @@ export class Ade {
   }
 
   protected async authHeaders(opts: FinalRequestOptions): Promise<NullableHeaders | undefined> {
-    return buildHeaders([{ Authorization: `Bearer ${this.username}` }]);
+    return buildHeaders([{ Authorization: `Bearer ${this.apikey}` }]);
   }
 
   /**
@@ -735,8 +735,8 @@ export declare namespace Ade {
   export {
     AdeResource as AdeResource,
     type AdeExtractResponse as AdeExtractResponse,
-    type AdeParsetResponse as AdeParsetResponse,
+    type AdeParseResponse as AdeParseResponse,
     type AdeExtractParams as AdeExtractParams,
-    type AdeParsetParams as AdeParsetParams,
+    type AdeParseParams as AdeParseParams,
   };
 }
