@@ -1,6 +1,6 @@
 // File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
 
-import Ade, { toFile } from 'ade';
+import Ade, { toFile } from 'ade-typescript';
 
 const client = new Ade({
   username: 'My Username',
