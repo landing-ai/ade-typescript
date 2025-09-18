@@ -307,6 +307,19 @@ describe('instantiate client', () => {
       expect(client.baseURL).toEqual('https://api.va.landing.ai');
     });
 
+    test('env variable with environment', () => {
+      process.env['ADE_BASE_URL'] = 'https://example.com/from_env';
+
+      expect(
+        () => new Ade({ apikey: 'My Apikey', environment: 'production' }),
+      ).toThrowErrorMatchingInlineSnapshot(
+        `"Ambiguous URL; The \`baseURL\` option (or ADE_BASE_URL env var) and the \`environment\` option are given. If you want to use the environment you must pass baseURL: null"`,
+      );
+
+      const client = new Ade({ apikey: 'My Apikey', baseURL: null, environment: 'production' });
+      expect(client.baseURL).toEqual('https://api.va.landing.ai');
+    });
+
     test('in request options', () => {
       const client = new Ade({ apikey: 'My Apikey' });
       expect(client.buildURL('/foo', null, 'http://localhost:5000/option')).toEqual(
