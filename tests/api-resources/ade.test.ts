@@ -9,8 +9,8 @@ const client = new Ade({
 
 describe('resource ade', () => {
   // Prism tests are disabled
-  test.skip('extractData: only required params', async () => {
-    const responsePromise = client.ade.extractData({ schema: 'schema' });
+  test.skip('extract: only required params', async () => {
+    const responsePromise = client.ade.extract({ schema: 'schema' });
     const rawResponse = await responsePromise.asResponse();
     expect(rawResponse).toBeInstanceOf(Response);
     const response = await responsePromise;
@@ -21,8 +21,8 @@ describe('resource ade', () => {
   });
 
   // Prism tests are disabled
-  test.skip('extractData: required and optional params', async () => {
-    const response = await client.ade.extractData({
+  test.skip('extract: required and optional params', async () => {
+    const response = await client.ade.extract({
       schema: 'schema',
       markdown: await toFile(Buffer.from('# my file contents'), 'README.md'),
       markdown_url: 'markdown_url',
@@ -30,8 +30,8 @@ describe('resource ade', () => {
   });
 
   // Prism tests are disabled
-  test.skip('parseDocument', async () => {
-    const responsePromise = client.ade.parseDocument({});
+  test.skip('parset', async () => {
+    const responsePromise = client.ade.parset({});
     const rawResponse = await responsePromise.asResponse();
     expect(rawResponse).toBeInstanceOf(Response);
     const response = await responsePromise;

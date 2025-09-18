@@ -17,13 +17,12 @@ import * as Uploads from './core/uploads';
 import * as API from './resources/index';
 import { APIPromise } from './core/api-promise';
 import {
-  AdeExtractDataParams,
-  AdeExtractDataResponse,
-  AdeParseDocumentParams,
-  AdeParseDocumentResponse,
+  AdeExtractParams,
+  AdeExtractResponse,
+  AdeParsetParams,
+  AdeParsetResponse,
   AdeResource,
 } from './resources/ade';
-import { Tools } from './resources/tools';
 import { type Fetch } from './internal/builtin-types';
 import { HeadersLike, NullableHeaders, buildHeaders } from './internal/headers';
 import { FinalRequestOptions, RequestOptions } from './internal/request-options';
@@ -725,23 +724,19 @@ export class Ade {
 
   static toFile = Uploads.toFile;
 
-  tools: API.Tools = new API.Tools(this);
   ade: API.AdeResource = new API.AdeResource(this);
 }
 
-Ade.Tools = Tools;
 Ade.AdeResource = AdeResource;
 
 export declare namespace Ade {
   export type RequestOptions = Opts.RequestOptions;
 
-  export { Tools as Tools };
-
   export {
     AdeResource as AdeResource,
-    type AdeExtractDataResponse as AdeExtractDataResponse,
-    type AdeParseDocumentResponse as AdeParseDocumentResponse,
-    type AdeExtractDataParams as AdeExtractDataParams,
-    type AdeParseDocumentParams as AdeParseDocumentParams,
+    type AdeExtractResponse as AdeExtractResponse,
+    type AdeParsetResponse as AdeParsetResponse,
+    type AdeExtractParams as AdeExtractParams,
+    type AdeParsetParams as AdeParsetParams,
   };
 }
