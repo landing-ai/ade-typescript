@@ -1,6 +1,6 @@
 // File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
 
-import { Ade } from 'ade';
+import { Ade } from 'ade-typescript';
 
 const { stringifyQuery } = Ade.prototype as any;
 

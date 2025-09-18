@@ -1,4 +1,4 @@
-import { createPathTagFunction, encodeURIPath } from 'ade/internal/utils/path';
+import { createPathTagFunction, encodeURIPath } from 'ade-typescript/internal/utils/path';
 import { inspect } from 'node:util';
 import { runInNewContext } from 'node:vm';
 

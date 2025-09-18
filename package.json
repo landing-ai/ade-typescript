@@ -1,12 +1,12 @@
 {
-  "name": "ade",
-  "version": "0.0.1",
+  "name": "ade-typescript",
+  "version": "0.1.0",
   "description": "The official TypeScript library for the Ade API",
   "author": "Ade <>",
   "types": "dist/index.d.ts",
   "main": "dist/index.js",
   "type": "commonjs",
-  "repository": "github:stainless-sdks/ade-typescript",
+  "repository": "github:landing-ai/ade-typescript",
   "license": "Apache-2.0",
   "packageManager": "yarn@1.22.22",
   "files": [

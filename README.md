@@ -1,6 +1,6 @@
 # Ade TypeScript API Library
 
-[![NPM version](<https://img.shields.io/npm/v/ade.svg?label=npm%20(stable)>)](https://npmjs.org/package/ade) ![npm bundle size](https://img.shields.io/bundlephobia/minzip/ade)
+[![NPM version](<https://img.shields.io/npm/v/ade-typescript.svg?label=npm%20(stable)>)](https://npmjs.org/package/ade-typescript) ![npm bundle size](https://img.shields.io/bundlephobia/minzip/ade-typescript)
 
 This library provides convenient access to the Ade REST API from server-side TypeScript or JavaScript.
 
@@ -11,11 +11,8 @@ It is generated with [Stainless](https://www.stainless.com/).
 ## Installation
 
 ```sh
-npm install git+ssh://git@github.com:stainless-sdks/ade-typescript.git
+npm install ade-typescript
 ```
-
-> [!NOTE]
-> Once this package is [published to npm](https://www.stainless.com/docs/guides/publish), this will become: `npm install ade`
 
 ## Usage
 
@@ -23,15 +20,15 @@ The full API of this library can be found in [api.md](api.md).
 
 <!-- prettier-ignore -->
 ```js
-import Ade from 'ade';
+import Ade from 'ade-typescript';
 
 const client = new Ade({
   username: process.env['ADE_USERNAME'], // This is the default and can be omitted
 });
 
-const response = await client.tools.agenticDocumentAnalysis();
+const response = await client.ade.extract({ schema: 'schema' });
 
-console.log(response.data);
+console.log(response.extraction);
 ```
 
 ### Request & Response types
@@ -40,13 +37,13 @@ This library includes TypeScript definitions for all request params and response
 
 <!-- prettier-ignore -->
 ```ts
-import Ade from 'ade';
+import Ade from 'ade-typescript';
 
 const client = new Ade({
   username: process.env['ADE_USERNAME'], // This is the default and can be omitted
 });
 
-const response: Ade.ToolAgenticDocumentAnalysisResponse = await client.tools.agenticDocumentAnalysis();
+const response: Ade.AdeParsetResponse = await client.ade.parset();
 ```
 
 Documentation for each method, request param, and response field are available in docstrings and will appear on hover in most modern editors.
@@ -62,22 +59,22 @@ Request parameters that correspond to file uploads can be passed in many differe
 
 ```ts
 import fs from 'fs';
-import Ade, { toFile } from 'ade';
+import Ade, { toFile } from 'ade-typescript';
 
 const client = new Ade();
 
 // If you have access to Node `fs` we recommend using `fs.createReadStream()`:
-await client.tools.agenticDocumentAnalysis({ image: fs.createReadStream('/path/to/file') });
+await client.ade.extract({ schema: 'schema', markdown: fs.createReadStream('/path/to/file') });
 
 // Or if you have the web `File` API you can pass a `File` instance:
-await client.tools.agenticDocumentAnalysis({ image: new File(['my bytes'], 'file') });
+await client.ade.extract({ schema: 'schema', markdown: new File(['my bytes'], 'file') });
 
 // You can also pass a `fetch` `Response`:
-await client.tools.agenticDocumentAnalysis({ image: await fetch('https://somesite/file') });
+await client.ade.extract({ schema: 'schema', markdown: await fetch('https://somesite/file') });
 
 // Finally, if none of the above are convenient, you can use our `toFile` helper:
-await client.tools.agenticDocumentAnalysis({ image: await toFile(Buffer.from('my bytes'), 'file') });
-await client.tools.agenticDocumentAnalysis({ image: await toFile(new Uint8Array([0, 1, 2]), 'file') });
+await client.ade.extract({ schema: 'schema', markdown: await toFile(Buffer.from('my bytes'), 'file') });
+await client.ade.extract({ schema: 'schema', markdown: await toFile(new Uint8Array([0, 1, 2]), 'file') });
 ```
 
 ## Handling errors
@@ -88,7 +85,7 @@ a subclass of `APIError` will be thrown:
 
 <!-- prettier-ignore -->
 ```ts
-const response = await client.tools.agenticDocumentAnalysis().catch(async (err) => {
+const response = await client.ade.parset().catch(async (err) => {
   if (err instanceof Ade.APIError) {
     console.log(err.status); // 400
     console.log(err.name); // BadRequestError
@@ -128,7 +125,7 @@ const client = new Ade({
 });
 
 // Or, configure per-request:
-await client.tools.agenticDocumentAnalysis({
+await client.ade.parset({
   maxRetries: 5,
 });
 ```
@@ -145,7 +142,7 @@ const client = new Ade({
 });
 
 // Override per-request:
-await client.tools.agenticDocumentAnalysis({
+await client.ade.parset({
   timeout: 5 * 1000,
 });
 ```
@@ -168,13 +165,13 @@ Unlike `.asResponse()` this method consumes the body, returning once it is parse
 ```ts
 const client = new Ade();
 
-const response = await client.tools.agenticDocumentAnalysis().asResponse();
+const response = await client.ade.parset().asResponse();
 console.log(response.headers.get('X-My-Header'));
 console.log(response.statusText); // access the underlying Response object
 
-const { data: response, response: raw } = await client.tools.agenticDocumentAnalysis().withResponse();
+const { data: response, response: raw } = await client.ade.parset().withResponse();
 console.log(raw.headers.get('X-My-Header'));
-console.log(response.data);
+console.log(response.chunks);
 ```
 
 ### Logging
@@ -191,7 +188,7 @@ The log level can be configured in two ways:
 2. Using the `logLevel` client option (overrides the environment variable if set)
 
 ```ts
-import Ade from 'ade';
+import Ade from 'ade-typescript';
 
 const client = new Ade({
   logLevel: 'debug', // Show all log messages
@@ -219,7 +216,7 @@ When providing a custom logger, the `logLevel` option still controls which messa
 below the configured level will not be sent to your logger.
 
 ```ts
-import Ade from 'ade';
+import Ade from 'ade-typescript';
 import pino from 'pino';
 
 const logger = pino();
@@ -254,7 +251,7 @@ parameter. This library doesn't validate at runtime that the request matches the
 send will be sent as-is.
 
 ```ts
-client.tools.agenticDocumentAnalysis({
+client.ade.extract({
   // ...
   // @ts-expect-error baz is not yet public
   baz: 'undocumented option',
@@ -288,7 +285,7 @@ globalThis.fetch = fetch;
 Or pass it to the client:
 
 ```ts
-import Ade from 'ade';
+import Ade from 'ade-typescript';
 import fetch from 'my-fetch';
 
 const client = new Ade({ fetch });
@@ -299,7 +296,7 @@ const client = new Ade({ fetch });
 If you want to set custom `fetch` options without overriding the `fetch` function, you can provide a `fetchOptions` object when instantiating the client or making a request. (Request-specific options override client options.)
 
 ```ts
-import Ade from 'ade';
+import Ade from 'ade-typescript';
 
 const client = new Ade({
   fetchOptions: {
@@ -316,7 +313,7 @@ options to requests:
 <img src="https://raw.githubusercontent.com/stainless-api/sdk-assets/refs/heads/main/node.svg" align="top" width="18" height="21"> **Node** <sup>[[docs](https://github.com/nodejs/undici/blob/main/docs/docs/api/ProxyAgent.md#example---proxyagent-with-fetch)]</sup>
 
 ```ts
-import Ade from 'ade';
+import Ade from 'ade-typescript';
 import * as undici from 'undici';
 
 const proxyAgent = new undici.ProxyAgent('http://localhost:8888');
@@ -330,7 +327,7 @@ const client = new Ade({
 <img src="https://raw.githubusercontent.com/stainless-api/sdk-assets/refs/heads/main/bun.svg" align="top" width="18" height="21"> **Bun** <sup>[[docs](https://bun.sh/guides/http/proxy)]</sup>
 
 ```ts
-import Ade from 'ade';
+import Ade from 'ade-typescript';
 
 const client = new Ade({
   fetchOptions: {
@@ -342,7 +339,7 @@ const client = new Ade({
 <img src="https://raw.githubusercontent.com/stainless-api/sdk-assets/refs/heads/main/deno.svg" align="top" width="18" height="21"> **Deno** <sup>[[docs](https://docs.deno.com/api/deno/~/Deno.createHttpClient)]</sup>
 
 ```ts
-import Ade from 'npm:ade';
+import Ade from 'npm:ade-typescript';
 
 const httpClient = Deno.createHttpClient({ proxy: { url: 'http://localhost:8888' } });
 const client = new Ade({
@@ -364,7 +361,7 @@ This package generally follows [SemVer](https://semver.org/spec/v2.0.0.html) con
 
 We take backwards-compatibility seriously and work hard to ensure you can rely on a smooth upgrade experience.
 
-We are keen for your feedback; please open an [issue](https://www.github.com/stainless-sdks/ade-typescript/issues) with questions, bugs, or suggestions.
+We are keen for your feedback; please open an [issue](https://www.github.com/landing-ai/ade-typescript/issues) with questions, bugs, or suggestions.
 
 ## Requirements
 

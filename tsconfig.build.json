@@ -5,8 +5,8 @@
   "compilerOptions": {
     "rootDir": "./dist/src",
     "paths": {
-      "ade/*": ["dist/src/*"],
-      "ade": ["dist/src/index.ts"]
+      "ade-typescript/*": ["dist/src/*"],
+      "ade-typescript": ["dist/src/index.ts"]
     },
     "noEmit": false,
     "declaration": true,
