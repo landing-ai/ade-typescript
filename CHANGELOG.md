@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.0 (2025-09-18)
+
+Full Changelog: [v0.1.0...v0.2.0](https://github.com/landing-ai/ade-typescript/compare/v0.1.0...v0.2.0)
+
+### Features
+
+* **api:** manual updates ([f2fcdd6](https://github.com/landing-ai/ade-typescript/commit/f2fcdd643f827706d670172eb1b5ee0e70f43cca))
+
 ## 0.1.0 (2025-09-18)
 
 Full Changelog: [v0.0.1...v0.1.0](https://github.com/landing-ai/ade-typescript/compare/v0.0.1...v0.1.0)
