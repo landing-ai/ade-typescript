@@ -2,9 +2,8 @@
 
 export {
   AdeResource,
-  type AdeExtractDataResponse,
-  type AdeParseDocumentResponse,
-  type AdeExtractDataParams,
-  type AdeParseDocumentParams,
+  type AdeExtractResponse,
+  type AdeParsetResponse,
+  type AdeExtractParams,
+  type AdeParsetParams,
 } from './ade';
-export { Tools } from './tools';
