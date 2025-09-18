@@ -26,9 +26,9 @@ const client = new Ade({
   username: process.env['ADE_USERNAME'], // This is the default and can be omitted
 });
 
-const response = await client.tools.agenticDocumentAnalysis();
+const response = await client.ade.extractData({ schema: 'schema' });
 
-console.log(response.data);
+console.log(response.extraction);
 ```
 
 ### Request & Response types
@@ -43,7 +43,8 @@ const client = new Ade({
   username: process.env['ADE_USERNAME'], // This is the default and can be omitted
 });
 
-const response: Ade.ToolAgenticDocumentAnalysisResponse = await client.tools.agenticDocumentAnalysis();
+const params: Ade.AdeExtractDataParams = { schema: 'schema' };
+const response: Ade.AdeExtractDataResponse = await client.ade.extractData(params);
 ```
 
 Documentation for each method, request param, and response field are available in docstrings and will appear on hover in most modern editors.
@@ -64,17 +65,17 @@ import Ade, { toFile } from 'ade-typescript';
 const client = new Ade();
 
 // If you have access to Node `fs` we recommend using `fs.createReadStream()`:
-await client.tools.agenticDocumentAnalysis({ image: fs.createReadStream('/path/to/file') });
+await client.ade.extractData({ schema: 'schema', markdown: fs.createReadStream('/path/to/file') });
 
 // Or if you have the web `File` API you can pass a `File` instance:
-await client.tools.agenticDocumentAnalysis({ image: new File(['my bytes'], 'file') });
+await client.ade.extractData({ schema: 'schema', markdown: new File(['my bytes'], 'file') });
 
 // You can also pass a `fetch` `Response`:
-await client.tools.agenticDocumentAnalysis({ image: await fetch('https://somesite/file') });
+await client.ade.extractData({ schema: 'schema', markdown: await fetch('https://somesite/file') });
 
 // Finally, if none of the above are convenient, you can use our `toFile` helper:
-await client.tools.agenticDocumentAnalysis({ image: await toFile(Buffer.from('my bytes'), 'file') });
-await client.tools.agenticDocumentAnalysis({ image: await toFile(new Uint8Array([0, 1, 2]), 'file') });
+await client.ade.extractData({ schema: 'schema', markdown: await toFile(Buffer.from('my bytes'), 'file') });
+await client.ade.extractData({ schema: 'schema', markdown: await toFile(new Uint8Array([0, 1, 2]), 'file') });
 ```
 
 ## Handling errors
@@ -85,7 +86,7 @@ a subclass of `APIError` will be thrown:
 
 <!-- prettier-ignore -->
 ```ts
-const response = await client.tools.agenticDocumentAnalysis().catch(async (err) => {
+const response = await client.ade.extractData({ schema: 'schema' }).catch(async (err) => {
   if (err instanceof Ade.APIError) {
     console.log(err.status); // 400
     console.log(err.name); // BadRequestError
@@ -125,7 +126,7 @@ const client = new Ade({
 });
 
 // Or, configure per-request:
-await client.tools.agenticDocumentAnalysis({
+await client.ade.extractData({ schema: 'schema' }, {
   maxRetries: 5,
 });
 ```
@@ -142,7 +143,7 @@ const client = new Ade({
 });
 
 // Override per-request:
-await client.tools.agenticDocumentAnalysis({
+await client.ade.extractData({ schema: 'schema' }, {
   timeout: 5 * 1000,
 });
 ```
@@ -165,13 +166,13 @@ Unlike `.asResponse()` this method consumes the body, returning once it is parse
 ```ts
 const client = new Ade();
 
-const response = await client.tools.agenticDocumentAnalysis().asResponse();
+const response = await client.ade.extractData({ schema: 'schema' }).asResponse();
 console.log(response.headers.get('X-My-Header'));
 console.log(response.statusText); // access the underlying Response object
 
-const { data: response, response: raw } = await client.tools.agenticDocumentAnalysis().withResponse();
+const { data: response, response: raw } = await client.ade.extractData({ schema: 'schema' }).withResponse();
 console.log(raw.headers.get('X-My-Header'));
-console.log(response.data);
+console.log(response.extraction);
 ```
 
 ### Logging
@@ -251,7 +252,7 @@ parameter. This library doesn't validate at runtime that the request matches the
 send will be sent as-is.
 
 ```ts
-client.tools.agenticDocumentAnalysis({
+client.ade.extractData({
   // ...
   // @ts-expect-error baz is not yet public
   baz: 'undocumented option',
