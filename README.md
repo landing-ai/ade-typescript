@@ -24,9 +24,10 @@ import Ade from 'ade-typescript';
 
 const client = new Ade({
   apikey: process.env['ADE_API_KEY'], // This is the default and can be omitted
+  environment: 'eu-production', // defaults to 'production'
 });
 
-const response = await client.ade.parse({ document: fs.createReadStream('path/to/file') });
+const response = await client.ade.parse();
 
 console.log(response.chunks);
 ```
@@ -41,6 +42,7 @@ import Ade from 'ade-typescript';
 
 const client = new Ade({
   apikey: process.env['ADE_API_KEY'], // This is the default and can be omitted
+  environment: 'eu-production', // defaults to 'production'
 });
 
 const response: Ade.AdeParseResponse = await client.ade.parse();
