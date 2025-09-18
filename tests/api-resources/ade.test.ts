@@ -3,7 +3,7 @@
 import Ade, { toFile } from 'ade-typescript';
 
 const client = new Ade({
-  username: 'My Username',
+  apikey: 'My Apikey',
   baseURL: process.env['TEST_API_BASE_URL'] ?? 'http://127.0.0.1:4010',
 });
 
@@ -30,8 +30,8 @@ describe('resource ade', () => {
   });
 
   // Prism tests are disabled
-  test.skip('parset', async () => {
-    const responsePromise = client.ade.parset({});
+  test.skip('parse', async () => {
+    const responsePromise = client.ade.parse({});
     const rawResponse = await responsePromise.asResponse();
     expect(rawResponse).toBeInstanceOf(Response);
     const response = await responsePromise;

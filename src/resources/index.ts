@@ -3,7 +3,7 @@
 export {
   AdeResource,
   type AdeExtractResponse,
-  type AdeParsetResponse,
+  type AdeParseResponse,
   type AdeExtractParams,
-  type AdeParsetParams,
+  type AdeParseParams,
 } from './ade';

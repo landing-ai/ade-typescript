@@ -33,7 +33,7 @@ export class AdeResource extends APIResource {
    *
    *     `https://api.va.eu-west-1.landing.ai/v1/ade/parse`.
    */
-  parset(body: AdeParsetParams, options?: RequestOptions): APIPromise<AdeParsetResponse> {
+  parse(body: AdeParseParams, options?: RequestOptions): APIPromise<AdeParseResponse> {
     return this._client.post(
       '/v1/ade/parse',
       multipartFormRequestOptions({ body, ...options }, this._client),
@@ -75,17 +75,17 @@ export namespace AdeExtractResponse {
   }
 }
 
-export interface AdeParsetResponse {
-  chunks: Array<AdeParsetResponse.Chunk>;
+export interface AdeParseResponse {
+  chunks: Array<AdeParseResponse.Chunk>;
 
   markdown: string;
 
-  metadata: AdeParsetResponse.Metadata;
+  metadata: AdeParseResponse.Metadata;
 
-  splits: Array<AdeParsetResponse.Split>;
+  splits: Array<AdeParseResponse.Split>;
 }
 
-export namespace AdeParsetResponse {
+export namespace AdeParseResponse {
   export interface Chunk {
     id: string;
 
@@ -162,7 +162,7 @@ export interface AdeExtractParams {
   markdown_url?: string | null;
 }
 
-export interface AdeParsetParams {
+export interface AdeParseParams {
   /**
    * A file to be parsed. The file can be a PDF (50 pages max) or an image (50MB).
    * See the list of supported file types here
@@ -190,8 +190,8 @@ export interface AdeParsetParams {
 export declare namespace AdeResource {
   export {
     type AdeExtractResponse as AdeExtractResponse,
-    type AdeParsetResponse as AdeParsetResponse,
+    type AdeParseResponse as AdeParseResponse,
     type AdeExtractParams as AdeExtractParams,
-    type AdeParsetParams as AdeParsetParams,
+    type AdeParseParams as AdeParseParams,
   };
 }
