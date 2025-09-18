@@ -9,8 +9,8 @@
     "esModuleInterop": true,
     "baseUrl": "./",
     "paths": {
-      "ade/*": ["src/*"],
-      "ade": ["src/index.ts"]
+      "ade-typescript/*": ["src/*"],
+      "ade-typescript": ["src/index.ts"]
     },
     "noEmit": true,
 

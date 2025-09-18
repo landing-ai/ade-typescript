@@ -1,5 +1,5 @@
-import { multipartFormRequestOptions, createForm } from 'ade/internal/uploads';
-import { toFile } from 'ade/core/uploads';
+import { multipartFormRequestOptions, createForm } from 'ade-typescript/internal/uploads';
+import { toFile } from 'ade-typescript/core/uploads';
 
 describe('form data validation', () => {
   test('valid values do not error', async () => {
