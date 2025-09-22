@@ -7,8 +7,8 @@ const config: JestConfigWithTsJest = {
     '^.+\\.(t|j)sx?$': ['@swc/jest', { sourceMaps: 'inline' }],
   },
   moduleNameMapper: {
-    '^ade-typescript$': '<rootDir>/src/index.ts',
-    '^ade-typescript/(.*)$': '<rootDir>/src/$1',
+    '^landingai-ade$': '<rootDir>/src/index.ts',
+    '^landingai-ade/(.*)$': '<rootDir>/src/$1',
   },
   modulePathIgnorePatterns: [
     '<rootDir>/ecosystem-tests/',

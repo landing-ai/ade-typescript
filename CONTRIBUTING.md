@@ -55,12 +55,12 @@ $ cd ade-typescript
 # With yarn
 $ yarn link
 $ cd ../my-package
-$ yarn link ade-typescript
+$ yarn link landingai-ade
 
 # With pnpm
 $ pnpm link --global
 $ cd ../my-package
-$ pnpm link -—global ade-typescript
+$ pnpm link -—global landingai-ade
 ```
 
 ## Running tests

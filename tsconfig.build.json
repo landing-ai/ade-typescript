@@ -5,8 +5,8 @@
   "compilerOptions": {
     "rootDir": "./dist/src",
     "paths": {
-      "ade-typescript/*": ["dist/src/*"],
-      "ade-typescript": ["dist/src/index.ts"]
+      "landingai-ade/*": ["dist/src/*"],
+      "landingai-ade": ["dist/src/index.ts"]
     },
     "noEmit": false,
     "declaration": true,
