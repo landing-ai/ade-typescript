@@ -1,11 +1,11 @@
-# Ade
+# Landingai
 
 Types:
 
-- <code><a href="./src/resources/ade.ts">AdeExtractResponse</a></code>
-- <code><a href="./src/resources/ade.ts">AdeParseResponse</a></code>
+- <code><a href="./src/resources/top-level.ts">ExtractResponse</a></code>
+- <code><a href="./src/resources/top-level.ts">ParseResponse</a></code>
 
 Methods:
 
-- <code title="post /v1/ade/extract">client.ade.<a href="./src/resources/ade.ts">extract</a>({ ...params }) -> AdeExtractResponse</code>
-- <code title="post /v1/ade/parse">client.ade.<a href="./src/resources/ade.ts">parse</a>({ ...params }) -> AdeParseResponse</code>
+- <code title="post /v1/ade/extract">client.<a href="./src/index.ts">extract</a>({ ...params }) -> ExtractResponse</code>
+- <code title="post /v1/ade/parse">client.<a href="./src/index.ts">parse</a>({ ...params }) -> ParseResponse</code>

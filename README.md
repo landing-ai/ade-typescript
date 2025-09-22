@@ -27,7 +27,7 @@ const client = new Landingai({
   environment: 'eu', // defaults to 'production'
 });
 
-const response = await client.ade.parse();
+const response = await client.parse();
 
 console.log(response.chunks);
 ```
@@ -45,7 +45,7 @@ const client = new Landingai({
   environment: 'eu', // defaults to 'production'
 });
 
-const response: Landingai.AdeParseResponse = await client.ade.parse();
+const response: Landingai.ParseResponse = await client.parse();
 ```
 
 Documentation for each method, request param, and response field are available in docstrings and will appear on hover in most modern editors.
@@ -66,17 +66,17 @@ import Landingai, { toFile } from 'landingai-ade';
 const client = new Landingai();
 
 // If you have access to Node `fs` we recommend using `fs.createReadStream()`:
-await client.ade.parse({ document: fs.createReadStream('/path/to/file') });
+await client.parse({ document: fs.createReadStream('/path/to/file') });
 
 // Or if you have the web `File` API you can pass a `File` instance:
-await client.ade.parse({ document: new File(['my bytes'], 'file') });
+await client.parse({ document: new File(['my bytes'], 'file') });
 
 // You can also pass a `fetch` `Response`:
-await client.ade.parse({ document: await fetch('https://somesite/file') });
+await client.parse({ document: await fetch('https://somesite/file') });
 
 // Finally, if none of the above are convenient, you can use our `toFile` helper:
-await client.ade.parse({ document: await toFile(Buffer.from('my bytes'), 'file') });
-await client.ade.parse({ document: await toFile(new Uint8Array([0, 1, 2]), 'file') });
+await client.parse({ document: await toFile(Buffer.from('my bytes'), 'file') });
+await client.parse({ document: await toFile(new Uint8Array([0, 1, 2]), 'file') });
 ```
 
 ## Handling errors
@@ -87,7 +87,7 @@ a subclass of `APIError` will be thrown:
 
 <!-- prettier-ignore -->
 ```ts
-const response = await client.ade.parse().catch(async (err) => {
+const response = await client.parse().catch(async (err) => {
   if (err instanceof Landingai.APIError) {
     console.log(err.status); // 400
     console.log(err.name); // BadRequestError
@@ -127,7 +127,7 @@ const client = new Landingai({
 });
 
 // Or, configure per-request:
-await client.ade.parse({
+await client.parse({
   maxRetries: 5,
 });
 ```
@@ -144,7 +144,7 @@ const client = new Landingai({
 });
 
 // Override per-request:
-await client.ade.parse({
+await client.parse({
   timeout: 5 * 1000,
 });
 ```
@@ -167,11 +167,11 @@ Unlike `.asResponse()` this method consumes the body, returning once it is parse
 ```ts
 const client = new Landingai();
 
-const response = await client.ade.parse().asResponse();
+const response = await client.parse().asResponse();
 console.log(response.headers.get('X-My-Header'));
 console.log(response.statusText); // access the underlying Response object
 
-const { data: response, response: raw } = await client.ade.parse().withResponse();
+const { data: response, response: raw } = await client.parse().withResponse();
 console.log(raw.headers.get('X-My-Header'));
 console.log(response.chunks);
 ```
@@ -253,7 +253,7 @@ parameter. This library doesn't validate at runtime that the request matches the
 send will be sent as-is.
 
 ```ts
-client.ade.parse({
+client.parse({
   // ...
   // @ts-expect-error baz is not yet public
   baz: 'undocumented option',

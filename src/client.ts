@@ -14,12 +14,13 @@ import * as Opts from './internal/request-options';
 import { VERSION } from './version';
 import * as Errors from './core/error';
 import * as Uploads from './core/uploads';
-import * as API from './resources/index';
+import * as TopLevelAPI from './resources/top-level';
+import { ExtractParams, ExtractResponse, ParseParams, ParseResponse } from './resources/top-level';
 import { APIPromise } from './core/api-promise';
-import { Ade, AdeExtractParams, AdeExtractResponse, AdeParseParams, AdeParseResponse } from './resources/ade';
 import { type Fetch } from './internal/builtin-types';
 import { HeadersLike, NullableHeaders, buildHeaders } from './internal/headers';
 import { FinalRequestOptions, RequestOptions } from './internal/request-options';
+import { multipartFormRequestOptions } from './internal/uploads';
 import { readEnv } from './internal/utils/env';
 import {
   type LogLevel,
@@ -224,6 +225,36 @@ export class Landingai {
    */
   #baseURLOverridden(): boolean {
     return this.baseURL !== environments[this._options.environment || 'production'];
+  }
+
+  /**
+   * Extract structured data from Markdown using a JSON schema.
+   *
+   * This endpoint processes Markdown content and extracts structured data according
+   * to the provided JSON schema.
+   *
+   * For EU users, use this endpoint:
+   *
+   *     `https://api.va.eu-west-1.landing.ai/v1/ade/extract`.
+   */
+  extract(
+    body: TopLevelAPI.ExtractParams,
+    options?: RequestOptions,
+  ): APIPromise<TopLevelAPI.ExtractResponse> {
+    return this.post('/v1/ade/extract', multipartFormRequestOptions({ body, ...options }, this));
+  }
+
+  /**
+   * Parse a document.
+   *
+   * This endpoint parses documents and structured Markdown, chunks, and metadata.
+   *
+   * For EU users, use this endpoint:
+   *
+   *     `https://api.va.eu-west-1.landing.ai/v1/ade/parse`.
+   */
+  parse(body: TopLevelAPI.ParseParams, options?: RequestOptions): APIPromise<TopLevelAPI.ParseResponse> {
+    return this.post('/v1/ade/parse', multipartFormRequestOptions({ body, ...options }, this));
   }
 
   protected defaultQuery(): Record<string, string | undefined> | undefined {
@@ -741,20 +772,15 @@ export class Landingai {
   static UnprocessableEntityError = Errors.UnprocessableEntityError;
 
   static toFile = Uploads.toFile;
-
-  ade: API.Ade = new API.Ade(this);
 }
-
-Landingai.Ade = Ade;
 
 export declare namespace Landingai {
   export type RequestOptions = Opts.RequestOptions;
 
   export {
-    Ade as Ade,
-    type AdeExtractResponse as AdeExtractResponse,
-    type AdeParseResponse as AdeParseResponse,
-    type AdeExtractParams as AdeExtractParams,
-    type AdeParseParams as AdeParseParams,
+    type ExtractResponse as ExtractResponse,
+    type ParseResponse as ParseResponse,
+    type ExtractParams as ExtractParams,
+    type ParseParams as ParseParams,
   };
 }
