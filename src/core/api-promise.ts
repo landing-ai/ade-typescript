@@ -1,6 +1,6 @@
 // File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
 
-import { type Ade } from '../client';
+import { type Landingai } from '../client';
 
 import { type PromiseOrValue } from '../internal/types';
 import { APIResponseProps, defaultParseResponse } from '../internal/parse';
@@ -11,12 +11,15 @@ import { APIResponseProps, defaultParseResponse } from '../internal/parse';
  */
 export class APIPromise<T> extends Promise<T> {
   private parsedPromise: Promise<T> | undefined;
-  #client: Ade;
+  #client: Landingai;
 
   constructor(
-    client: Ade,
+    client: Landingai,
     private responsePromise: Promise<APIResponseProps>,
-    private parseResponse: (client: Ade, props: APIResponseProps) => PromiseOrValue<T> = defaultParseResponse,
+    private parseResponse: (
+      client: Landingai,
+      props: APIResponseProps,
+    ) => PromiseOrValue<T> = defaultParseResponse,
   ) {
     super((resolve) => {
       // this is maybe a bit weird but this has to be a no-op to not implicitly
