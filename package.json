@@ -1,6 +1,6 @@
 {
   "name": "landingai-ade",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "The official TypeScript library for the Ade API",
   "author": "Ade <>",
   "types": "dist/index.d.ts",
