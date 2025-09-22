@@ -9,8 +9,8 @@
     "esModuleInterop": true,
     "baseUrl": "./",
     "paths": {
-      "ade-typescript/*": ["src/*"],
-      "ade-typescript": ["src/index.ts"]
+      "landingai-ade/*": ["src/*"],
+      "landingai-ade": ["src/index.ts"]
     },
     "noEmit": true,
 
