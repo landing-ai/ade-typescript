@@ -1,47 +1,8 @@
 // File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
 
-import { APIResource } from '../core/resource';
-import { APIPromise } from '../core/api-promise';
 import { type Uploadable } from '../core/uploads';
-import { RequestOptions } from '../internal/request-options';
-import { multipartFormRequestOptions } from '../internal/uploads';
 
-export class Ade extends APIResource {
-  /**
-   * Extract structured data from Markdown using a JSON schema.
-   *
-   * This endpoint processes Markdown content and extracts structured data according
-   * to the provided JSON schema.
-   *
-   * For EU users, use this endpoint:
-   *
-   *     `https://api.va.eu-west-1.landing.ai/v1/ade/extract`.
-   */
-  extract(body: AdeExtractParams, options?: RequestOptions): APIPromise<AdeExtractResponse> {
-    return this._client.post(
-      '/v1/ade/extract',
-      multipartFormRequestOptions({ body, ...options }, this._client),
-    );
-  }
-
-  /**
-   * Parse a document.
-   *
-   * This endpoint parses documents and structured Markdown, chunks, and metadata.
-   *
-   * For EU users, use this endpoint:
-   *
-   *     `https://api.va.eu-west-1.landing.ai/v1/ade/parse`.
-   */
-  parse(body: AdeParseParams, options?: RequestOptions): APIPromise<AdeParseResponse> {
-    return this._client.post(
-      '/v1/ade/parse',
-      multipartFormRequestOptions({ body, ...options }, this._client),
-    );
-  }
-}
-
-export interface AdeExtractResponse {
+export interface ExtractResponse {
   /**
    * The extracted key-value pairs.
    */
@@ -55,10 +16,10 @@ export interface AdeExtractResponse {
   /**
    * The metadata for the extraction process.
    */
-  metadata: AdeExtractResponse.Metadata;
+  metadata: ExtractResponse.Metadata;
 }
 
-export namespace AdeExtractResponse {
+export namespace ExtractResponse {
   /**
    * The metadata for the extraction process.
    */
@@ -75,17 +36,17 @@ export namespace AdeExtractResponse {
   }
 }
 
-export interface AdeParseResponse {
-  chunks: Array<AdeParseResponse.Chunk>;
+export interface ParseResponse {
+  chunks: Array<ParseResponse.Chunk>;
 
   markdown: string;
 
-  metadata: AdeParseResponse.Metadata;
+  metadata: ParseResponse.Metadata;
 
-  splits: Array<AdeParseResponse.Split>;
+  splits: Array<ParseResponse.Split>;
 }
 
-export namespace AdeParseResponse {
+export namespace ParseResponse {
   export interface Chunk {
     id: string;
 
@@ -143,7 +104,7 @@ export namespace AdeParseResponse {
   }
 }
 
-export interface AdeExtractParams {
+export interface ExtractParams {
   /**
    * JSON schema for field extraction. This schema determines what key-values pairs
    * are extracted from the Markdown. The schema must be a valid JSON object and will
@@ -162,7 +123,7 @@ export interface AdeExtractParams {
   markdown_url?: string | null;
 }
 
-export interface AdeParseParams {
+export interface ParseParams {
   /**
    * A file to be parsed. The file can be a PDF (50 pages max) or an image (50MB).
    * See the list of supported file types here
@@ -187,11 +148,11 @@ export interface AdeParseParams {
   split?: 'page' | null;
 }
 
-export declare namespace Ade {
+export declare namespace TopLevel {
   export {
-    type AdeExtractResponse as AdeExtractResponse,
-    type AdeParseResponse as AdeParseResponse,
-    type AdeExtractParams as AdeExtractParams,
-    type AdeParseParams as AdeParseParams,
+    type ExtractResponse as ExtractResponse,
+    type ParseResponse as ParseResponse,
+    type ExtractParams as ExtractParams,
+    type ParseParams as ParseParams,
   };
 }

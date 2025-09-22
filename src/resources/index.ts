@@ -1,9 +1,3 @@
 // File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
 
-export {
-  Ade,
-  type AdeExtractResponse,
-  type AdeParseResponse,
-  type AdeExtractParams,
-  type AdeParseParams,
-} from './ade';
+export { type ExtractResponse, type ParseResponse, type ExtractParams, type ParseParams } from './top-level';

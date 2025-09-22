@@ -7,10 +7,10 @@ const client = new Landingai({
   baseURL: process.env['TEST_API_BASE_URL'] ?? 'http://127.0.0.1:4010',
 });
 
-describe('resource ade', () => {
+describe('top level methods', () => {
   // Prism tests are disabled
   test.skip('extract: only required params', async () => {
-    const responsePromise = client.ade.extract({ schema: 'schema' });
+    const responsePromise = client.extract({ schema: 'schema' });
     const rawResponse = await responsePromise.asResponse();
     expect(rawResponse).toBeInstanceOf(Response);
     const response = await responsePromise;
@@ -22,7 +22,7 @@ describe('resource ade', () => {
 
   // Prism tests are disabled
   test.skip('extract: required and optional params', async () => {
-    const response = await client.ade.extract({
+    const response = await client.extract({
       schema: 'schema',
       markdown: await toFile(Buffer.from('# my file contents'), 'README.md'),
       markdown_url: 'markdown_url',
@@ -31,7 +31,7 @@ describe('resource ade', () => {
 
   // Prism tests are disabled
   test.skip('parse', async () => {
-    const responsePromise = client.ade.parse({});
+    const responsePromise = client.parse({});
     const rawResponse = await responsePromise.asResponse();
     expect(rawResponse).toBeInstanceOf(Response);
     const response = await responsePromise;
