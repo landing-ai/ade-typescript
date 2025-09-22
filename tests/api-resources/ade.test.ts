@@ -1,6 +1,6 @@
 // File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
 
-import Ade, { toFile } from 'ade-typescript';
+import Ade, { toFile } from 'landingai-ade';
 
 const client = new Ade({
   apikey: 'My Apikey',
