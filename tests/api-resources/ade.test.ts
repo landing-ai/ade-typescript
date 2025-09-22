@@ -1,8 +1,8 @@
 // File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
 
-import Ade, { toFile } from 'landingai-ade';
+import Landingai, { toFile } from 'landingai-ade';
 
-const client = new Ade({
+const client = new Landingai({
   apikey: 'My Apikey',
   baseURL: process.env['TEST_API_BASE_URL'] ?? 'http://127.0.0.1:4010',
 });

@@ -6,7 +6,7 @@ import { type Uploadable } from '../core/uploads';
 import { RequestOptions } from '../internal/request-options';
 import { multipartFormRequestOptions } from '../internal/uploads';
 
-export class AdeResource extends APIResource {
+export class Ade extends APIResource {
   /**
    * Extract structured data from Markdown using a JSON schema.
    *
@@ -187,7 +187,7 @@ export interface AdeParseParams {
   split?: 'page' | null;
 }
 
-export declare namespace AdeResource {
+export declare namespace Ade {
   export {
     type AdeExtractResponse as AdeExtractResponse,
     type AdeParseResponse as AdeParseResponse,
