@@ -24,7 +24,7 @@ import Landingai from 'landingai-ade';
 
 const client = new Landingai({
   apikey: process.env['ADE_API_KEY'], // This is the default and can be omitted
-  environment: 'eu-production', // defaults to 'production'
+  environment: 'eu', // defaults to 'production'
 });
 
 const response = await client.ade.parse();
@@ -42,7 +42,7 @@ import Landingai from 'landingai-ade';
 
 const client = new Landingai({
   apikey: process.env['ADE_API_KEY'], // This is the default and can be omitted
-  environment: 'eu-production', // defaults to 'production'
+  environment: 'eu', // defaults to 'production'
 });
 
 const response: Landingai.AdeParseResponse = await client.ade.parse();
