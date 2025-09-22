@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.1 (2025-09-22)
+
+Full Changelog: [v0.3.0...v0.3.1](https://github.com/landing-ai/ade-typescript/compare/v0.3.0...v0.3.1)
+
+### Chores
+
+* do not install brew dependencies in ./scripts/bootstrap by default ([0ed8852](https://github.com/landing-ai/ade-typescript/commit/0ed8852337ed3f07d13797f720361e306bda90cb))
+
 ## 0.3.0 (2025-09-18)
 
 Full Changelog: [v0.2.0...v0.3.0](https://github.com/landing-ai/ade-typescript/compare/v0.2.0...v0.3.0)
