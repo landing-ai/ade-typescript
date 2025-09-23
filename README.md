@@ -1,8 +1,8 @@
-# Landingai TypeScript API Library
+# LandingAI ADE TypeScript API Library
 
 [![NPM version](<https://img.shields.io/npm/v/landingai-ade.svg?label=npm%20(stable)>)](https://npmjs.org/package/landingai-ade) ![npm bundle size](https://img.shields.io/bundlephobia/minzip/landingai-ade)
 
-This library provides convenient access to the Landingai REST API from server-side TypeScript or JavaScript.
+This library provides convenient access to the LandingAI ADE REST API from server-side TypeScript or JavaScript.
 
 The REST API documentation can be found on [docs.landing.ai](https://docs.landing.ai/). The full API of this library can be found in [api.md](api.md).
 
@@ -20,14 +20,14 @@ The full API of this library can be found in [api.md](api.md).
 
 <!-- prettier-ignore -->
 ```js
-import Landingai from 'landingai-ade';
+import LandingAIADE from 'landingai-ade';
 
-const client = new Landingai({
-  apikey: process.env['ADE_API_KEY'], // This is the default and can be omitted
+const client = new LandingAIADE({
+  apikey: process.env['VISION_AGENT_API_KEY'], // This is the default and can be omitted
   environment: 'eu', // defaults to 'production'
 });
 
-const response = await client.parse();
+const response = await client.parse({ document_url: 'https://va.landing.ai/pdfs/LabReport.pdf' });
 
 console.log(response.chunks);
 ```
@@ -38,14 +38,15 @@ This library includes TypeScript definitions for all request params and response
 
 <!-- prettier-ignore -->
 ```ts
-import Landingai from 'landingai-ade';
+import LandingAIADE from 'landingai-ade';
 
-const client = new Landingai({
-  apikey: process.env['ADE_API_KEY'], // This is the default and can be omitted
+const client = new LandingAIADE({
+  apikey: process.env['VISION_AGENT_API_KEY'], // This is the default and can be omitted
   environment: 'eu', // defaults to 'production'
 });
 
-const response: Landingai.ParseResponse = await client.parse();
+const params: LandingAIADE.ExtractParams = { schema: 'schema' };
+const response: LandingAIADE.ExtractResponse = await client.extract(params);
 ```
 
 Documentation for each method, request param, and response field are available in docstrings and will appear on hover in most modern editors.
@@ -61,9 +62,9 @@ Request parameters that correspond to file uploads can be passed in many differe
 
 ```ts
 import fs from 'fs';
-import Landingai, { toFile } from 'landingai-ade';
+import LandingAIADE, { toFile } from 'landingai-ade';
 
-const client = new Landingai();
+const client = new LandingAIADE();
 
 // If you have access to Node `fs` we recommend using `fs.createReadStream()`:
 await client.parse({ document: fs.createReadStream('/path/to/file') });
@@ -87,8 +88,8 @@ a subclass of `APIError` will be thrown:
 
 <!-- prettier-ignore -->
 ```ts
-const response = await client.parse().catch(async (err) => {
-  if (err instanceof Landingai.APIError) {
+const response = await client.extract({ schema: 'schema' }).catch(async (err) => {
+  if (err instanceof LandingAIADE.APIError) {
     console.log(err.status); // 400
     console.log(err.name); // BadRequestError
     console.log(err.headers); // {server: 'nginx', ...}
@@ -122,12 +123,12 @@ You can use the `maxRetries` option to configure or disable this:
 <!-- prettier-ignore -->
 ```js
 // Configure the default for all requests:
-const client = new Landingai({
+const client = new LandingAIADE({
   maxRetries: 0, // default is 2
 });
 
 // Or, configure per-request:
-await client.parse({
+await client.extract({ schema: 'schema' }, {
   maxRetries: 5,
 });
 ```
@@ -139,12 +140,12 @@ Requests time out after 1 minute by default. You can configure this with a `time
 <!-- prettier-ignore -->
 ```ts
 // Configure the default for all requests:
-const client = new Landingai({
+const client = new LandingAIADE({
   timeout: 20 * 1000, // 20 seconds (default is 1 minute)
 });
 
 // Override per-request:
-await client.parse({
+await client.extract({ schema: 'schema' }, {
   timeout: 5 * 1000,
 });
 ```
@@ -165,15 +166,15 @@ Unlike `.asResponse()` this method consumes the body, returning once it is parse
 
 <!-- prettier-ignore -->
 ```ts
-const client = new Landingai();
+const client = new LandingAIADE();
 
-const response = await client.parse().asResponse();
+const response = await client.extract({ schema: 'schema' }).asResponse();
 console.log(response.headers.get('X-My-Header'));
 console.log(response.statusText); // access the underlying Response object
 
-const { data: response, response: raw } = await client.parse().withResponse();
+const { data: response, response: raw } = await client.extract({ schema: 'schema' }).withResponse();
 console.log(raw.headers.get('X-My-Header'));
-console.log(response.chunks);
+console.log(response.extraction);
 ```
 
 ### Logging
@@ -186,13 +187,13 @@ console.log(response.chunks);
 
 The log level can be configured in two ways:
 
-1. Via the `LANDINGAI_LOG` environment variable
+1. Via the `LANDINGAI_ADE_LOG` environment variable
 2. Using the `logLevel` client option (overrides the environment variable if set)
 
 ```ts
-import Landingai from 'landingai-ade';
+import LandingAIADE from 'landingai-ade';
 
-const client = new Landingai({
+const client = new LandingAIADE({
   logLevel: 'debug', // Show all log messages
 });
 ```
@@ -218,13 +219,13 @@ When providing a custom logger, the `logLevel` option still controls which messa
 below the configured level will not be sent to your logger.
 
 ```ts
-import Landingai from 'landingai-ade';
+import LandingAIADE from 'landingai-ade';
 import pino from 'pino';
 
 const logger = pino();
 
-const client = new Landingai({
-  logger: logger.child({ name: 'Landingai' }),
+const client = new LandingAIADE({
+  logger: logger.child({ name: 'LandingAIADE' }),
   logLevel: 'debug', // Send all messages to pino, allowing it to filter
 });
 ```
@@ -287,10 +288,10 @@ globalThis.fetch = fetch;
 Or pass it to the client:
 
 ```ts
-import Landingai from 'landingai-ade';
+import LandingAIADE from 'landingai-ade';
 import fetch from 'my-fetch';
 
-const client = new Landingai({ fetch });
+const client = new LandingAIADE({ fetch });
 ```
 
 ### Fetch options
@@ -298,9 +299,9 @@ const client = new Landingai({ fetch });
 If you want to set custom `fetch` options without overriding the `fetch` function, you can provide a `fetchOptions` object when instantiating the client or making a request. (Request-specific options override client options.)
 
 ```ts
-import Landingai from 'landingai-ade';
+import LandingAIADE from 'landingai-ade';
 
-const client = new Landingai({
+const client = new LandingAIADE({
   fetchOptions: {
     // `RequestInit` options
   },
@@ -315,11 +316,11 @@ options to requests:
 <img src="https://raw.githubusercontent.com/stainless-api/sdk-assets/refs/heads/main/node.svg" align="top" width="18" height="21"> **Node** <sup>[[docs](https://github.com/nodejs/undici/blob/main/docs/docs/api/ProxyAgent.md#example---proxyagent-with-fetch)]</sup>
 
 ```ts
-import Landingai from 'landingai-ade';
+import LandingAIADE from 'landingai-ade';
 import * as undici from 'undici';
 
 const proxyAgent = new undici.ProxyAgent('http://localhost:8888');
-const client = new Landingai({
+const client = new LandingAIADE({
   fetchOptions: {
     dispatcher: proxyAgent,
   },
@@ -329,9 +330,9 @@ const client = new Landingai({
 <img src="https://raw.githubusercontent.com/stainless-api/sdk-assets/refs/heads/main/bun.svg" align="top" width="18" height="21"> **Bun** <sup>[[docs](https://bun.sh/guides/http/proxy)]</sup>
 
 ```ts
-import Landingai from 'landingai-ade';
+import LandingAIADE from 'landingai-ade';
 
-const client = new Landingai({
+const client = new LandingAIADE({
   fetchOptions: {
     proxy: 'http://localhost:8888',
   },
@@ -341,10 +342,10 @@ const client = new Landingai({
 <img src="https://raw.githubusercontent.com/stainless-api/sdk-assets/refs/heads/main/deno.svg" align="top" width="18" height="21"> **Deno** <sup>[[docs](https://docs.deno.com/api/deno/~/Deno.createHttpClient)]</sup>
 
 ```ts
-import Landingai from 'npm:landingai-ade';
+import LandingAIADE from 'npm:landingai-ade';
 
 const httpClient = Deno.createHttpClient({ proxy: { url: 'http://localhost:8888' } });
-const client = new Landingai({
+const client = new LandingAIADE({
   fetchOptions: {
     client: httpClient,
   },

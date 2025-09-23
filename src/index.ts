@@ -1,12 +1,12 @@
 // File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
 
-export { Landingai as default } from './client';
+export { LandingAIADE as default } from './client';
 
 export { type Uploadable, toFile } from './core/uploads';
 export { APIPromise } from './core/api-promise';
-export { Landingai, type ClientOptions } from './client';
+export { LandingAIADE, type ClientOptions } from './client';
 export {
-  LandingaiError,
+  LandingAIADEError,
   APIError,
   APIConnectionError,
   APIConnectionTimeoutError,
