@@ -1,11 +1,11 @@
 // File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
 
-import type { Landingai } from '../client';
+import type { LandingAIADE } from '../client';
 
 export abstract class APIResource {
-  protected _client: Landingai;
+  protected _client: LandingAIADE;
 
-  constructor(client: Landingai) {
+  constructor(client: LandingAIADE) {
     this._client = client;
   }
 }

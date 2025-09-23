@@ -1,8 +1,8 @@
 // File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
 
-import { Landingai } from 'landingai-ade';
+import { LandingAIADE } from 'landingai-ade';
 
-const { stringifyQuery } = Landingai.prototype as any;
+const { stringifyQuery } = LandingAIADE.prototype as any;
 
 describe(stringifyQuery, () => {
   for (const [input, expected] of [
