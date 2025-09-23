@@ -1,6 +1,6 @@
 // File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
 
-import { type Landingai } from '../client';
+import { type LandingAIADE } from '../client';
 
 import { type PromiseOrValue } from '../internal/types';
 import { APIResponseProps, defaultParseResponse } from '../internal/parse';
@@ -11,13 +11,13 @@ import { APIResponseProps, defaultParseResponse } from '../internal/parse';
  */
 export class APIPromise<T> extends Promise<T> {
   private parsedPromise: Promise<T> | undefined;
-  #client: Landingai;
+  #client: LandingAIADE;
 
   constructor(
-    client: Landingai,
+    client: LandingAIADE,
     private responsePromise: Promise<APIResponseProps>,
     private parseResponse: (
-      client: Landingai,
+      client: LandingAIADE,
       props: APIResponseProps,
     ) => PromiseOrValue<T> = defaultParseResponse,
   ) {

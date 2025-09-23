@@ -3,7 +3,7 @@
 import { APIPromise } from 'landingai-ade/core/api-promise';
 
 import util from 'node:util';
-import Landingai from 'landingai-ade';
+import LandingAIADE from 'landingai-ade';
 import { APIUserAbortError } from 'landingai-ade';
 const defaultFetch = fetch;
 
@@ -20,7 +20,7 @@ describe('instantiate client', () => {
   });
 
   describe('defaultHeaders', () => {
-    const client = new Landingai({
+    const client = new LandingAIADE({
       baseURL: 'http://localhost:5000/',
       defaultHeaders: { 'X-My-Default-Header': '2' },
       apikey: 'My Apikey',
@@ -54,14 +54,14 @@ describe('instantiate client', () => {
 
     beforeEach(() => {
       process.env = { ...env };
-      process.env['LANDINGAI_LOG'] = undefined;
+      process.env['LANDINGAI_ADE_LOG'] = undefined;
     });
 
     afterEach(() => {
       process.env = env;
     });
 
-    const forceAPIResponseForClient = async (client: Landingai) => {
+    const forceAPIResponseForClient = async (client: LandingAIADE) => {
       await new APIPromise(
         client,
         Promise.resolve({
@@ -87,14 +87,14 @@ describe('instantiate client', () => {
         error: jest.fn(),
       };
 
-      const client = new Landingai({ logger: logger, logLevel: 'debug', apikey: 'My Apikey' });
+      const client = new LandingAIADE({ logger: logger, logLevel: 'debug', apikey: 'My Apikey' });
 
       await forceAPIResponseForClient(client);
       expect(debugMock).toHaveBeenCalled();
     });
 
     test('default logLevel is warn', async () => {
-      const client = new Landingai({ apikey: 'My Apikey' });
+      const client = new LandingAIADE({ apikey: 'My Apikey' });
       expect(client.logLevel).toBe('warn');
     });
 
@@ -107,7 +107,7 @@ describe('instantiate client', () => {
         error: jest.fn(),
       };
 
-      const client = new Landingai({ logger: logger, logLevel: 'info', apikey: 'My Apikey' });
+      const client = new LandingAIADE({ logger: logger, logLevel: 'info', apikey: 'My Apikey' });
 
       await forceAPIResponseForClient(client);
       expect(debugMock).not.toHaveBeenCalled();
@@ -122,8 +122,8 @@ describe('instantiate client', () => {
         error: jest.fn(),
       };
 
-      process.env['LANDINGAI_LOG'] = 'debug';
-      const client = new Landingai({ logger: logger, apikey: 'My Apikey' });
+      process.env['LANDINGAI_ADE_LOG'] = 'debug';
+      const client = new LandingAIADE({ logger: logger, apikey: 'My Apikey' });
       expect(client.logLevel).toBe('debug');
 
       await forceAPIResponseForClient(client);
@@ -139,11 +139,11 @@ describe('instantiate client', () => {
         error: jest.fn(),
       };
 
-      process.env['LANDINGAI_LOG'] = 'not a log level';
-      const client = new Landingai({ logger: logger, apikey: 'My Apikey' });
+      process.env['LANDINGAI_ADE_LOG'] = 'not a log level';
+      const client = new LandingAIADE({ logger: logger, apikey: 'My Apikey' });
       expect(client.logLevel).toBe('warn');
       expect(warnMock).toHaveBeenCalledWith(
-        'process.env[\'LANDINGAI_LOG\'] was set to "not a log level", expected one of ["off","error","warn","info","debug"]',
+        'process.env[\'LANDINGAI_ADE_LOG\'] was set to "not a log level", expected one of ["off","error","warn","info","debug"]',
       );
     });
 
@@ -156,8 +156,8 @@ describe('instantiate client', () => {
         error: jest.fn(),
       };
 
-      process.env['LANDINGAI_LOG'] = 'debug';
-      const client = new Landingai({ logger: logger, logLevel: 'off', apikey: 'My Apikey' });
+      process.env['LANDINGAI_ADE_LOG'] = 'debug';
+      const client = new LandingAIADE({ logger: logger, logLevel: 'off', apikey: 'My Apikey' });
 
       await forceAPIResponseForClient(client);
       expect(debugMock).not.toHaveBeenCalled();
@@ -172,8 +172,8 @@ describe('instantiate client', () => {
         error: jest.fn(),
       };
 
-      process.env['LANDINGAI_LOG'] = 'not a log level';
-      const client = new Landingai({ logger: logger, logLevel: 'debug', apikey: 'My Apikey' });
+      process.env['LANDINGAI_ADE_LOG'] = 'not a log level';
+      const client = new LandingAIADE({ logger: logger, logLevel: 'debug', apikey: 'My Apikey' });
       expect(client.logLevel).toBe('debug');
       expect(warnMock).not.toHaveBeenCalled();
     });
@@ -181,7 +181,7 @@ describe('instantiate client', () => {
 
   describe('defaultQuery', () => {
     test('with null query params given', () => {
-      const client = new Landingai({
+      const client = new LandingAIADE({
         baseURL: 'http://localhost:5000/',
         defaultQuery: { apiVersion: 'foo' },
         apikey: 'My Apikey',
@@ -190,7 +190,7 @@ describe('instantiate client', () => {
     });
 
     test('multiple default query params', () => {
-      const client = new Landingai({
+      const client = new LandingAIADE({
         baseURL: 'http://localhost:5000/',
         defaultQuery: { apiVersion: 'foo', hello: 'world' },
         apikey: 'My Apikey',
@@ -199,7 +199,7 @@ describe('instantiate client', () => {
     });
 
     test('overriding with `undefined`', () => {
-      const client = new Landingai({
+      const client = new LandingAIADE({
         baseURL: 'http://localhost:5000/',
         defaultQuery: { hello: 'world' },
         apikey: 'My Apikey',
@@ -209,7 +209,7 @@ describe('instantiate client', () => {
   });
 
   test('custom fetch', async () => {
-    const client = new Landingai({
+    const client = new LandingAIADE({
       baseURL: 'http://localhost:5000/',
       apikey: 'My Apikey',
       fetch: (url) => {
@@ -227,7 +227,7 @@ describe('instantiate client', () => {
 
   test('explicit global fetch', async () => {
     // make sure the global fetch type is assignable to our Fetch type
-    const client = new Landingai({
+    const client = new LandingAIADE({
       baseURL: 'http://localhost:5000/',
       apikey: 'My Apikey',
       fetch: defaultFetch,
@@ -235,7 +235,7 @@ describe('instantiate client', () => {
   });
 
   test('custom signal', async () => {
-    const client = new Landingai({
+    const client = new LandingAIADE({
       baseURL: process.env['TEST_API_BASE_URL'] ?? 'http://127.0.0.1:4010',
       apikey: 'My Apikey',
       fetch: (...args) => {
@@ -267,7 +267,7 @@ describe('instantiate client', () => {
       return new Response(JSON.stringify({}), { headers: { 'Content-Type': 'application/json' } });
     };
 
-    const client = new Landingai({
+    const client = new LandingAIADE({
       baseURL: 'http://localhost:5000/',
       apikey: 'My Apikey',
       fetch: testFetch,
@@ -279,72 +279,72 @@ describe('instantiate client', () => {
 
   describe('baseUrl', () => {
     test('trailing slash', () => {
-      const client = new Landingai({ baseURL: 'http://localhost:5000/custom/path/', apikey: 'My Apikey' });
+      const client = new LandingAIADE({ baseURL: 'http://localhost:5000/custom/path/', apikey: 'My Apikey' });
       expect(client.buildURL('/foo', null)).toEqual('http://localhost:5000/custom/path/foo');
     });
 
     test('no trailing slash', () => {
-      const client = new Landingai({ baseURL: 'http://localhost:5000/custom/path', apikey: 'My Apikey' });
+      const client = new LandingAIADE({ baseURL: 'http://localhost:5000/custom/path', apikey: 'My Apikey' });
       expect(client.buildURL('/foo', null)).toEqual('http://localhost:5000/custom/path/foo');
     });
 
     afterEach(() => {
-      process.env['LANDINGAI_BASE_URL'] = undefined;
+      process.env['LANDINGAI_ADE_BASE_URL'] = undefined;
     });
 
     test('explicit option', () => {
-      const client = new Landingai({ baseURL: 'https://example.com', apikey: 'My Apikey' });
+      const client = new LandingAIADE({ baseURL: 'https://example.com', apikey: 'My Apikey' });
       expect(client.baseURL).toEqual('https://example.com');
     });
 
     test('env variable', () => {
-      process.env['LANDINGAI_BASE_URL'] = 'https://example.com/from_env';
-      const client = new Landingai({ apikey: 'My Apikey' });
+      process.env['LANDINGAI_ADE_BASE_URL'] = 'https://example.com/from_env';
+      const client = new LandingAIADE({ apikey: 'My Apikey' });
       expect(client.baseURL).toEqual('https://example.com/from_env');
     });
 
     test('empty env variable', () => {
-      process.env['LANDINGAI_BASE_URL'] = ''; // empty
-      const client = new Landingai({ apikey: 'My Apikey' });
+      process.env['LANDINGAI_ADE_BASE_URL'] = ''; // empty
+      const client = new LandingAIADE({ apikey: 'My Apikey' });
       expect(client.baseURL).toEqual('https://api.va.landing.ai');
     });
 
     test('blank env variable', () => {
-      process.env['LANDINGAI_BASE_URL'] = '  '; // blank
-      const client = new Landingai({ apikey: 'My Apikey' });
+      process.env['LANDINGAI_ADE_BASE_URL'] = '  '; // blank
+      const client = new LandingAIADE({ apikey: 'My Apikey' });
       expect(client.baseURL).toEqual('https://api.va.landing.ai');
     });
 
     test('env variable with environment', () => {
-      process.env['LANDINGAI_BASE_URL'] = 'https://example.com/from_env';
+      process.env['LANDINGAI_ADE_BASE_URL'] = 'https://example.com/from_env';
 
       expect(
-        () => new Landingai({ apikey: 'My Apikey', environment: 'production' }),
+        () => new LandingAIADE({ apikey: 'My Apikey', environment: 'production' }),
       ).toThrowErrorMatchingInlineSnapshot(
-        `"Ambiguous URL; The \`baseURL\` option (or LANDINGAI_BASE_URL env var) and the \`environment\` option are given. If you want to use the environment you must pass baseURL: null"`,
+        `"Ambiguous URL; The \`baseURL\` option (or LANDINGAI_ADE_BASE_URL env var) and the \`environment\` option are given. If you want to use the environment you must pass baseURL: null"`,
       );
 
-      const client = new Landingai({ apikey: 'My Apikey', baseURL: null, environment: 'production' });
+      const client = new LandingAIADE({ apikey: 'My Apikey', baseURL: null, environment: 'production' });
       expect(client.baseURL).toEqual('https://api.va.landing.ai');
     });
 
     test('in request options', () => {
-      const client = new Landingai({ apikey: 'My Apikey' });
+      const client = new LandingAIADE({ apikey: 'My Apikey' });
       expect(client.buildURL('/foo', null, 'http://localhost:5000/option')).toEqual(
         'http://localhost:5000/option/foo',
       );
     });
 
     test('in request options overridden by client options', () => {
-      const client = new Landingai({ apikey: 'My Apikey', baseURL: 'http://localhost:5000/client' });
+      const client = new LandingAIADE({ apikey: 'My Apikey', baseURL: 'http://localhost:5000/client' });
       expect(client.buildURL('/foo', null, 'http://localhost:5000/option')).toEqual(
         'http://localhost:5000/client/foo',
       );
     });
 
     test('in request options overridden by env variable', () => {
-      process.env['LANDINGAI_BASE_URL'] = 'http://localhost:5000/env';
-      const client = new Landingai({ apikey: 'My Apikey' });
+      process.env['LANDINGAI_ADE_BASE_URL'] = 'http://localhost:5000/env';
+      const client = new LandingAIADE({ apikey: 'My Apikey' });
       expect(client.buildURL('/foo', null, 'http://localhost:5000/option')).toEqual(
         'http://localhost:5000/env/foo',
       );
@@ -352,17 +352,21 @@ describe('instantiate client', () => {
   });
 
   test('maxRetries option is correctly set', () => {
-    const client = new Landingai({ maxRetries: 4, apikey: 'My Apikey' });
+    const client = new LandingAIADE({ maxRetries: 4, apikey: 'My Apikey' });
     expect(client.maxRetries).toEqual(4);
 
     // default
-    const client2 = new Landingai({ apikey: 'My Apikey' });
+    const client2 = new LandingAIADE({ apikey: 'My Apikey' });
     expect(client2.maxRetries).toEqual(2);
   });
 
   describe('withOptions', () => {
     test('creates a new client with overridden options', async () => {
-      const client = new Landingai({ baseURL: 'http://localhost:5000/', maxRetries: 3, apikey: 'My Apikey' });
+      const client = new LandingAIADE({
+        baseURL: 'http://localhost:5000/',
+        maxRetries: 3,
+        apikey: 'My Apikey',
+      });
 
       const newClient = client.withOptions({
         maxRetries: 5,
@@ -383,7 +387,7 @@ describe('instantiate client', () => {
     });
 
     test('inherits options from the parent client', async () => {
-      const client = new Landingai({
+      const client = new LandingAIADE({
         baseURL: 'http://localhost:5000/',
         defaultHeaders: { 'X-Test-Header': 'test-value' },
         defaultQuery: { 'test-param': 'test-value' },
@@ -402,7 +406,11 @@ describe('instantiate client', () => {
     });
 
     test('respects runtime property changes when creating new client', () => {
-      const client = new Landingai({ baseURL: 'http://localhost:5000/', timeout: 1000, apikey: 'My Apikey' });
+      const client = new LandingAIADE({
+        baseURL: 'http://localhost:5000/',
+        timeout: 1000,
+        apikey: 'My Apikey',
+      });
 
       // Modify the client properties directly after creation
       client.baseURL = 'http://localhost:6000/';
@@ -430,21 +438,21 @@ describe('instantiate client', () => {
 
   test('with environment variable arguments', () => {
     // set options via env var
-    process.env['ADE_API_KEY'] = 'My Apikey';
-    const client = new Landingai();
+    process.env['VISION_AGENT_API_KEY'] = 'My Apikey';
+    const client = new LandingAIADE();
     expect(client.apikey).toBe('My Apikey');
   });
 
   test('with overridden environment variable arguments', () => {
     // set options via env var
-    process.env['ADE_API_KEY'] = 'another My Apikey';
-    const client = new Landingai({ apikey: 'My Apikey' });
+    process.env['VISION_AGENT_API_KEY'] = 'another My Apikey';
+    const client = new LandingAIADE({ apikey: 'My Apikey' });
     expect(client.apikey).toBe('My Apikey');
   });
 });
 
 describe('request building', () => {
-  const client = new Landingai({ apikey: 'My Apikey' });
+  const client = new LandingAIADE({ apikey: 'My Apikey' });
 
   describe('custom headers', () => {
     test('handles undefined', async () => {
@@ -463,7 +471,7 @@ describe('request building', () => {
 });
 
 describe('default encoder', () => {
-  const client = new Landingai({ apikey: 'My Apikey' });
+  const client = new LandingAIADE({ apikey: 'My Apikey' });
 
   class Serializable {
     toJSON() {
@@ -548,7 +556,7 @@ describe('retries', () => {
       return new Response(JSON.stringify({ a: 1 }), { headers: { 'Content-Type': 'application/json' } });
     };
 
-    const client = new Landingai({ apikey: 'My Apikey', timeout: 10, fetch: testFetch });
+    const client = new LandingAIADE({ apikey: 'My Apikey', timeout: 10, fetch: testFetch });
 
     expect(await client.request({ path: '/foo', method: 'get' })).toEqual({ a: 1 });
     expect(count).toEqual(2);
@@ -578,7 +586,7 @@ describe('retries', () => {
       return new Response(JSON.stringify({ a: 1 }), { headers: { 'Content-Type': 'application/json' } });
     };
 
-    const client = new Landingai({ apikey: 'My Apikey', fetch: testFetch, maxRetries: 4 });
+    const client = new LandingAIADE({ apikey: 'My Apikey', fetch: testFetch, maxRetries: 4 });
 
     expect(await client.request({ path: '/foo', method: 'get' })).toEqual({ a: 1 });
 
@@ -602,7 +610,7 @@ describe('retries', () => {
       capturedRequest = init;
       return new Response(JSON.stringify({ a: 1 }), { headers: { 'Content-Type': 'application/json' } });
     };
-    const client = new Landingai({ apikey: 'My Apikey', fetch: testFetch, maxRetries: 4 });
+    const client = new LandingAIADE({ apikey: 'My Apikey', fetch: testFetch, maxRetries: 4 });
 
     expect(
       await client.request({
@@ -631,7 +639,7 @@ describe('retries', () => {
       capturedRequest = init;
       return new Response(JSON.stringify({ a: 1 }), { headers: { 'Content-Type': 'application/json' } });
     };
-    const client = new Landingai({
+    const client = new LandingAIADE({
       apikey: 'My Apikey',
       fetch: testFetch,
       maxRetries: 4,
@@ -664,7 +672,7 @@ describe('retries', () => {
       capturedRequest = init;
       return new Response(JSON.stringify({ a: 1 }), { headers: { 'Content-Type': 'application/json' } });
     };
-    const client = new Landingai({ apikey: 'My Apikey', fetch: testFetch, maxRetries: 4 });
+    const client = new LandingAIADE({ apikey: 'My Apikey', fetch: testFetch, maxRetries: 4 });
 
     expect(
       await client.request({
@@ -694,7 +702,7 @@ describe('retries', () => {
       return new Response(JSON.stringify({ a: 1 }), { headers: { 'Content-Type': 'application/json' } });
     };
 
-    const client = new Landingai({ apikey: 'My Apikey', fetch: testFetch });
+    const client = new LandingAIADE({ apikey: 'My Apikey', fetch: testFetch });
 
     expect(await client.request({ path: '/foo', method: 'get' })).toEqual({ a: 1 });
     expect(count).toEqual(2);
@@ -724,7 +732,7 @@ describe('retries', () => {
       return new Response(JSON.stringify({ a: 1 }), { headers: { 'Content-Type': 'application/json' } });
     };
 
-    const client = new Landingai({ apikey: 'My Apikey', fetch: testFetch });
+    const client = new LandingAIADE({ apikey: 'My Apikey', fetch: testFetch });
 
     expect(await client.request({ path: '/foo', method: 'get' })).toEqual({ a: 1 });
     expect(count).toEqual(2);
