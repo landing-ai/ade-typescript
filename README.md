@@ -45,8 +45,7 @@ const client = new LandingAIADE({
   environment: 'eu', // defaults to 'production'
 });
 
-const params: LandingAIADE.ExtractParams = { schema: 'schema' };
-const response: LandingAIADE.ExtractResponse = await client.extract(params);
+const response: LandingAIADE.ParseResponse = await client.parse();
 ```
 
 Documentation for each method, request param, and response field are available in docstrings and will appear on hover in most modern editors.
@@ -88,7 +87,7 @@ a subclass of `APIError` will be thrown:
 
 <!-- prettier-ignore -->
 ```ts
-const response = await client.extract({ schema: 'schema' }).catch(async (err) => {
+const response = await client.parse().catch(async (err) => {
   if (err instanceof LandingAIADE.APIError) {
     console.log(err.status); // 400
     console.log(err.name); // BadRequestError
@@ -128,7 +127,7 @@ const client = new LandingAIADE({
 });
 
 // Or, configure per-request:
-await client.extract({ schema: 'schema' }, {
+await client.parse({
   maxRetries: 5,
 });
 ```
@@ -145,7 +144,7 @@ const client = new LandingAIADE({
 });
 
 // Override per-request:
-await client.extract({ schema: 'schema' }, {
+await client.parse({
   timeout: 5 * 1000,
 });
 ```
@@ -168,13 +167,13 @@ Unlike `.asResponse()` this method consumes the body, returning once it is parse
 ```ts
 const client = new LandingAIADE();
 
-const response = await client.extract({ schema: 'schema' }).asResponse();
+const response = await client.parse().asResponse();
 console.log(response.headers.get('X-My-Header'));
 console.log(response.statusText); // access the underlying Response object
 
-const { data: response, response: raw } = await client.extract({ schema: 'schema' }).withResponse();
+const { data: response, response: raw } = await client.parse().withResponse();
 console.log(raw.headers.get('X-My-Header'));
-console.log(response.extraction);
+console.log(response.chunks);
 ```
 
 ### Logging
