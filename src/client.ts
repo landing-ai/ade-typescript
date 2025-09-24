@@ -34,6 +34,7 @@ import { isEmptyObj } from './internal/utils/values';
 const environments = {
   production: 'https://api.va.landing.ai',
   eu: 'https://va.eu-west-1.landing.ai',
+  staging: 'https://api.va.staging.landing.ai',
 };
 type Environment = keyof typeof environments;
 
@@ -53,6 +54,7 @@ export interface ClientOptions {
    * Each environment maps to a different base URL:
    * - `production` corresponds to `https://api.va.landing.ai`
    * - `eu` corresponds to `https://va.eu-west-1.landing.ai`
+   * - `staging` corresponds to `https://api.va.staging.landing.ai`
    */
   environment?: Environment | undefined;
 
