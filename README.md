@@ -24,7 +24,7 @@ import LandingAIADE from 'landingai-ade';
 
 const client = new LandingAIADE({
   apikey: process.env['VISION_AGENT_API_KEY'], // This is the default and can be omitted
-  environment: 'eu', // or 'production' | 'staging'; defaults to 'production'
+  environment: 'eu', // defaults to 'production'
 });
 
 const response = await client.parse({
@@ -45,7 +45,7 @@ import LandingAIADE from 'landingai-ade';
 
 const client = new LandingAIADE({
   apikey: process.env['VISION_AGENT_API_KEY'], // This is the default and can be omitted
-  environment: 'eu', // or 'production' | 'staging'; defaults to 'production'
+  environment: 'eu', // defaults to 'production'
 });
 
 const response: LandingAIADE.ParseResponse = await client.parse();
