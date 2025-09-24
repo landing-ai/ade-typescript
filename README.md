@@ -79,6 +79,59 @@ await client.parse({ document: await toFile(Buffer.from('my bytes'), 'file') });
 await client.parse({ document: await toFile(new Uint8Array([0, 1, 2]), 'file') });
 ```
 
+## Using Zod for Type-Safe Schemas
+
+You can use [Zod](https://zod.dev) to define type-safe schemas for the `extract` endpoint. This provides full TypeScript type inference and validation for your extracted data.
+
+### Basic Pattern
+
+The key is to convert your Zod schema to JSON Schema format:
+
+```ts
+import Ade, { toFile } from 'ade-typescript';
+import { z } from 'zod';
+
+// 1. Define your schema using Zod
+const InvoiceSchema = z.object({
+  invoiceNumber: z.string().describe('Invoice number or ID'),
+  invoiceDate: z.string().describe('Date the invoice was issued'),
+  vendor: z.object({
+    name: z.string(),
+    address: z.string().optional(),
+  }),
+  items: z.array(z.object({
+    description: z.string(),
+    quantity: z.number().int().positive(),
+    unitPrice: z.number().positive(),
+    total: z.number().positive(),
+  })),
+  totalAmount: z.number().describe('Total amount due'),
+});
+
+// 2. Get TypeScript type from the schema
+type Invoice = z.infer<typeof InvoiceSchema>;
+
+const client = new Ade({
+  apikey: process.env['ADE_API_KEY'],
+});
+
+// 3. Convert Zod schema to JSON Schema string for the API
+const jsonSchemaString = JSON.stringify(z.toJSONSchema(InvoiceSchema));
+
+// 4. Use it with the extract endpoint
+const result = await client.ade.extract({
+  schema: jsonSchemaString,
+  markdown: await toFile(Buffer.from(markdownContent), 'document.md'),
+});
+
+// 5. The extraction is now typed as Invoice
+const invoice: Invoice = result.extraction as Invoice;
+console.log(invoice.invoiceNumber); // TypeScript knows this is a string
+console.log(invoice.totalAmount);   // TypeScript knows this is a number
+```
+
+Note: Zod is optional. You can also pass JSON Schema strings directly to the `extract` endpoint if you prefer.
+
 ## Handling errors
 
 When the library is unable to connect to the API,
