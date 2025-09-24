@@ -24,7 +24,7 @@ import LandingAIADE from 'landingai-ade';
 
 const client = new LandingAIADE({
   apikey: process.env['VISION_AGENT_API_KEY'], // This is the default and can be omitted
-  environment: 'eu', // defaults to 'production'
+  environment: 'eu', // or 'production' | 'staging'; defaults to 'production'
 });
 
 const response = await client.parse({ document_url: 'https://va.landing.ai/pdfs/LabReport.pdf' });
@@ -42,7 +42,7 @@ import LandingAIADE from 'landingai-ade';
 
 const client = new LandingAIADE({
   apikey: process.env['VISION_AGENT_API_KEY'], // This is the default and can be omitted
-  environment: 'eu', // defaults to 'production'
+  environment: 'eu', // or 'production' | 'staging'; defaults to 'production'
 });
 
 const response: LandingAIADE.ParseResponse = await client.parse();
