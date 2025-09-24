@@ -30,9 +30,11 @@ export namespace ExtractResponse {
 
     filename: string;
 
+    job_id: string;
+
     org_id: string | null;
 
-    version: string;
+    version: string | null;
   }
 }
 
@@ -84,11 +86,13 @@ export namespace ParseResponse {
 
     filename: string;
 
+    job_id: string;
+
     org_id: string | null;
 
     page_count: number;
 
-    version: string;
+    version: string | null;
   }
 
   export interface Split {
@@ -121,6 +125,11 @@ export interface ExtractParams {
    * The URL to the Markdown file to extract data from.
    */
   markdown_url?: string | null;
+
+  /**
+   * The version of the model to use for extraction.
+   */
+  model?: string | null;
 }
 
 export interface ParseParams {
@@ -139,6 +148,11 @@ export interface ParseParams {
    * document parameter must be provided.
    */
   document_url?: string | null;
+
+  /**
+   * The version of the model to use for parsing.
+   */
+  model?: string | null;
 
   /**
    * If you want to split documents into smaller sections, include the split

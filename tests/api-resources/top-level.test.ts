@@ -26,6 +26,7 @@ describe('top level methods', () => {
       schema: 'schema',
       markdown: await toFile(Buffer.from('# my file contents'), 'README.md'),
       markdown_url: 'markdown_url',
+      model: 'model',
     });
   });
 

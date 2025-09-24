@@ -27,7 +27,10 @@ const client = new LandingAIADE({
   environment: 'eu', // or 'production' | 'staging'; defaults to 'production'
 });
 
-const response = await client.parse({ document_url: 'https://va.landing.ai/pdfs/LabReport.pdf' });
+const response = await client.parse({
+  document_url: 'https://va.landing.ai/pdfs/LabReport.pdf',
+  model: 'dpt-2-latest',
+});
 
 console.log(response.chunks);
 ```
