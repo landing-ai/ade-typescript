@@ -88,7 +88,7 @@ You can use [Zod](https://zod.dev) to define type-safe schemas for the `extract`
 The key is to convert your Zod schema to JSON Schema format:
 
 ```ts
-import Ade, { toFile } from 'ade-typescript';
+import LandingAIADE, { toFile } from 'landingai-ade';
 import { z } from 'zod';
 
 // 1. Define your schema using Zod
@@ -111,15 +111,15 @@ const InvoiceSchema = z.object({
 // 2. Get TypeScript type from the schema
 type Invoice = z.infer<typeof InvoiceSchema>;
 
-const client = new Ade({
-  apikey: process.env['ADE_API_KEY'],
+const client = new LandingAIADE({
+  apikey: process.env['VISION_AGENT_API_KEY'],
 });
 
 // 3. Convert Zod schema to JSON Schema string for the API
 const jsonSchemaString = JSON.stringify(z.toJSONSchema(InvoiceSchema));
 
 // 4. Use it with the extract endpoint
-const result = await client.ade.extract({
+const result = await client.extract({
   schema: jsonSchemaString,
   markdown: await toFile(Buffer.from(markdownContent), 'document.md'),
 });
