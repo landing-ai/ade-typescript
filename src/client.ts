@@ -241,7 +241,15 @@ export class LandingAIADE {
     body: TopLevelAPI.ExtractParams,
     options?: RequestOptions,
   ): APIPromise<TopLevelAPI.ExtractResponse> {
-    return this.post('/v1/ade/extract', multipartFormRequestOptions({ body, ...options }, this));
+    // Exclude runtime tag header from extract calls
+    const extractOptions = {
+      ...options,
+      headers: {
+        ...options?.headers,
+        runtime_tag: null,
+      },
+    };
+    return this.post('/v1/ade/extract', multipartFormRequestOptions({ body, ...extractOptions }, this));
   }
 
   /**
@@ -704,6 +712,7 @@ export class LandingAIADE {
         'User-Agent': this.getUserAgent(),
         'X-Stainless-Retry-Count': String(retryCount),
         ...(options.timeout ? { 'X-Stainless-Timeout': String(Math.trunc(options.timeout / 1000)) } : {}),
+        runtime_tag: `ade-typescript-v${VERSION}`,
         ...getPlatformHeaders(),
       },
       await this.authHeaders(options),
