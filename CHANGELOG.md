@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.4.1 (2025-09-26)
+
+Full Changelog: [v0.4.0...v0.4.1](https://github.com/landing-ai/ade-typescript/compare/v0.4.0...v0.4.1)
+
+### Performance Improvements
+
+* faster formatting ([8595d77](https://github.com/landing-ai/ade-typescript/commit/8595d77a9c81ebd70f49bca86a013979965abc7f))
+
+
+### Chores
+
+* add zod instructions to readme ([#8](https://github.com/landing-ai/ade-typescript/issues/8)) ([e867f1b](https://github.com/landing-ai/ade-typescript/commit/e867f1b18f45d3fcfd70faff703b5f93f84cf470))
+* **internal:** remove deprecated `compilerOptions.baseUrl` from tsconfig.json ([74b67c1](https://github.com/landing-ai/ade-typescript/commit/74b67c1606b7fbd2ad8e936c0cb677a068b6bf2e))
+
 ## 0.4.0 (2025-09-26)
 
 Full Changelog: [v0.3.1...v0.4.0](https://github.com/landing-ai/ade-typescript/compare/v0.3.1...v0.4.0)
