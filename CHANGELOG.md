@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.2 (2025-09-27)
+
+Full Changelog: [v0.4.1...v0.4.2](https://github.com/landing-ai/ade-typescript/compare/v0.4.1...v0.4.2)
+
+### Chores
+
+* **internal:** fix incremental formatting in some cases ([3e01a22](https://github.com/landing-ai/ade-typescript/commit/3e01a2298b17634d2c696c733bd2d6ac83ba449c))
+
 ## 0.4.1 (2025-09-26)
 
 Full Changelog: [v0.4.0...v0.4.1](https://github.com/landing-ai/ade-typescript/compare/v0.4.0...v0.4.1)
