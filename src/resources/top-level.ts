@@ -165,9 +165,10 @@ export interface ExtractParams {
   markdown_url?: string | null;
 
   /**
-   * The version of the model to use for extraction.
+   * The version of the model to use for extraction. Use `extract-latest` to use the
+   * latest version.
    */
-  model?: 'extract-20250630' | 'extract-20250930' | null;
+  model?: string | null;
 }
 
 export interface ParseParams {
