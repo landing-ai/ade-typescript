@@ -46,17 +46,19 @@ export interface ParseResponse {
   metadata: ParseResponse.Metadata;
 
   splits: Array<ParseResponse.Split>;
+
+  grounding?: { [key: string]: ParseResponse.Grounding };
 }
 
 export namespace ParseResponse {
   export interface Chunk {
     id: string;
 
+    grounding: Chunk.Grounding;
+
     markdown: string;
 
     type: string;
-
-    grounding?: Chunk.Grounding | null;
   }
 
   export namespace Chunk {
@@ -106,6 +108,42 @@ export namespace ParseResponse {
 
     pages: Array<number>;
   }
+
+  export interface Grounding {
+    box: Grounding.Box;
+
+    page: number;
+
+    type:
+      | 'chunkLogo'
+      | 'chunkCard'
+      | 'chunkAttestation'
+      | 'chunkScanCode'
+      | 'chunkForm'
+      | 'chunkTable'
+      | 'chunkFigure'
+      | 'chunkText'
+      | 'chunkMarginalia'
+      | 'chunkTitle'
+      | 'chunkPageHeader'
+      | 'chunkPageFooter'
+      | 'chunkPageNumber'
+      | 'chunkKeyValue'
+      | 'table'
+      | 'tableCell';
+  }
+
+  export namespace Grounding {
+    export interface Box {
+      bottom: number;
+
+      left: number;
+
+      right: number;
+
+      top: number;
+    }
+  }
 }
 
 export interface ExtractParams {
@@ -117,7 +155,7 @@ export interface ExtractParams {
   schema: string;
 
   /**
-   * The Markdown file to extract data from.
+   * The Markdown file or Markdown content to extract data from.
    */
   markdown?: Uploadable | null;
 
@@ -129,23 +167,21 @@ export interface ExtractParams {
   /**
    * The version of the model to use for extraction.
    */
-  model?: string | null;
+  model?: 'extract-20250630' | 'extract-20250930' | null;
 }
 
 export interface ParseParams {
   /**
-   * A file to be parsed. The file can be a PDF (50 pages max) or an image (50MB).
-   * See the list of supported file types here
-   * (https://docs.landing.ai/ade/ade-file-types). Either this parameter or the
-   * document_url parameter must be provided.
+   * A file to be parsed. The file can be a PDF or an image. See the list of
+   * supported file types here: https://docs.landing.ai/ade/ade-file-types. Either
+   * this parameter or the `document_url` parameter must be provided.
    */
   document?: Uploadable | null;
 
   /**
-   * The URL to the file to be parsed. The file can be a PDF (50 pages max) or an
-   * image (50MB). See the list of supported file types here
-   * (https://docs.landing.ai/ade/ade-file-types). Either this parameter or the
-   * document parameter must be provided.
+   * The URL to the file to be parsed. The file can be a PDF or an image. See the
+   * list of supported file types here: https://docs.landing.ai/ade/ade-file-types.
+   * Either this parameter or the `document` parameter must be provided.
    */
   document_url?: string | null;
 
