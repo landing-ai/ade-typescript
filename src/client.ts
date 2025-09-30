@@ -149,7 +149,7 @@ export class LandingAIADE {
    * @param {string | undefined} [opts.apikey=process.env['VISION_AGENT_API_KEY'] ?? undefined]
    * @param {Environment} [opts.environment=production] - Specifies the environment URL to use for the API.
    * @param {string} [opts.baseURL=process.env['LANDINGAI_ADE_BASE_URL'] ?? https://api.va.landing.ai] - Override the default base URL for the API.
-   * @param {number} [opts.timeout=1 minute] - The maximum amount of time (in milliseconds) the client will wait for a response before timing out.
+   * @param {number} [opts.timeout=8 minutes] - The maximum amount of time (in milliseconds) the client will wait for a response before timing out.
    * @param {MergedRequestInit} [opts.fetchOptions] - Additional `RequestInit` options to be passed to `fetch` calls.
    * @param {Fetch} [opts.fetch] - Specify a custom `fetch` function implementation.
    * @param {number} [opts.maxRetries=2] - The maximum number of times the client will retry a request.
@@ -181,7 +181,7 @@ export class LandingAIADE {
     }
 
     this.baseURL = options.baseURL || environments[options.environment || 'production'];
-    this.timeout = options.timeout ?? LandingAIADE.DEFAULT_TIMEOUT /* 1 minute */;
+    this.timeout = options.timeout ?? LandingAIADE.DEFAULT_TIMEOUT /* 8 minutes */;
     this.logger = options.logger ?? console;
     const defaultLogLevel = 'warn';
     // Set default logLevel early so that we can log a warning in parseLogLevel.
@@ -764,7 +764,7 @@ export class LandingAIADE {
   }
 
   static LandingAIADE = this;
-  static DEFAULT_TIMEOUT = 60000; // 1 minute
+  static DEFAULT_TIMEOUT = 480000; // 8 minutes
 
   static LandingAIADEError = Errors.LandingAIADEError;
   static APIError = Errors.APIError;
