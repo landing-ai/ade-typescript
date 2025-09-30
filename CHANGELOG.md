@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.5.0 (2025-09-30)
+
+Full Changelog: [v0.4.1...v0.5.0](https://github.com/landing-ai/ade-typescript/compare/v0.4.1...v0.5.0)
+
+### Features
+
+* **api:** add extract endpoint enums ([3b8e1d6](https://github.com/landing-ai/ade-typescript/commit/3b8e1d6cfd15044c7eebeb00e055ffebc284eae8))
+* **api:** default models for extract ([5a1b9c9](https://github.com/landing-ai/ade-typescript/commit/5a1b9c99418aec8f12f28a78f2c0e112ae487b33))
+
+
+### Chores
+
+* **internal:** codegen related update ([f506e76](https://github.com/landing-ai/ade-typescript/commit/f506e76ac5489da443a7edd0f0678701171f4047))
+* **internal:** fix incremental formatting in some cases ([3e01a22](https://github.com/landing-ai/ade-typescript/commit/3e01a2298b17634d2c696c733bd2d6ac83ba449c))
+* **internal:** ignore .eslintcache ([9b064a9](https://github.com/landing-ai/ade-typescript/commit/9b064a9b00a3079aeb1e6a5771746902427b44d4))
+
 ## 0.4.1 (2025-09-26)
 
 Full Changelog: [v0.4.0...v0.4.1](https://github.com/landing-ai/ade-typescript/compare/v0.4.0...v0.4.1)
