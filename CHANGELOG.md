@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.5.1 (2025-10-01)
+
+Full Changelog: [v0.5.0...v0.5.1](https://github.com/landing-ai/ade-typescript/compare/v0.5.0...v0.5.1)
+
+### Bug Fixes
+
+* **api:** increase default timeout ([e0c9abe](https://github.com/landing-ai/ade-typescript/commit/e0c9abe3e08a8f3f3a68c65fea89f34c6a5373ed))
+
+
+### Chores
+
+* **internal:** remove .eslintcache ([12ebcb7](https://github.com/landing-ai/ade-typescript/commit/12ebcb7f87a0d42e3db1bea02eb3f07c33cfa842))
+
 ## 0.5.0 (2025-09-30)
 
 Full Changelog: [v0.4.1...v0.5.0](https://github.com/landing-ai/ade-typescript/compare/v0.4.1...v0.5.0)
