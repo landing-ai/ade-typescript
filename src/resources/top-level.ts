@@ -155,7 +155,7 @@ export interface ExtractParams {
   schema: string;
 
   /**
-   * The Markdown as string or Markdown content in bytes to extract data from.
+   * The Markdown file or Markdown content to extract data from.
    */
   markdown?: Uploadable | null;
 
