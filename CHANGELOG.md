@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.0 (2025-10-02)
+
+Full Changelog: [v0.5.1...v0.6.0](https://github.com/landing-ai/ade-typescript/compare/v0.5.1...v0.6.0)
+
+### Features
+
+* **api:** markdown commnet chaagne ([726df57](https://github.com/landing-ai/ade-typescript/commit/726df57a5014349cb349c6fef0291959c9767c3a))
+
 ## 0.5.1 (2025-10-01)
 
 Full Changelog: [v0.5.0...v0.5.1](https://github.com/landing-ai/ade-typescript/compare/v0.5.0...v0.5.1)
