@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.1 (2025-10-04)
+
+Full Changelog: [v0.7.0...v0.7.1](https://github.com/landing-ai/ade-typescript/compare/v0.7.0...v0.7.1)
+
+### Chores
+
+* **jsdoc:** fix [@link](https://github.com/link) annotations to refer only to parts of the package‘s public interface ([7495cb1](https://github.com/landing-ai/ade-typescript/commit/7495cb189ac8938df8ce685f38e27bd45d7c74e9))
+
 ## 0.7.0 (2025-10-03)
 
 Full Changelog: [v0.6.0...v0.7.0](https://github.com/landing-ai/ade-typescript/compare/v0.6.0...v0.7.0)
