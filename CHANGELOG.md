@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.2 (2025-10-07)
+
+Full Changelog: [v0.7.1...v0.7.2](https://github.com/landing-ai/ade-typescript/compare/v0.7.1...v0.7.2)
+
+### Chores
+
+* **internal:** use npm pack for build uploads ([f17c703](https://github.com/landing-ai/ade-typescript/commit/f17c70357a03625538122f4368611a11dbefdea0))
+
 ## 0.7.1 (2025-10-04)
 
 Full Changelog: [v0.7.0...v0.7.1](https://github.com/landing-ai/ade-typescript/compare/v0.7.0...v0.7.1)
