@@ -14,9 +14,18 @@ import * as Opts from './internal/request-options';
 import { VERSION } from './version';
 import * as Errors from './core/error';
 import * as Uploads from './core/uploads';
+import * as API from './resources/index';
 import * as TopLevelAPI from './resources/top-level';
 import { ExtractParams, ExtractResponse, ParseParams, ParseResponse } from './resources/top-level';
 import { APIPromise } from './core/api-promise';
+import {
+  ParseJobCreateParams,
+  ParseJobCreateResponse,
+  ParseJobGetResponse,
+  ParseJobListParams,
+  ParseJobListResponse,
+  ParseJobs,
+} from './resources/parse-jobs';
 import { type Fetch } from './internal/builtin-types';
 import { HeadersLike, NullableHeaders, buildHeaders } from './internal/headers';
 import { FinalRequestOptions, RequestOptions } from './internal/request-options';
@@ -781,7 +790,11 @@ export class LandingAIADE {
   static UnprocessableEntityError = Errors.UnprocessableEntityError;
 
   static toFile = Uploads.toFile;
+
+  parseJobs: API.ParseJobs = new API.ParseJobs(this);
 }
+
+LandingAIADE.ParseJobs = ParseJobs;
 
 export declare namespace LandingAIADE {
   export type RequestOptions = Opts.RequestOptions;
@@ -792,4 +805,16 @@ export declare namespace LandingAIADE {
     type ExtractParams as ExtractParams,
     type ParseParams as ParseParams,
   };
+
+  export {
+    ParseJobs as ParseJobs,
+    type ParseJobCreateResponse as ParseJobCreateResponse,
+    type ParseJobListResponse as ParseJobListResponse,
+    type ParseJobGetResponse as ParseJobGetResponse,
+    type ParseJobCreateParams as ParseJobCreateParams,
+    type ParseJobListParams as ParseJobListParams,
+  };
+
+  export type ParseGroundingBox = API.ParseGroundingBox;
+  export type ParseMetadata = API.ParseMetadata;
 }
