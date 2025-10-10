@@ -1,5 +1,6 @@
 // File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
 
+import * as Shared from './shared';
 import { type Uploadable } from '../core/uploads';
 
 export interface ExtractResponse {
@@ -43,7 +44,7 @@ export interface ParseResponse {
 
   markdown: string;
 
-  metadata: ParseResponse.Metadata;
+  metadata: Shared.ParseMetadata;
 
   splits: Array<ParseResponse.Split>;
 
@@ -63,38 +64,10 @@ export namespace ParseResponse {
 
   export namespace Chunk {
     export interface Grounding {
-      box: Grounding.Box;
+      box: Shared.ParseGroundingBox;
 
       page: number;
     }
-
-    export namespace Grounding {
-      export interface Box {
-        bottom: number;
-
-        left: number;
-
-        right: number;
-
-        top: number;
-      }
-    }
-  }
-
-  export interface Metadata {
-    credit_usage: number;
-
-    duration_ms: number;
-
-    filename: string;
-
-    job_id: string;
-
-    org_id: string | null;
-
-    page_count: number;
-
-    version: string | null;
   }
 
   export interface Split {
@@ -110,7 +83,7 @@ export namespace ParseResponse {
   }
 
   export interface Grounding {
-    box: Grounding.Box;
+    box: Shared.ParseGroundingBox;
 
     page: number;
 
@@ -131,18 +104,6 @@ export namespace ParseResponse {
       | 'chunkKeyValue'
       | 'table'
       | 'tableCell';
-  }
-
-  export namespace Grounding {
-    export interface Box {
-      bottom: number;
-
-      left: number;
-
-      right: number;
-
-      top: number;
-    }
   }
 }
 
