@@ -32,6 +32,74 @@ const response = await client.parse({ document_url: 'path/to/file', model: 'dpt-
 console.log(response.chunks);
 ```
 
+### Extract
+
+Extract structured data from markdown using a JSON schema:
+
+```js
+import LandingAIADE from 'landingai-ade';
+import fs from 'fs';
+
+// Define your JSON schema
+const schema = {
+  type: 'object',
+  properties: {
+    name: {
+      type: 'string',
+      description: "Person's name"
+    },
+    age: {
+      type: 'number',
+      description: "Person's age"
+    }
+  },
+  required: ['name', 'age']
+};
+
+const client = new LandingAIADE({
+  apikey: process.env['VISION_AGENT_API_KEY'],
+});
+
+const response = await client.extract({
+  schema: JSON.stringify(schema),
+  markdown: fs.createReadStream('path/to/file.md')
+});
+```
+
+For advanced type-safe schemas with full TypeScript inference, see [Using Zod for Type-Safe Schemas](#using-zod-for-type-safe-schemas).
+
+### Parse Jobs
+
+For processing large documents asynchronously:
+
+```js
+import LandingAIADE from 'landingai-ade';
+
+const client = new LandingAIADE({
+  apikey: process.env['VISION_AGENT_API_KEY'],
+});
+
+// Create an async parse job
+const job = await client.parseJobs.create({
+  document_url: 'path/to/large_file.pdf',
+});
+console.log(`Job created with ID: ${job.job_id}`);
+
+// Get job status
+const jobStatus = await client.parseJobs.get(job.job_id);
+console.log(`Status: ${jobStatus.status}`);
+
+// List all jobs (with optional filtering)
+const response = await client.parseJobs.list({
+  status: 'completed',
+  page: 0,
+  pageSize: 10,
+});
+for (const job of response.jobs) {
+  console.log(`Job ${job.job_id}: ${job.status}`);
+}
+```
+
 ### Request & Response types
 
 This library includes TypeScript definitions for all request params and response fields. You may import and use them like so:
