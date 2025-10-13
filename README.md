@@ -18,7 +18,8 @@ npm install landingai-ade
 
 The full API of this library can be found in [api.md](api.md).
 
-<!-- prettier-ignore -->
+### Parse
+
 ```js
 import LandingAIADE from 'landingai-ade';
 
@@ -30,6 +31,38 @@ const client = new LandingAIADE({
 const response = await client.parse({ document_url: 'path/to/file', model: 'dpt-2-latest' });
 
 console.log(response.chunks);
+```
+
+### Parse Jobs
+
+For processing large documents asynchronously:
+
+```js
+import LandingAIADE from 'landingai-ade';
+
+const client = new LandingAIADE({
+  apikey: process.env['VISION_AGENT_API_KEY'],
+});
+
+// Create an async parse job
+const job = await client.parseJobs.create({
+  document_url: 'path/to/large_file.pdf',
+});
+console.log(`Job created with ID: ${job.job_id}`);
+
+// Get job status
+const jobStatus = await client.parseJobs.get(job.job_id);
+console.log(`Status: ${jobStatus.status}`);
+
+// List all jobs (with optional filtering)
+const response = await client.parseJobs.list({
+  status: 'completed',
+  page: 0,
+  pageSize: 10,
+});
+for (const job of response.jobs) {
+  console.log(`Job ${job.job_id}: ${job.status}`);
+}
 ```
 
 ### Extract
@@ -67,38 +100,6 @@ const response = await client.extract({
 ```
 
 For advanced type-safe schemas with full TypeScript inference, see [Using Zod for Type-Safe Schemas](#using-zod-for-type-safe-schemas).
-
-### Parse Jobs
-
-For processing large documents asynchronously:
-
-```js
-import LandingAIADE from 'landingai-ade';
-
-const client = new LandingAIADE({
-  apikey: process.env['VISION_AGENT_API_KEY'],
-});
-
-// Create an async parse job
-const job = await client.parseJobs.create({
-  document_url: 'path/to/large_file.pdf',
-});
-console.log(`Job created with ID: ${job.job_id}`);
-
-// Get job status
-const jobStatus = await client.parseJobs.get(job.job_id);
-console.log(`Status: ${jobStatus.status}`);
-
-// List all jobs (with optional filtering)
-const response = await client.parseJobs.list({
-  status: 'completed',
-  page: 0,
-  pageSize: 10,
-});
-for (const job of response.jobs) {
-  console.log(`Job ${job.job_id}: ${job.status}`);
-}
-```
 
 ### Request & Response types
 
