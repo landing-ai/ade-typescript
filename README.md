@@ -22,13 +22,14 @@ The full API of this library can be found in [api.md](api.md).
 
 ```js
 import LandingAIADE from 'landingai-ade';
+import fs from 'fs';
 
 const client = new LandingAIADE({
   apikey: process.env['VISION_AGENT_API_KEY'], // This is the default and can be omitted
   environment: 'eu', // defaults to 'production'
 });
 
-const response = await client.parse({ document_url: 'path/to/file', model: 'dpt-2-latest' });
+const response = await client.parse({ document: fs.createReadStream('path/to/file'), model: 'dpt-2-latest' });
 
 console.log(response.chunks);
 ```
@@ -39,6 +40,7 @@ For processing large documents asynchronously:
 
 ```js
 import LandingAIADE from 'landingai-ade';
+import fs from 'fs';
 
 const client = new LandingAIADE({
   apikey: process.env['VISION_AGENT_API_KEY'],
@@ -46,7 +48,7 @@ const client = new LandingAIADE({
 
 // Create an async parse job
 const job = await client.parseJobs.create({
-  document_url: 'path/to/large_file.pdf',
+  document: fs.createReadStream('path/to/large_file.pdf'),
 });
 console.log(`Job created with ID: ${job.job_id}`);
 
