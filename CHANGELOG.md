@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.10.0 (2025-10-29)
+
+Full Changelog: [v0.9.0...v0.10.0](https://github.com/landing-ai/ade-typescript/compare/v0.9.0...v0.10.0)
+
+### Features
+
+* **api:** api update ([c8761b0](https://github.com/landing-ai/ade-typescript/commit/c8761b0ca55f092655fdd67956396eb517c99716))
+
 ## 0.9.0 (2025-10-28)
 
 Full Changelog: [v0.8.1...v0.9.0](https://github.com/landing-ai/ade-typescript/compare/v0.8.1...v0.9.0)
