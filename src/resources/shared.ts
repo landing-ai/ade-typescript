@@ -24,4 +24,6 @@ export interface ParseMetadata {
   page_count: number;
 
   version: string | null;
+
+  failed_pages?: Array<number>;
 }
