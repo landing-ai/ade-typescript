@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.10.1 (2025-11-06)
+
+Full Changelog: [v0.10.0...v0.10.1](https://github.com/landing-ai/ade-typescript/compare/v0.10.0...v0.10.1)
+
+### Chores
+
+* configure new SDK language ([3aea19d](https://github.com/landing-ai/ade-typescript/commit/3aea19d4cfb4e6bbbbfcba0a30df8bb94e832fdd))
+
 ## 0.10.0 (2025-10-29)
 
 Full Changelog: [v0.9.0...v0.10.0](https://github.com/landing-ai/ade-typescript/compare/v0.9.0...v0.10.0)
