@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.11.0 (2025-11-10)
+
+Full Changelog: [v0.10.1...v0.11.0](https://github.com/landing-ai/ade-typescript/compare/v0.10.1...v0.11.0)
+
+### Features
+
+* **api:** api update ([146cff3](https://github.com/landing-ai/ade-typescript/commit/146cff3bb2b5fb56b1b2cc64cd99f92d437dfc28))
+
+
+### Chores
+
+* **internal:** codegen related update ([3044f22](https://github.com/landing-ai/ade-typescript/commit/3044f2297888b0b201629b0e57e29337ceedd0be))
+
+
+### Documentation
+
+* **mcp:** add a README link to add server to VS Code or Claude Code ([be71608](https://github.com/landing-ai/ade-typescript/commit/be71608aff852c1de32190b8a2d8bd98c5eee938))
+
 ## 0.10.1 (2025-11-06)
 
 Full Changelog: [v0.10.0...v0.10.1](https://github.com/landing-ai/ade-typescript/compare/v0.10.0...v0.10.1)
