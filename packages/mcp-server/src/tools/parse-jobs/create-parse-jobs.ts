@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   tags: [],
   httpMethod: 'post',
   httpPath: '/v1/ade/parse/jobs',
-  operationId: 'tool_ade_parse_async_v1_ade_parse_jobs_post',
+  operationId: 'tool_ade_parse_jobs_v1_ade_parse_jobs_post',
 };
 
 export const tool: Tool = {

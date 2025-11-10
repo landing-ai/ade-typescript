@@ -104,10 +104,11 @@ export interface ParseJobGetResponse {
   status: string;
 
   /**
-   * The parsed output, if the job is complete and the `output_save_url` parameter
-   * was not used.
+   * The parsed output (ParseResponse for documents, SpreadsheetParseResponse for
+   * spreadsheets), if the job is complete and the `output_save_url` parameter was
+   * not used.
    */
-  data?: ParseJobGetResponse.Data | null;
+  data?: ParseJobGetResponse.ParseResponse | ParseJobGetResponse.SpreadsheetParseResponse | null;
 
   failure_reason?: string | null;
 
@@ -128,23 +129,19 @@ export interface ParseJobGetResponse {
 }
 
 export namespace ParseJobGetResponse {
-  /**
-   * The parsed output, if the job is complete and the `output_save_url` parameter
-   * was not used.
-   */
-  export interface Data {
-    chunks: Array<Data.Chunk>;
+  export interface ParseResponse {
+    chunks: Array<ParseResponse.Chunk>;
 
     markdown: string;
 
     metadata: Shared.ParseMetadata;
 
-    splits: Array<Data.Split>;
+    splits: Array<ParseResponse.Split>;
 
-    grounding?: { [key: string]: Data.Grounding };
+    grounding?: { [key: string]: ParseResponse.Grounding };
   }
 
-  export namespace Data {
+  export namespace ParseResponse {
     export interface Chunk {
       id: string;
 
@@ -197,6 +194,176 @@ export namespace ParseJobGetResponse {
         | 'chunkKeyValue'
         | 'table'
         | 'tableCell';
+    }
+  }
+
+  /**
+   * Response from /ade/parse-spreadsheet endpoint.
+   *
+   * Similar structure to ParseResponse but without grounding.
+   */
+  export interface SpreadsheetParseResponse {
+    /**
+     * List of table chunks (HTML)
+     */
+    chunks: Array<SpreadsheetParseResponse.Chunk>;
+
+    /**
+     * Full document as HTML with anchor tags and tables
+     */
+    markdown: string;
+
+    /**
+     * Metadata for spreadsheet parsing result.
+     */
+    metadata: SpreadsheetParseResponse.Metadata;
+
+    /**
+     * Sheet-based splits
+     */
+    splits: Array<SpreadsheetParseResponse.Split>;
+  }
+
+  export namespace SpreadsheetParseResponse {
+    /**
+     * Chunk from spreadsheet parsing.
+     *
+     * Can represent:
+     *
+     * - Table chunks from spreadsheet cells
+     * - Parsed content chunks from embedded images (text, table, figure, etc.)
+     */
+    export interface Chunk {
+      /**
+       * Chunk ID - format: '{sheet_name}-{cell_range}' for tables,
+       * '{sheet_name}-image-{index}-{anchor_cell}-chunk-{i}-{type}' for parsed image
+       * chunks
+       */
+      id: string;
+
+      /**
+       * Chunk content as HTML table with anchor tag (for tables) or parsed markdown
+       * content (for chunks from images)
+       */
+      markdown: string;
+
+      /**
+       * Chunk type: 'table' for spreadsheet tables, or types from /parse (text, table,
+       * figure, form, etc.) for chunks derived from embedded images
+       */
+      type: string;
+
+      /**
+       * Visual grounding coordinates from /parse API (only for chunks derived from
+       * embedded images)
+       */
+      grounding?: Chunk.Grounding | null;
+    }
+
+    export namespace Chunk {
+      /**
+       * Visual grounding coordinates from /parse API (only for chunks derived from
+       * embedded images)
+       */
+      export interface Grounding {
+        box: Shared.ParseGroundingBox;
+
+        page: number;
+      }
+    }
+
+    /**
+     * Metadata for spreadsheet parsing result.
+     */
+    export interface Metadata {
+      /**
+       * Processing duration in milliseconds
+       */
+      duration_ms: number;
+
+      /**
+       * Original filename
+       */
+      filename: string;
+
+      /**
+       * Number of sheets processed
+       */
+      sheet_count: number;
+
+      /**
+       * Total non-empty cells across all sheets
+       */
+      total_cells: number;
+
+      /**
+       * Total chunks (tables + images) extracted
+       */
+      total_chunks: number;
+
+      /**
+       * Total rows across all sheets
+       */
+      total_rows: number;
+
+      /**
+       * Credits charged
+       */
+      credit_usage?: number;
+
+      /**
+       * Inference history job ID
+       */
+      job_id?: string;
+
+      /**
+       * Organization ID
+       */
+      org_id?: string | null;
+
+      /**
+       * Total images extracted
+       */
+      total_images?: number;
+
+      /**
+       * Model version for parsing images
+       */
+      version?: string | null;
+    }
+
+    /**
+     * Sheet-based split from spreadsheet parsing.
+     *
+     * Similar to ParseSplit but grouped by sheet instead of page. Supports both 'page'
+     * (per-sheet) and 'full' (all sheets) split types.
+     */
+    export interface Split {
+      /**
+       * Chunk IDs in this split
+       */
+      chunks: Array<string>;
+
+      /**
+       * Split class: 'page' for per-sheet splits, 'full' for single split with all
+       * content
+       */
+      class: string;
+
+      /**
+       * Split identifier: sheet name for 'page' splits, 'full' for full split
+       */
+      identifier: string;
+
+      /**
+       * Combined markdown for this split
+       */
+      markdown: string;
+
+      /**
+       * Sheet indices: single element for 'page' splits, all indices for 'full' split
+       */
+      sheets: Array<number>;
     }
   }
 }
