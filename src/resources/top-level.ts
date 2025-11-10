@@ -36,6 +36,13 @@ export namespace ExtractResponse {
     org_id: string | null;
 
     version: string | null;
+
+    /**
+     * A detailed error message shows why the extracted data does not fully conform to
+     * the input schema. Null means the extraction result is consistent with the input
+     * schema.
+     */
+    schema_violation_error?: string | null;
   }
 }
 

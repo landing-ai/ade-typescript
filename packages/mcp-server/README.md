@@ -254,10 +254,10 @@ The following tools are available in this MCP server.
 
       `https://api.va.eu-west-1.landing.ai/v1/ade/extract`.
 
-- `parse_client` (`write`): Parse a document.
+- `parse_client` (`write`): Parse a document or spreadsheet.
 
-  This endpoint parses documents and structured Markdown,
-  chunks, and metadata.
+  This endpoint parses documents (PDF, images)
+  and spreadsheets (XLSX, CSV) into structured Markdown, chunks, and metadata.
 
   For EU users, use this endpoint:
 
@@ -275,9 +275,8 @@ The following tools are available in this MCP server.
 
       `https://api.va.eu-west-1.landing.ai/v1/ade/parse/jobs`.
 
-- `list_parse_jobs` (`read`): List all async parse jobs associated with your API key.
-  Returns the list of jobs or an error response.
-  For EU users, use this endpoint:
+- `list_parse_jobs` (`read`): List all async parse jobs associated with your API key. Returns the list of jobs
+  or an error response. For EU users, use this endpoint:
 
   `https://api.va.eu-west-1.landing.ai/v1/ade/parse/jobs`.
 

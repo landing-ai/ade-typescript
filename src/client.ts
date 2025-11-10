@@ -254,9 +254,10 @@ export class LandingAIADE {
   }
 
   /**
-   * Parse a document.
+   * Parse a document or spreadsheet.
    *
-   * This endpoint parses documents and structured Markdown, chunks, and metadata.
+   * This endpoint parses documents (PDF, images) and spreadsheets (XLSX, CSV) into
+   * structured Markdown, chunks, and metadata.
    *
    * For EU users, use this endpoint:
    *
