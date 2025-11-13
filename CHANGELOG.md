@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.11.1 (2025-11-13)
+
+Full Changelog: [v0.11.0...v0.11.1](https://github.com/landing-ai/ade-typescript/compare/v0.11.0...v0.11.1)
+
+### Bug Fixes
+
+* **mcp:** return tool execution error on jq failure ([5f2b36b](https://github.com/landing-ai/ade-typescript/commit/5f2b36b3f5f5d20a55c7c80229278837aa95c791))
+
+
+### Chores
+
+* **mcp:** clarify http auth error ([2ea3927](https://github.com/landing-ai/ade-typescript/commit/2ea3927b896c4152cf7aca067634bbeacc9523c1))
+
 ## 0.11.0 (2025-11-10)
 
 Full Changelog: [v0.10.1...v0.11.0](https://github.com/landing-ai/ade-typescript/compare/v0.10.1...v0.11.0)
