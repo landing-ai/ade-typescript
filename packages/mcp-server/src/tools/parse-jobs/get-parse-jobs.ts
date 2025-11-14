@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 export const tool: Tool = {
   name: 'get_parse_jobs',
   description:
-    'Get the status of an async parse job by job_id. Returns job status (pending/processing/completed/failed) and progress. If completed and ADE_OUTPUT_DIR is set, the full result will be saved to disk and you\'ll receive a preview.',
+    "Get the status of an async parse job by job_id. Returns job status (pending/processing/completed/failed) and progress. If completed and ADE_OUTPUT_DIR is set, the full result will be saved to disk and you'll receive a preview.",
   inputSchema: {
     type: 'object',
     properties: {
@@ -42,7 +42,7 @@ export const handler = async (client: LandingAIADE, args: Record<string, unknown
   if (result.status === 'completed' && result.data) {
     const { saved_to } = saveResultIfNeeded({
       result,
-      filename: `parse_job_${job_id}`
+      filename: `parse_job_${job_id}`,
     });
 
     // If saved to disk, return a preview
@@ -50,7 +50,7 @@ export const handler = async (client: LandingAIADE, args: Record<string, unknown
       const preview = createPreview(result);
       return asTextContentResult({
         preview,
-        message: `Full result saved to ${saved_to}. Do not ask the LLM to read this file because it will incur a lot of tokens due to it being very large.`
+        message: `Full result saved to ${saved_to}. Do not ask the LLM to read this file because it will incur a lot of tokens due to it being very large.`,
       });
     }
 

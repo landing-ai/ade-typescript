@@ -70,7 +70,7 @@ export const handler = async (client: LandingAIADE, args: Record<string, unknown
 
   const processedBody = {
     ...body,
-    document: convertFilePathToStream(document)
+    document: convertFilePathToStream(document),
   };
 
   try {

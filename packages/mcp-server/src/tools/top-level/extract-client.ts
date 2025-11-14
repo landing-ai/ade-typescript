@@ -34,7 +34,8 @@ export const tool: Tool = {
       markdown: {
         type: 'string',
         title: 'Markdown',
-        description: 'Can be: (1) raw Markdown content as a string, (2) an absolute file path to a Markdown file (e.g., "/Users/name/Desktop/file.md"), or (3) an absolute file path to a JSON file with a "markdown" field or "data.markdown" field (like output from parse_client or get_parse_jobs). The handler will automatically detect the type and read the file accordingly.',
+        description:
+          'Can be: (1) raw Markdown content as a string, (2) an absolute file path to a Markdown file (e.g., "/Users/name/Desktop/file.md"), or (3) an absolute file path to a JSON file with a "markdown" field or "data.markdown" field (like output from parse_client or get_parse_jobs). The handler will automatically detect the type and read the file accordingly.',
       },
       markdown_url: {
         type: 'string',
@@ -101,14 +102,12 @@ export const handler = async (client: LandingAIADE, args: Record<string, unknown
   const processedBody = {
     ...body,
     markdown: markdownContent,
-    schema: typeof schema === 'object' ? JSON.stringify(schema) : schema
+    schema: typeof schema === 'object' ? JSON.stringify(schema) : schema,
   };
 
   try {
     const result = await client.extract(processedBody);
-    const filename = isFilePath
-      ? path.basename(markdown, path.extname(markdown))
-      : 'extract_result';
+    const filename = isFilePath ? path.basename(markdown, path.extname(markdown)) : 'extract_result';
 
     // Apply jq filter to the full result first
     const filteredResult = await maybeFilter(jq_filter, result);
@@ -116,7 +115,7 @@ export const handler = async (client: LandingAIADE, args: Record<string, unknown
     // Save the full result to disk if ADE_OUTPUT_DIR is set
     const { saved_to } = saveResultIfNeeded({
       result,
-      filename: `${filename}_${Date.now()}`
+      filename: `${filename}_${Date.now()}`,
     });
 
     // If saved to disk, return a preview of the filtered result
@@ -124,7 +123,7 @@ export const handler = async (client: LandingAIADE, args: Record<string, unknown
       const preview = createPreview(filteredResult);
       return asTextContentResult({
         preview,
-        message: `Full result saved to ${saved_to}. Do not ask the LLM to read this file because it will incur a lot of tokens due to it being very large.`
+        message: `Full result saved to ${saved_to}. Do not ask the LLM to read this file because it will incur a lot of tokens due to it being very large.`,
       });
     }
 

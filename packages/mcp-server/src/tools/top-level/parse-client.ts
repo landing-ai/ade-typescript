@@ -65,12 +65,13 @@ export const handler = async (client: LandingAIADE, args: Record<string, unknown
 
   const processedBody = {
     ...body,
-    document: convertFilePathToStream(document)
+    document: convertFilePathToStream(document),
   };
 
   try {
     const result = await client.parse(processedBody);
-    const filename = typeof document === 'string' ? path.basename(document, path.extname(document)) : 'parse_result';
+    const filename =
+      typeof document === 'string' ? path.basename(document, path.extname(document)) : 'parse_result';
 
     // Apply jq filter to the full result first
     const filteredResult = await maybeFilter(jq_filter, result);
@@ -78,7 +79,7 @@ export const handler = async (client: LandingAIADE, args: Record<string, unknown
     // Save the full result to disk if ADE_OUTPUT_DIR is set
     const { saved_to } = saveResultIfNeeded({
       result,
-      filename: `${filename}_${Date.now()}`
+      filename: `${filename}_${Date.now()}`,
     });
 
     // If saved to disk, return a preview of the filtered result
@@ -86,7 +87,7 @@ export const handler = async (client: LandingAIADE, args: Record<string, unknown
       const preview = createPreview(filteredResult);
       return asTextContentResult({
         preview,
-        message: `Full result saved to ${saved_to}. Do not ask the LLM to read this file because it will incur a lot of tokens due to it being very large.`
+        message: `Full result saved to ${saved_to}. Do not ask the LLM to read this file because it will incur a lot of tokens due to it being very large.`,
       });
     }
 
