@@ -5,6 +5,7 @@ import { Metadata, asErrorResult, asTextContentResult } from 'landingai-ade-mcp/
 
 import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import LandingAIADE from 'landingai-ade';
+import * as fs from 'fs';
 
 export const metadata: Metadata = {
   resource: 'parse_jobs',
@@ -26,7 +27,7 @@ export const tool: Tool = {
         type: 'string',
         title: 'Document',
         description:
-          'A file to be parsed. The file can be a PDF or an image. See the list of supported file types here: https://docs.landing.ai/ade/ade-file-types. Either this parameter or the `document_url` parameter must be provided.',
+          'Absolute file path to the document to be parsed (e.g., "/Users/name/Desktop/file.pdf"). The file can be a PDF or an image. See the list of supported file types here: https://docs.landing.ai/ade/ade-file-types. Either this parameter or the `document_url` parameter must be provided.',
       },
       document_url: {
         type: 'string',
@@ -65,9 +66,16 @@ export const tool: Tool = {
 };
 
 export const handler = async (client: LandingAIADE, args: Record<string, unknown> | undefined) => {
-  const { jq_filter, ...body } = args as any;
+  const { jq_filter, document, ...body } = args as any;
+
+  // Convert file path string to ReadStream if document is a string
+  const processedBody = {
+    ...body,
+    document: typeof document === 'string' ? fs.createReadStream(document) : document
+  };
+
   try {
-    return asTextContentResult(await maybeFilter(jq_filter, await client.parseJobs.create(body)));
+    return asTextContentResult(await maybeFilter(jq_filter, await client.parseJobs.create(processedBody)));
   } catch (error) {
     if (isJqError(error)) {
       return asErrorResult(error.message);

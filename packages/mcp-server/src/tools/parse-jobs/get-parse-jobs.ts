@@ -4,6 +4,8 @@ import { Metadata, asTextContentResult } from 'landingai-ade-mcp/tools/types';
 
 import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import LandingAIADE from 'landingai-ade';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export const metadata: Metadata = {
   resource: 'parse_jobs',
@@ -35,7 +37,39 @@ export const tool: Tool = {
 
 export const handler = async (client: LandingAIADE, args: Record<string, unknown> | undefined) => {
   const { job_id, ...body } = args as any;
-  return asTextContentResult(await client.parseJobs.get(job_id));
+
+  const result = await client.parseJobs.get(job_id);
+
+  const outputDir = process.env['ADE_OUTPUT_DIR'];
+
+  if (result.status === 'completed' && result.data) {
+    if (outputDir) {
+      fs.mkdirSync(outputDir, { recursive: true });
+
+      const outputFile = path.join(outputDir, `parse_job_${job_id}.json`);
+      fs.writeFileSync(outputFile, JSON.stringify(result, null, 2));
+
+      return asTextContentResult({
+        job_id: result.job_id,
+        status: result.status,
+        progress: result.progress,
+        metadata: result.metadata,
+        saved_to: outputFile,
+        message: `Full parse result saved to ${outputFile}`,
+      });
+    }
+
+    return asTextContentResult(result);
+  }
+
+  return asTextContentResult({
+    job_id: result.job_id,
+    status: result.status,
+    progress: result.progress,
+    received_at: result.received_at,
+    org_id: result.org_id,
+    version: result.version,
+  });
 };
 
 export default { metadata, tool, handler };

@@ -5,6 +5,8 @@ import { Metadata, asErrorResult, asTextContentResult } from 'landingai-ade-mcp/
 
 import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import LandingAIADE from 'landingai-ade';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export const metadata: Metadata = {
   resource: '$client',
@@ -26,7 +28,7 @@ export const tool: Tool = {
         type: 'string',
         title: 'Document',
         description:
-          'A file to be parsed. The file can be a PDF or an image. See the list of supported file types here: https://docs.landing.ai/ade/ade-file-types. Either this parameter or the `document_url` parameter must be provided.',
+          'Absolute file path to the document to be parsed (e.g., "/Users/name/Desktop/file.pdf"). The file can be a PDF or an image. See the list of supported file types here: https://docs.landing.ai/ade/ade-file-types. Either this parameter or the `document_url` parameter must be provided.',
       },
       document_url: {
         type: 'string',
@@ -59,9 +61,37 @@ export const tool: Tool = {
 };
 
 export const handler = async (client: LandingAIADE, args: Record<string, unknown> | undefined) => {
-  const { jq_filter, ...body } = args as any;
+  const { jq_filter, document, ...body } = args as any;
+
+  // Convert file path string to File object if document is a string
+  const processedBody = {
+    ...body,
+    document: typeof document === 'string' ? fs.createReadStream(document) : document
+  };
+
   try {
-    return asTextContentResult(await maybeFilter(jq_filter, await client.parse(body)));
+    const result = await client.parse(processedBody);
+
+    const outputDir = process.env['ADE_OUTPUT_DIR'];
+
+    if (outputDir) {
+      fs.mkdirSync(outputDir, { recursive: true });
+
+
+      const filename = typeof document === 'string' ? path.basename(document, path.extname(document)) : 'parse_result';
+      const outputFile = path.join(outputDir, `${filename}_${Date.now()}.json`);
+      fs.writeFileSync(outputFile, JSON.stringify(result, null, 2));
+
+      const summary = {
+        metadata: result.metadata,
+        saved_to: outputFile,
+        message: `Full parse result saved to ${outputFile}`
+      };
+
+      return asTextContentResult(await maybeFilter(jq_filter, summary));
+    }
+
+    return asTextContentResult(await maybeFilter(jq_filter, result));
   } catch (error) {
     if (isJqError(error)) {
       return asErrorResult(error.message);
