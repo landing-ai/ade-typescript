@@ -5,8 +5,8 @@ import { Metadata, asErrorResult, asTextContentResult } from 'landingai-ade-mcp/
 
 import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import LandingAIADE from 'landingai-ade';
-import * as fs from 'fs';
 import * as path from 'path';
+import { convertFilePathToStream, saveResultIfNeeded } from '../handler-utils';
 
 export const metadata: Metadata = {
   resource: '$client',
@@ -63,35 +63,22 @@ export const tool: Tool = {
 export const handler = async (client: LandingAIADE, args: Record<string, unknown> | undefined) => {
   const { jq_filter, document, ...body } = args as any;
 
-  // Convert file path string to File object if document is a string
   const processedBody = {
     ...body,
-    document: typeof document === 'string' ? fs.createReadStream(document) : document
+    document: convertFilePathToStream(document)
   };
 
   try {
     const result = await client.parse(processedBody);
+    const filename = typeof document === 'string' ? path.basename(document, path.extname(document)) : 'parse_result';
 
-    const outputDir = process.env['ADE_OUTPUT_DIR'];
+    const resultToReturn = saveResultIfNeeded({
+      result,
+      filename: `${filename}_${Date.now()}`,
+      summary: { metadata: result.metadata }
+    });
 
-    if (outputDir) {
-      fs.mkdirSync(outputDir, { recursive: true });
-
-
-      const filename = typeof document === 'string' ? path.basename(document, path.extname(document)) : 'parse_result';
-      const outputFile = path.join(outputDir, `${filename}_${Date.now()}.json`);
-      fs.writeFileSync(outputFile, JSON.stringify(result, null, 2));
-
-      const summary = {
-        metadata: result.metadata,
-        saved_to: outputFile,
-        message: `Full parse result saved to ${outputFile}`
-      };
-
-      return asTextContentResult(await maybeFilter(jq_filter, summary));
-    }
-
-    return asTextContentResult(await maybeFilter(jq_filter, result));
+    return asTextContentResult(await maybeFilter(jq_filter, resultToReturn));
   } catch (error) {
     if (isJqError(error)) {
       return asErrorResult(error.message);

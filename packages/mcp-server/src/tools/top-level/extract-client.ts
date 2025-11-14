@@ -6,7 +6,7 @@ import { Metadata, asErrorResult, asTextContentResult } from 'landingai-ade-mcp/
 import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import LandingAIADE from 'landingai-ade';
 import * as fs from 'fs';
-import * as path from 'path';
+import { saveResultIfNeeded } from '../handler-utils';
 
 export const metadata: Metadata = {
   resource: '$client',
@@ -61,38 +61,25 @@ export const tool: Tool = {
 export const handler = async (client: LandingAIADE, args: Record<string, unknown> | undefined) => {
   const { jq_filter, markdown, schema, ...body } = args as any;
 
-  // Convert file path string to ReadStream if markdown is a string file path
-  // Note: markdown parameter expects the raw content string, but if a file path is provided, read it
   const processedBody = {
     ...body,
     markdown: typeof markdown === 'string' && markdown.endsWith('.md') ? fs.createReadStream(markdown) : markdown,
-    // Ensure schema is a JSON string, not an object
     schema: typeof schema === 'object' ? JSON.stringify(schema) : schema
   };
 
   try {
     const result = await client.extract(processedBody);
 
-    const outputDir = process.env['ADE_OUTPUT_DIR'];
-
-    if (outputDir) {
-      fs.mkdirSync(outputDir, { recursive: true });
-
-
-      const outputFile = path.join(outputDir, `extract_result_${Date.now()}.json`);
-      fs.writeFileSync(outputFile, JSON.stringify(result, null, 2));
-
-      const summary = {
+    const resultToReturn = saveResultIfNeeded({
+      result,
+      filename: `extract_result_${Date.now()}`,
+      summary: {
         extraction: result.extraction,
-        metadata: result.metadata,
-        saved_to: outputFile,
-        message: `Full extract result saved to ${outputFile}`
-      };
+        metadata: result.metadata
+      }
+    });
 
-      return asTextContentResult(await maybeFilter(jq_filter, summary));
-    }
-
-    return asTextContentResult(await maybeFilter(jq_filter, result));
+    return asTextContentResult(await maybeFilter(jq_filter, resultToReturn));
   } catch (error) {
     if (isJqError(error)) {
       return asErrorResult(error.message);

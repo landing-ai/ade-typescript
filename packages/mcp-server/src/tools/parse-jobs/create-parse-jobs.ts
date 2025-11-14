@@ -5,7 +5,7 @@ import { Metadata, asErrorResult, asTextContentResult } from 'landingai-ade-mcp/
 
 import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import LandingAIADE from 'landingai-ade';
-import * as fs from 'fs';
+import { convertFilePathToStream } from '../handler-utils';
 
 export const metadata: Metadata = {
   resource: 'parse_jobs',
@@ -68,10 +68,9 @@ export const tool: Tool = {
 export const handler = async (client: LandingAIADE, args: Record<string, unknown> | undefined) => {
   const { jq_filter, document, ...body } = args as any;
 
-  // Convert file path string to ReadStream if document is a string
   const processedBody = {
     ...body,
-    document: typeof document === 'string' ? fs.createReadStream(document) : document
+    document: convertFilePathToStream(document)
   };
 
   try {
