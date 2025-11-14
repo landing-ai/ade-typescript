@@ -6,7 +6,7 @@ import { Metadata, asErrorResult, asTextContentResult } from 'landingai-ade-mcp/
 import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import LandingAIADE from 'landingai-ade';
 import * as path from 'path';
-import { convertFilePathToStream, saveResultIfNeeded } from '../handler-utils';
+import { convertFilePathToStream, saveResultIfNeeded, createPreview } from '../handler-utils';
 
 export const metadata: Metadata = {
   resource: '$client',
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 export const tool: Tool = {
   name: 'parse_client',
   description:
-    "When using this tool, always use the `jq_filter` parameter to reduce the response size and improve performance.\n\nOnly omit if you're sure you don't need the data.\n\nParse a document or spreadsheet.\n\nThis endpoint parses documents (PDF, images)\n    and spreadsheets (XLSX, CSV) into structured Markdown, chunks, and metadata.\n    \n\n For EU users, use this endpoint:\n\n\n    `https://api.va.eu-west-1.landing.ai/v1/ade/parse`.\n\n# Response Schema\n```json\n{\n  $ref: '#/$defs/parse_response',\n  $defs: {\n    parse_response: {\n      type: 'object',\n      title: 'ParseResponse',\n      properties: {\n        chunks: {\n          type: 'array',\n          title: 'Chunks',\n          items: {\n            type: 'object',\n            title: 'ParseChunk',\n            properties: {\n              id: {\n                type: 'string',\n                title: 'Id'\n              },\n              grounding: {\n                type: 'object',\n                title: 'ParseGrounding',\n                properties: {\n                  box: {\n                    $ref: '#/$defs/parse_grounding_box'\n                  },\n                  page: {\n                    type: 'integer',\n                    title: 'Page'\n                  }\n                },\n                required: [                  'box',\n                  'page'\n                ]\n              },\n              markdown: {\n                type: 'string',\n                title: 'Markdown'\n              },\n              type: {\n                type: 'string',\n                title: 'Type'\n              }\n            },\n            required: [              'id',\n              'grounding',\n              'markdown',\n              'type'\n            ]\n          }\n        },\n        markdown: {\n          type: 'string',\n          title: 'Markdown'\n        },\n        metadata: {\n          $ref: '#/$defs/parse_metadata'\n        },\n        splits: {\n          type: 'array',\n          title: 'Splits',\n          items: {\n            type: 'object',\n            title: 'ParseSplit',\n            properties: {\n              chunks: {\n                type: 'array',\n                title: 'Chunks',\n                items: {\n                  type: 'string'\n                }\n              },\n              class: {\n                type: 'string',\n                title: 'Class'\n              },\n              identifier: {\n                type: 'string',\n                title: 'Identifier'\n              },\n              markdown: {\n                type: 'string',\n                title: 'Markdown'\n              },\n              pages: {\n                type: 'array',\n                title: 'Pages',\n                items: {\n                  type: 'integer'\n                }\n              }\n            },\n            required: [              'chunks',\n              'class',\n              'identifier',\n              'markdown',\n              'pages'\n            ]\n          }\n        },\n        grounding: {\n          type: 'object',\n          title: 'Grounding',\n          additionalProperties: true\n        }\n      },\n      required: [        'chunks',\n        'markdown',\n        'metadata',\n        'splits'\n      ]\n    },\n    parse_grounding_box: {\n      type: 'object',\n      title: 'ParseGroundingBox',\n      properties: {\n        bottom: {\n          type: 'number',\n          title: 'Bottom'\n        },\n        left: {\n          type: 'number',\n          title: 'Left'\n        },\n        right: {\n          type: 'number',\n          title: 'Right'\n        },\n        top: {\n          type: 'number',\n          title: 'Top'\n        }\n      },\n      required: [        'bottom',\n        'left',\n        'right',\n        'top'\n      ]\n    },\n    parse_metadata: {\n      type: 'object',\n      title: 'ParseMetadata',\n      properties: {\n        credit_usage: {\n          type: 'number',\n          title: 'Credit Usage'\n        },\n        duration_ms: {\n          type: 'integer',\n          title: 'Duration Ms'\n        },\n        filename: {\n          type: 'string',\n          title: 'Filename'\n        },\n        job_id: {\n          type: 'string',\n          title: 'Job Id'\n        },\n        org_id: {\n          type: 'string',\n          title: 'Org Id'\n        },\n        page_count: {\n          type: 'integer',\n          title: 'Page Count'\n        },\n        version: {\n          type: 'string',\n          title: 'Version'\n        },\n        failed_pages: {\n          type: 'array',\n          title: 'Failed Pages',\n          items: {\n            type: 'integer'\n          }\n        }\n      },\n      required: [        'credit_usage',\n        'duration_ms',\n        'filename',\n        'job_id',\n        'org_id',\n        'page_count',\n        'version'\n      ]\n    }\n  }\n}\n```",
+    "Parse a document or spreadsheet (PDF, images, XLSX, CSV) into structured Markdown, chunks, and metadata.\n\nIMPORTANT: Always use the `jq_filter` parameter to extract only the fields you need (e.g., '.markdown' for just the markdown content).\n\nIf ADE_OUTPUT_DIR is set, the full result will be saved to disk and you'll receive a preview.",
   inputSchema: {
     type: 'object',
     properties: {
@@ -72,13 +72,26 @@ export const handler = async (client: LandingAIADE, args: Record<string, unknown
     const result = await client.parse(processedBody);
     const filename = typeof document === 'string' ? path.basename(document, path.extname(document)) : 'parse_result';
 
-    const resultToReturn = saveResultIfNeeded({
+    // Apply jq filter to the full result first
+    const filteredResult = await maybeFilter(jq_filter, result);
+
+    // Save the full result to disk if ADE_OUTPUT_DIR is set
+    const { saved_to } = saveResultIfNeeded({
       result,
-      filename: `${filename}_${Date.now()}`,
-      summary: { metadata: result.metadata }
+      filename: `${filename}_${Date.now()}`
     });
 
-    return asTextContentResult(await maybeFilter(jq_filter, resultToReturn));
+    // If saved to disk, return a preview of the filtered result
+    if (saved_to) {
+      const preview = createPreview(filteredResult);
+      return asTextContentResult({
+        preview,
+        message: `Full result saved to ${saved_to}. Do not ask the LLM to read this file because it will incur a lot of tokens due to it being very large.`
+      });
+    }
+
+    // If not saved, return the full filtered result
+    return asTextContentResult(filteredResult);
   } catch (error) {
     if (isJqError(error)) {
       return asErrorResult(error.message);

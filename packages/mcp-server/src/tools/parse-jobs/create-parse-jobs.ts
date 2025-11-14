@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 export const tool: Tool = {
   name: 'create_parse_jobs',
   description:
-    "When using this tool, always use the `jq_filter` parameter to reduce the response size and improve performance.\n\nOnly omit if you're sure you don't need the data.\n\nParse documents asynchronously.\n\nThis endpoint creates a job that handles the\n    processing for both large documents and large batches of documents.\n\n For EU\n    users, use this endpoint:\n\n\n    `https://api.va.eu-west-1.landing.ai/v1/ade/parse/jobs`.\n\n# Response Schema\n```json\n{\n  $ref: '#/$defs/parse_job_create_response',\n  $defs: {\n    parse_job_create_response: {\n      type: 'object',\n      title: 'JobCreationResponse',\n      properties: {\n        job_id: {\n          type: 'string',\n          title: 'Job Id'\n        }\n      },\n      required: [        'job_id'\n      ]\n    }\n  }\n}\n```",
+    'Create an async parse job for large documents or batches. Returns a job_id that can be used with get_parse_jobs to check status and retrieve results. Use this for documents that may take longer to process.\n\nIMPORTANT: Always use the `jq_filter` parameter to extract only the fields you need.',
   inputSchema: {
     type: 'object',
     properties: {

@@ -11,7 +11,13 @@ interface SaveResultOptions {
   summary?: any;
 }
 
-export function saveResultIfNeeded(options: SaveResultOptions): any {
+interface SaveResult {
+  data: any;
+  saved_to?: string;
+  message?: string;
+}
+
+export function saveResultIfNeeded(options: SaveResultOptions): SaveResult {
   const { result, filename, summary } = options;
   const outputDir = process.env['ADE_OUTPUT_DIR'];
 
@@ -22,11 +28,18 @@ export function saveResultIfNeeded(options: SaveResultOptions): any {
     fs.writeFileSync(outputFile, JSON.stringify(result, null, 2));
 
     return {
-      ...summary,
+      data: summary || result,
       saved_to: outputFile,
-      message: `Full result saved to ${outputFile}`,
     };
   }
 
-  return result;
+  return { data: summary || result };
+}
+
+export function createPreview(data: any, maxLength: number = 200): string {
+  const jsonString = JSON.stringify(data, null, 2);
+  if (jsonString.length <= maxLength) {
+    return jsonString;
+  }
+  return jsonString.substring(0, maxLength) + '\n... (truncated)';
 }

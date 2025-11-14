@@ -4,7 +4,7 @@ import { Metadata, asTextContentResult } from 'landingai-ade-mcp/tools/types';
 
 import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import LandingAIADE from 'landingai-ade';
-import { saveResultIfNeeded } from '../handler-utils';
+import { saveResultIfNeeded, createPreview } from '../handler-utils';
 
 export const metadata: Metadata = {
   resource: 'parse_jobs',
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 export const tool: Tool = {
   name: 'get_parse_jobs',
   description:
-    'Get the status for an async parse job.\n\nReturns the job status or an error\n   response. For EU users, use this endpoint:\n\n\n   `https://api.va.eu-west-1.landing.ai/v1/ade/parse/jobs/{job_id}`.',
+    'Get the status of an async parse job by job_id. Returns job status (pending/processing/completed/failed) and progress. If completed and ADE_OUTPUT_DIR is set, the full result will be saved to disk and you\'ll receive a preview.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -40,16 +40,22 @@ export const handler = async (client: LandingAIADE, args: Record<string, unknown
   const result = await client.parseJobs.get(job_id);
 
   if (result.status === 'completed' && result.data) {
-    return asTextContentResult(saveResultIfNeeded({
+    const { saved_to } = saveResultIfNeeded({
       result,
-      filename: `parse_job_${job_id}`,
-      summary: {
-        job_id: result.job_id,
-        status: result.status,
-        progress: result.progress,
-        metadata: result.metadata
-      }
-    }));
+      filename: `parse_job_${job_id}`
+    });
+
+    // If saved to disk, return a preview
+    if (saved_to) {
+      const preview = createPreview(result);
+      return asTextContentResult({
+        preview,
+        message: `Full result saved to ${saved_to}. Do not ask the LLM to read this file because it will incur a lot of tokens due to it being very large.`
+      });
+    }
+
+    // If not saved, return full result
+    return asTextContentResult(result);
   }
 
   return asTextContentResult({
