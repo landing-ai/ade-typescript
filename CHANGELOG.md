@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.11.2 (2025-11-13)
+
+Full Changelog: [v0.11.1...v0.11.2](https://github.com/landing-ai/ade-typescript/compare/v0.11.1...v0.11.2)
+
+### Chores
+
+* **mcp:** upgrade jq-web ([54124f5](https://github.com/landing-ai/ade-typescript/commit/54124f50126eb4725df1a6516c841d55dc5cc2e3))
+
 ## 0.11.1 (2025-11-13)
 
 Full Changelog: [v0.11.0...v0.11.1](https://github.com/landing-ai/ade-typescript/compare/v0.11.0...v0.11.1)
