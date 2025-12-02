@@ -174,7 +174,7 @@ const addFormValue = async (form: FormData, key: string, value: unknown): Promis
   } else if (isNamedBlob(value)) {
     form.append(key, value, getName(value));
   } else if (Array.isArray(value)) {
-    await Promise.all(value.map((entry) => addFormValue(form, key + '[]', entry)));
+    await Promise.all(value.map((entry, index) => addFormValue(form, `${key}[${index}]`, entry)));
   } else if (typeof value === 'object') {
     await Promise.all(
       Object.entries(value).map(([name, prop]) => addFormValue(form, `${key}[${name}]`, prop)),
