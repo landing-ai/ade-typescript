@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1 (2025-12-02)
+
+Full Changelog: [v1.0.0...v1.0.1](https://github.com/landing-ai/ade-typescript/compare/v1.0.0...v1.0.1)
+
 ## 1.0.0 (2025-12-02)
 
 Full Changelog: [v0.11.2...v1.0.0](https://github.com/landing-ai/ade-typescript/compare/v0.11.2...v1.0.0)
