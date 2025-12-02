@@ -9,4 +9,11 @@ export {
   type ParseJobCreateParams,
   type ParseJobListParams,
 } from './parse-jobs';
-export { type ExtractResponse, type ParseResponse, type ExtractParams, type ParseParams } from './top-level';
+export {
+  type ExtractResponse,
+  type ParseResponse,
+  type SplitResponse,
+  type ExtractParams,
+  type ParseParams,
+  type SplitParams,
+} from './top-level';

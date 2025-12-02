@@ -6,6 +6,7 @@ export { Metadata, Endpoint, HandlerFunction };
 
 import extract_client from './top-level/extract-client';
 import parse_client from './top-level/parse-client';
+import split_client from './top-level/split-client';
 import create_parse_jobs from './parse-jobs/create-parse-jobs';
 import list_parse_jobs from './parse-jobs/list-parse-jobs';
 import get_parse_jobs from './parse-jobs/get-parse-jobs';
@@ -18,6 +19,7 @@ function addEndpoint(endpoint: Endpoint) {
 
 addEndpoint(extract_client);
 addEndpoint(parse_client);
+addEndpoint(split_client);
 addEndpoint(create_parse_jobs);
 addEndpoint(list_parse_jobs);
 addEndpoint(get_parse_jobs);

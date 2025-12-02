@@ -4,11 +4,13 @@ Types:
 
 - <code><a href="./src/resources/top-level.ts">ExtractResponse</a></code>
 - <code><a href="./src/resources/top-level.ts">ParseResponse</a></code>
+- <code><a href="./src/resources/top-level.ts">SplitResponse</a></code>
 
 Methods:
 
 - <code title="post /v1/ade/extract">client.<a href="./src/index.ts">extract</a>({ ...params }) -> ExtractResponse</code>
 - <code title="post /v1/ade/parse">client.<a href="./src/index.ts">parse</a>({ ...params }) -> ParseResponse</code>
+- <code title="post /v1/ade/split">client.<a href="./src/index.ts">split</a>({ ...params }) -> SplitResponse</code>
 
 # Shared
 

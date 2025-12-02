@@ -114,6 +114,61 @@ export namespace ParseResponse {
   }
 }
 
+/**
+ * Response model for split classification endpoint.
+ */
+export interface SplitResponse {
+  /**
+   * Metadata for split classification response.
+   */
+  metadata: SplitResponse.Metadata;
+
+  splits: Array<SplitResponse.Split>;
+}
+
+export namespace SplitResponse {
+  /**
+   * Metadata for split classification response.
+   */
+  export interface Metadata {
+    credit_usage: number;
+
+    duration_ms: number;
+
+    filename: string;
+
+    page_count: number;
+
+    /**
+     * Inference history job ID
+     */
+    job_id?: string;
+
+    /**
+     * Organization ID
+     */
+    org_id?: string | null;
+
+    /**
+     * Model version used for split classification
+     */
+    version?: string | null;
+  }
+
+  /**
+   * Split data for split classification endpoint.
+   */
+  export interface Split {
+    classification: string;
+
+    identifier: string | null;
+
+    markdowns: Array<string>;
+
+    pages: Array<number>;
+  }
+}
+
 export interface ExtractParams {
   /**
    * JSON schema for field extraction. This schema determines what key-values pairs
@@ -167,11 +222,58 @@ export interface ParseParams {
   split?: 'page' | null;
 }
 
+export interface SplitParams {
+  /**
+   * List of split classification options/configuration. Can be provided as JSON
+   * string in form data.
+   */
+  options: Array<SplitParams.Option>;
+
+  /**
+   * The Markdown file or Markdown content to split.
+   */
+  markdown?: Uploadable | null;
+
+  /**
+   * The URL to the Markdown file to split.
+   */
+  markdownUrl?: string | null;
+
+  /**
+   * Model version to use for split classification. Defaults to the latest version.
+   */
+  model?: string | null;
+}
+
+export namespace SplitParams {
+  /**
+   * Model for split classification option.
+   */
+  export interface Option {
+    /**
+     * Name of the split classification type
+     */
+    name: string;
+
+    /**
+     * Detailed description of what this split type represents
+     */
+    description?: string | null;
+
+    /**
+     * Identifier to partition/group the splits by
+     */
+    identifier?: string | null;
+  }
+}
+
 export declare namespace TopLevel {
   export {
     type ExtractResponse as ExtractResponse,
     type ParseResponse as ParseResponse,
+    type SplitResponse as SplitResponse,
     type ExtractParams as ExtractParams,
     type ParseParams as ParseParams,
+    type SplitParams as SplitParams,
   };
 }

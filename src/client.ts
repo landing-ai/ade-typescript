@@ -16,7 +16,14 @@ import * as Errors from './core/error';
 import * as Uploads from './core/uploads';
 import * as API from './resources/index';
 import * as TopLevelAPI from './resources/top-level';
-import { ExtractParams, ExtractResponse, ParseParams, ParseResponse } from './resources/top-level';
+import {
+  ExtractParams,
+  ExtractResponse,
+  ParseParams,
+  ParseResponse,
+  SplitParams,
+  SplitResponse,
+} from './resources/top-level';
 import { APIPromise } from './core/api-promise';
 import {
   ParseJobCreateParams,
@@ -265,6 +272,20 @@ export class LandingAIADE {
    */
   parse(body: TopLevelAPI.ParseParams, options?: RequestOptions): APIPromise<TopLevelAPI.ParseResponse> {
     return this.post('/v1/ade/parse', multipartFormRequestOptions({ body, ...options }, this));
+  }
+
+  /**
+   * Split classification for documents.
+   *
+   * This endpoint classifies document sections based on markdown content and split
+   * options.
+   *
+   * For EU users, use this endpoint:
+   *
+   *     `https://api.va.eu-west-1.landing.ai/v1/ade/split`.
+   */
+  split(body: TopLevelAPI.SplitParams, options?: RequestOptions): APIPromise<TopLevelAPI.SplitResponse> {
+    return this.post('/v1/ade/split', multipartFormRequestOptions({ body, ...options }, this));
   }
 
   protected defaultQuery(): Record<string, string | undefined> | undefined {
@@ -794,8 +815,10 @@ export declare namespace LandingAIADE {
   export {
     type ExtractResponse as ExtractResponse,
     type ParseResponse as ParseResponse,
+    type SplitResponse as SplitResponse,
     type ExtractParams as ExtractParams,
     type ParseParams as ParseParams,
+    type SplitParams as SplitParams,
   };
 
   export {
