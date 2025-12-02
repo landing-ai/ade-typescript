@@ -1,6 +1,6 @@
 // File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
 
-import { Metadata, asTextContentResult } from 'landingai-ade-mcp/tools/types';
+import { Metadata, asErrorResult, asTextContentResult } from 'landingai-ade-mcp/tools/types';
 
 import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import LandingAIADE from 'landingai-ade';
@@ -35,7 +35,14 @@ export const tool: Tool = {
 
 export const handler = async (client: LandingAIADE, args: Record<string, unknown> | undefined) => {
   const { job_id, ...body } = args as any;
-  return asTextContentResult(await client.parseJobs.get(job_id));
+  try {
+    return asTextContentResult(await client.parseJobs.get(job_id));
+  } catch (error) {
+    if (error instanceof LandingAIADE.APIError) {
+      return asErrorResult(error.message);
+    }
+    throw error;
+  }
 };
 
 export default { metadata, tool, handler };
