@@ -44,6 +44,7 @@ const fuse = new Fuse(
   [
     'client.extract',
     'client.parse',
+    'client.split',
     'client.parseJobs.create',
     'client.parseJobs.get',
     'client.parseJobs.list',

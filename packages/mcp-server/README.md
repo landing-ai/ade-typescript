@@ -263,6 +263,15 @@ The following tools are available in this MCP server.
 
       `https://api.va.eu-west-1.landing.ai/v1/ade/parse`.
 
+- `split_client` (`write`): Split classification for documents.
+
+  This endpoint classifies document sections
+  based on markdown content and split options.
+
+  For EU users, use this endpoint:
+
+      `https://api.va.eu-west-1.landing.ai/v1/ade/split`.
+
 ### Resource `parse_jobs`:
 
 - `create_parse_jobs` (`write`): Parse documents asynchronously.
