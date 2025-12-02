@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.0.2 (2025-12-02)
+
+Full Changelog: [v1.0.1...v1.0.2](https://github.com/landing-ai/ade-typescript/compare/v1.0.1...v1.0.2)
+
+### Bug Fixes
+
+* **mcp:** return tool execution error on api error ([ac28229](https://github.com/landing-ai/ade-typescript/commit/ac28229fa39eb58acff167619fe35561b3d13780))
+
+
+### Chores
+
+* **client:** fix logger property type ([55952a1](https://github.com/landing-ai/ade-typescript/commit/55952a175a2f1696d71cbf2efed856ee22167e15))
+
 ## 1.0.1 (2025-12-02)
 
 Full Changelog: [v1.0.0...v1.0.1](https://github.com/landing-ai/ade-typescript/compare/v1.0.0...v1.0.1)
