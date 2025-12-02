@@ -83,7 +83,7 @@ export const handler = async (client: LandingAIADE, args: Record<string, unknown
   try {
     return asTextContentResult(await maybeFilter(jq_filter, await client.split(body)));
   } catch (error) {
-    if (isJqError(error)) {
+    if (error instanceof LandingAIADE.APIError || isJqError(error)) {
       return asErrorResult(error.message);
     }
     throw error;
