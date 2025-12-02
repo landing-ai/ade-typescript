@@ -1,5 +1,65 @@
 # Changelog
 
+## 1.2.0 (2025-12-02)
+
+Full Changelog: [v1.1.0...v1.2.0](https://github.com/landing-ai/ade-typescript/compare/v1.1.0...v1.2.0)
+
+### Features
+
+* **api:** add extract endpoint enums ([630a005](https://github.com/landing-ai/ade-typescript/commit/630a005741d64d20c8c941aadcaecf4bb8804523))
+* **api:** api update ([2fca854](https://github.com/landing-ai/ade-typescript/commit/2fca8547ec7dfae7b63b30446c36a0a27227d9fe))
+* **api:** api update ([948acd5](https://github.com/landing-ai/ade-typescript/commit/948acd5bf96b2613b4b6dd4618f2e945f8099782))
+* **api:** api update ([3140d4b](https://github.com/landing-ai/ade-typescript/commit/3140d4b01a1bc01cd4dc5b9eb162b2a1fcbc811e))
+* **api:** change support email ([c9b1b70](https://github.com/landing-ai/ade-typescript/commit/c9b1b707805a816eb6f2668f4b3fb152620d0060))
+* **api:** default models for extract ([1b59c39](https://github.com/landing-ai/ade-typescript/commit/1b59c398a09325a16eb773ad4e198bfe3aac6c4c))
+* **api:** manual updates ([e6f492c](https://github.com/landing-ai/ade-typescript/commit/e6f492ce016ffb85ef415041fa7d2ee8c5c7a170))
+* **api:** manual updates ([95671e0](https://github.com/landing-ai/ade-typescript/commit/95671e06564b0dd42a20164081f72b7f0b300d57))
+* **api:** manual updates ([cef17cd](https://github.com/landing-ai/ade-typescript/commit/cef17cd66d32921315078c6edd3ea9421a5a207d))
+* **api:** manual updates ([52ad24c](https://github.com/landing-ai/ade-typescript/commit/52ad24ceada4a830e0f6adb0442acf44b1e13938))
+* **api:** manual updates ([7aab981](https://github.com/landing-ai/ade-typescript/commit/7aab9815868a240bd23b65de398f4aaf63bb1ccc))
+* **api:** manual updates ([68081d2](https://github.com/landing-ai/ade-typescript/commit/68081d2a63c4ed0e177717112501fdf39e191af5))
+* **api:** manual updates ([d852ba6](https://github.com/landing-ai/ade-typescript/commit/d852ba62b340a60d5e0e28f66af151e4ac3db93c))
+* **api:** manual updates ([3053f42](https://github.com/landing-ai/ade-typescript/commit/3053f42809fb80d4ba586c5963907f4d39dbd54a))
+* **api:** manual updates ([6f117b4](https://github.com/landing-ai/ade-typescript/commit/6f117b4da47780778056b6498684ac8da27153d7))
+* **api:** manual updates ([fca88bc](https://github.com/landing-ai/ade-typescript/commit/fca88bc2fd1ad14d0f247cf91a95d6ceb941cb57))
+* **api:** manual updates ([e8cd076](https://github.com/landing-ai/ade-typescript/commit/e8cd076a8c32d39b9dbec6d0e3b7bc479e453f15))
+* **api:** manual updates ([f2fcdd6](https://github.com/landing-ai/ade-typescript/commit/f2fcdd643f827706d670172eb1b5ee0e70f43cca))
+* **api:** markdown commnet chaagne ([8cfc558](https://github.com/landing-ai/ade-typescript/commit/8cfc558e20764655bb27b7ab8366732a86741bbb))
+* **api:** remove so it only contains ade2 endpoints ([880615d](https://github.com/landing-ai/ade-typescript/commit/880615d006370f89806cc16e26d8c6be7d1f2f76))
+* **api:** support environments ([08cf6e1](https://github.com/landing-ai/ade-typescript/commit/08cf6e1790c094d682c5ed087a42f05db2f51805))
+* **api:** update README examples to support doccument_url as local path ([cc08604](https://github.com/landing-ai/ade-typescript/commit/cc086040ee78541a5a78e751ea0c21558f9e866e))
+* **mcp:** add detail field to docs search tool ([fbbd9bc](https://github.com/landing-ai/ade-typescript/commit/fbbd9bcac9d708d63f8d64afeb7330190fb0ffe6))
+
+
+### Bug Fixes
+
+* **api:** increase default timeout ([25671c2](https://github.com/landing-ai/ade-typescript/commit/25671c2632e3bb858a72bea0221968d21e859a0d))
+* **mcp:** return tool execution error on jq failure ([466855e](https://github.com/landing-ai/ade-typescript/commit/466855e0a49154fbd7be9a8225e1dc0cdf0c3e5f))
+
+
+### Chores
+
+* add zod instructions to readme ([#8](https://github.com/landing-ai/ade-typescript/issues/8)) ([e867f1b](https://github.com/landing-ai/ade-typescript/commit/e867f1b18f45d3fcfd70faff703b5f93f84cf470))
+* configure new SDK language ([3aea19d](https://github.com/landing-ai/ade-typescript/commit/3aea19d4cfb4e6bbbbfcba0a30df8bb94e832fdd))
+* configure new SDK language ([cdb4c74](https://github.com/landing-ai/ade-typescript/commit/cdb4c741c164bb0932bc2225ea1f5495cda4a16e))
+* do not install brew dependencies in ./scripts/bootstrap by default ([0ed8852](https://github.com/landing-ai/ade-typescript/commit/0ed8852337ed3f07d13797f720361e306bda90cb))
+* **internal:** codegen related update ([b338bbc](https://github.com/landing-ai/ade-typescript/commit/b338bbca22113bf2c53620f4652762e899809a56))
+* **internal:** codegen related update ([db5e76b](https://github.com/landing-ai/ade-typescript/commit/db5e76b367adbd1d77dc4805b2dce3197ad76716))
+* **internal:** fix incremental formatting in some cases ([127b35f](https://github.com/landing-ai/ade-typescript/commit/127b35fb503a8fbd91b640e0857b8fa6d9877e46))
+* **internal:** ignore .eslintcache ([756c640](https://github.com/landing-ai/ade-typescript/commit/756c640645bf9e047e22aa1dd63ff30c9c5d6fa4))
+* **internal:** remove .eslintcache ([52872c7](https://github.com/landing-ai/ade-typescript/commit/52872c716db39b6b0cf6d11ce37fddc19fa90a5c))
+* **internal:** use npm pack for build uploads ([f17c703](https://github.com/landing-ai/ade-typescript/commit/f17c70357a03625538122f4368611a11dbefdea0))
+* **mcp:** clarify http auth error ([96bf061](https://github.com/landing-ai/ade-typescript/commit/96bf06178de7aa9fb4c462ff03bfc8986989ec6c))
+* **mcp:** upgrade jq-web ([54124f5](https://github.com/landing-ai/ade-typescript/commit/54124f50126eb4725df1a6516c841d55dc5cc2e3))
+* update SDK settings ([c48da1c](https://github.com/landing-ai/ade-typescript/commit/c48da1c772ccc04f921f26fa283357918538dd7d))
+* update SDK settings ([e0d31c6](https://github.com/landing-ai/ade-typescript/commit/e0d31c6df37c89a42f59623385e343ae06ec8506))
+* update SDK settings ([7b4887b](https://github.com/landing-ai/ade-typescript/commit/7b4887bc632a817674ce4e94733105b30677b59f))
+
+
+### Documentation
+
+* **mcp:** add a README link to add server to VS Code or Claude Code ([716f99a](https://github.com/landing-ai/ade-typescript/commit/716f99a4b1bff6acf57c938d49fab4809737860f))
+
 ## 1.0.0 (2025-12-02)
 
 Full Changelog: [v0.11.2...v1.0.0](https://github.com/landing-ai/ade-typescript/compare/v0.11.2...v1.0.0)
