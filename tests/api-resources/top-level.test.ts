@@ -41,4 +41,26 @@ describe('top level methods', () => {
     expect(dataAndResponse.data).toBe(response);
     expect(dataAndResponse.response).toBe(rawResponse);
   });
+
+  // Prism tests are disabled
+  test.skip('split: only required params', async () => {
+    const responsePromise = client.split({ options: [{ name: 'name' }] });
+    const rawResponse = await responsePromise.asResponse();
+    expect(rawResponse).toBeInstanceOf(Response);
+    const response = await responsePromise;
+    expect(response).not.toBeInstanceOf(Response);
+    const dataAndResponse = await responsePromise.withResponse();
+    expect(dataAndResponse.data).toBe(response);
+    expect(dataAndResponse.response).toBe(rawResponse);
+  });
+
+  // Prism tests are disabled
+  test.skip('split: required and optional params', async () => {
+    const response = await client.split({
+      options: [{ name: 'name', description: 'description', identifier: 'identifier' }],
+      markdown: await toFile(Buffer.from('# my file contents'), 'README.md'),
+      markdownUrl: 'markdownUrl',
+      model: 'model',
+    });
+  });
 });
