@@ -80,6 +80,6 @@ describe('form data validation', () => {
       },
       fetch,
     );
-    expect(Array.from(form2.entries())).toEqual([['bar[]', 'foo']]);
+    expect(Array.from(form2.entries())).toEqual([['bar[1]', 'foo']]);
   });
 });
