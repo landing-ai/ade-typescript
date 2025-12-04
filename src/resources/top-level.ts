@@ -227,7 +227,7 @@ export interface SplitParams {
    * List of split classification options/configuration. Can be provided as JSON
    * string in form data.
    */
-  options: Array<SplitParams.Option>;
+  split_class: Array<SplitParams.SplitClass>;
 
   /**
    * The Markdown file or Markdown content to split.
@@ -249,7 +249,7 @@ export namespace SplitParams {
   /**
    * Model for split classification option.
    */
-  export interface Option {
+  export interface SplitClass {
     /**
      * Name of the split classification type
      */
