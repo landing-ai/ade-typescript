@@ -22,14 +22,14 @@ export const tool: Tool = {
   inputSchema: {
     type: 'object',
     properties: {
-      options: {
+      split_class: {
         type: 'array',
-        title: 'Options',
+        title: 'Split Class',
         description:
           'List of split classification options/configuration. Can be provided as JSON string in form data.',
         items: {
           type: 'object',
-          title: 'SplitOption',
+          title: 'SplitClass',
           description: 'Model for split classification option.',
           properties: {
             name: {
@@ -73,7 +73,7 @@ export const tool: Tool = {
           'A jq filter to apply to the response to include certain fields. Consult the output schema in the tool description to see the fields that are available.\n\nFor example: to include only the `name` field in every object of a results array, you can provide ".results[].name".\n\nFor more information, see the [jq documentation](https://jqlang.org/manual/).',
       },
     },
-    required: ['options'],
+    required: ['split_class'],
   },
   annotations: {},
 };
