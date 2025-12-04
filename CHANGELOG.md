@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.1.0 (2025-12-04)
+
+Full Changelog: [v1.0.2...v1.1.0](https://github.com/landing-ai/ade-typescript/compare/v1.0.2...v1.1.0)
+
+### Features
+
+* **api:** api update ([a6e2baf](https://github.com/landing-ai/ade-typescript/commit/a6e2baf527c9e19cdce2533fe2fb837f2527e8d5))
+* **mcp:** return logs on code tool errors ([4bee4cb](https://github.com/landing-ai/ade-typescript/commit/4bee4cbb7266f81f02b22193f4f70a7d3608789a))
+
+
+### Chores
+
+* **internal:** upgrade eslint ([238efa9](https://github.com/landing-ai/ade-typescript/commit/238efa980335b57287835ef9702bd06257f2ae6a))
+
 ## 1.0.2 (2025-12-02)
 
 Full Changelog: [v1.0.1...v1.0.2](https://github.com/landing-ai/ade-typescript/compare/v1.0.1...v1.0.2)
