@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.2.0 (2025-12-06)
+
+Full Changelog: [v1.1.0...v1.2.0](https://github.com/landing-ai/ade-typescript/compare/v1.1.0...v1.2.0)
+
+### Features
+
+* **mcp:** add typescript check to code execution tool ([244ca17](https://github.com/landing-ai/ade-typescript/commit/244ca1708bd4ca43b1c1c871dd8d980751225f7a))
+* **mcp:** handle code mode calls in the Stainless API ([8363063](https://github.com/landing-ai/ade-typescript/commit/8363063335fbe9cff96574c3fdb697f2eb551c13))
+
+
+### Bug Fixes
+
+* **mcp:** return correct lines on typescript errors ([8277fdd](https://github.com/landing-ai/ade-typescript/commit/8277fdd48ea5c9c502d3c86f377d7796cd68b97d))
+
+
+### Chores
+
+* **internal:** codegen related update ([a4a8cde](https://github.com/landing-ai/ade-typescript/commit/a4a8cde7bfd7a9f81ed6219e450ecf85e85f3a76))
+* use latest @modelcontextprotocol/sdk ([200e224](https://github.com/landing-ai/ade-typescript/commit/200e224dc4ff83dcbed4e115fca02dfeb73c7f00))
+
 ## 1.1.0 (2025-12-04)
 
 Full Changelog: [v1.0.2...v1.1.0](https://github.com/landing-ai/ade-typescript/compare/v1.0.2...v1.1.0)
