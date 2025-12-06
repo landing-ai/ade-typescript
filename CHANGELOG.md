@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.2 (2025-12-06)
+
+Full Changelog: [v1.2.1...v1.2.2](https://github.com/landing-ai/ade-typescript/compare/v1.2.1...v1.2.2)
+
+### Chores
+
+* **internal:** codegen related update ([6cbe6ea](https://github.com/landing-ai/ade-typescript/commit/6cbe6ea4c6923fde5e30a5ba69b44135e77c05f4))
+
 ## 1.2.1 (2025-12-06)
 
 Full Changelog: [v1.2.0...v1.2.1](https://github.com/landing-ai/ade-typescript/compare/v1.2.0...v1.2.1)
