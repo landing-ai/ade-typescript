@@ -34,7 +34,7 @@ export const newMcpServer = () =>
   new McpServer(
     {
       name: 'LandingAI_ade_api',
-      version: '1.2.1',
+      version: '1.2.2',
     },
     { capabilities: { tools: {}, logging: {} } },
   );
