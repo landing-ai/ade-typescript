@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.1 (2025-12-06)
+
+Full Changelog: [v1.2.0...v1.2.1](https://github.com/landing-ai/ade-typescript/compare/v1.2.0...v1.2.1)
+
+### Bug Fixes
+
+* **mcp:** correct code tool API endpoint ([9509aab](https://github.com/landing-ai/ade-typescript/commit/9509aab09cb204b053787e4428660c42d368a4e5))
+
 ## 1.2.0 (2025-12-06)
 
 Full Changelog: [v1.1.0...v1.2.0](https://github.com/landing-ai/ade-typescript/compare/v1.1.0...v1.2.0)
