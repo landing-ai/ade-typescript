@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.2.2 (2025-12-11)
+
+Full Changelog: [v1.2.1...v1.2.2](https://github.com/landing-ai/ade-typescript/compare/v1.2.1...v1.2.2)
+
+### Bug Fixes
+
+* **mcp:** add client instantiation options to code tool ([bc1dbfb](https://github.com/landing-ai/ade-typescript/commit/bc1dbfb11231f2b3aad7192ae5e0090a98ca9120))
+
+
+### Chores
+
+* **internal:** codegen related update ([6cbe6ea](https://github.com/landing-ai/ade-typescript/commit/6cbe6ea4c6923fde5e30a5ba69b44135e77c05f4))
+* **mcp:** update lockfile ([34f0413](https://github.com/landing-ai/ade-typescript/commit/34f041357722a7abcdf336e25e8310a304afdd4f))
+
 ## 1.2.1 (2025-12-06)
 
 Full Changelog: [v1.2.0...v1.2.1](https://github.com/landing-ai/ade-typescript/compare/v1.2.0...v1.2.1)
