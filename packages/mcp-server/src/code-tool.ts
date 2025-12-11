@@ -39,6 +39,7 @@ export async function codeTool() {
       },
       body: JSON.stringify({
         project_name: 'ade',
+        client_opts: { environment: (readEnv('LANDINGAI_ADE_ENVIRONMENT') || undefined) as any },
         code,
       }),
     });
