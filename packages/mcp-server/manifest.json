@@ -1,7 +1,7 @@
 {
   "dxt_version": "0.2",
   "name": "landingai-ade-mcp",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "The official MCP Server for the LandingAI ADE API",
   "author": {
     "name": "LandingAI ADE",
