@@ -38,6 +38,12 @@ export namespace ExtractResponse {
     version: string | null;
 
     /**
+     * The extract model that was actually used to extract the data when the initial
+     * extraction attempt failed with the requested version.
+     */
+    fallback_model_version?: string | null;
+
+    /**
      * A detailed error message shows why the extracted data does not fully conform to
      * the input schema. Null means the extraction result is consistent with the input
      * schema.
