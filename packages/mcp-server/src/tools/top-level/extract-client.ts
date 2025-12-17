@@ -29,7 +29,14 @@ export const tool: Tool = {
           'JSON schema for field extraction. This schema determines what key-values pairs are extracted from the Markdown. The schema must be a valid JSON object and will be validated before processing the document.',
       },
       markdown: {
-        type: 'string',
+        anyOf: [
+          {
+            type: 'string',
+          },
+          {
+            type: 'string',
+          },
+        ],
         title: 'Markdown',
         description: 'The Markdown file or Markdown content to extract data from.',
       },

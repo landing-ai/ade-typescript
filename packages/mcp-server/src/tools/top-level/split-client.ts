@@ -52,7 +52,14 @@ export const tool: Tool = {
         },
       },
       markdown: {
-        type: 'string',
+        anyOf: [
+          {
+            type: 'string',
+          },
+          {
+            type: 'string',
+          },
+        ],
         title: 'Markdown',
         description: 'The Markdown file or Markdown content to split.',
       },
