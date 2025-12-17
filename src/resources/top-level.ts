@@ -186,7 +186,7 @@ export interface ExtractParams {
   /**
    * The Markdown file or Markdown content to extract data from.
    */
-  markdown?: Uploadable | null;
+  markdown?: Uploadable | string | null;
 
   /**
    * The URL to the Markdown file to extract data from.
@@ -238,7 +238,7 @@ export interface SplitParams {
   /**
    * The Markdown file or Markdown content to split.
    */
-  markdown?: Uploadable | null;
+  markdown?: Uploadable | string | null;
 
   /**
    * The URL to the Markdown file to split.
