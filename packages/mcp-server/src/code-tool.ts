@@ -35,7 +35,10 @@ export async function codeTool() {
       headers: {
         ...(stainlessAPIKey && { Authorization: stainlessAPIKey }),
         'Content-Type': 'application/json',
-        client_envs: JSON.stringify({ VISION_AGENT_API_KEY: readEnv('VISION_AGENT_API_KEY') }),
+        client_envs: JSON.stringify({
+          VISION_AGENT_API_KEY: readEnv('VISION_AGENT_API_KEY'),
+          LANDINGAI_ADE_BASE_URL: readEnv('LANDINGAI_ADE_BASE_URL'),
+        }),
       },
       body: JSON.stringify({
         project_name: 'ade',
