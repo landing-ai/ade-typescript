@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.4.0 (2025-12-18)
+
+Full Changelog: [v1.3.0...v1.4.0](https://github.com/landing-ai/ade-typescript/compare/v1.3.0...v1.4.0)
+
+### Features
+
+* **files:** add support for string alternative to file upload type ([b3b6ce4](https://github.com/landing-ai/ade-typescript/commit/b3b6ce476f98642ad71fa4f95141e3dfa64f4fce))
+
+
+### Bug Fixes
+
+* **mcp:** pass base url to code tool ([88b8a9b](https://github.com/landing-ai/ade-typescript/commit/88b8a9b1c4ab9c66be22ee6dae08932f7cdea1b7))
+
 ## 1.3.0 (2025-12-16)
 
 Full Changelog: [v1.2.2...v1.3.0](https://github.com/landing-ai/ade-typescript/compare/v1.2.2...v1.3.0)
