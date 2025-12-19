@@ -1,5 +1,6 @@
 // File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
 
+import * as fs from 'fs';
 import type { RequestInit, RequestInfo, BodyInit } from './internal/builtin-types';
 import type { HTTPMethod, PromiseOrValue, MergedRequestInit, FinalizedRequestInit } from './internal/types';
 import { uuid4 } from './internal/utils/uuid';
@@ -254,18 +255,21 @@ export class LandingAIADE {
    *     `https://api.va.eu-west-1.landing.ai/v1/ade/extract`.
    */
   extract(
-    body: TopLevelAPI.ExtractParams,
+    body: TopLevelAPI.ExtractParams & { saveTo?: string },
     options?: RequestOptions,
   ): APIPromise<TopLevelAPI.ExtractResponse> {
-    // Exclude runtime tag header from extract calls
-    const extractOptions = {
-      ...options,
-      headers: {
-        ...options?.headers,
-        runtime_tag: null,
-      },
-    };
-    return this.post('/v1/ade/extract', multipartFormRequestOptions({ body, ...extractOptions }, this));
+    const { saveTo, ...apiBody } = body;
+    const extractOptions = { ...options, headers: { ...options?.headers, runtime_tag: null } };
+    const promise = this.post<TopLevelAPI.ExtractResponse>(
+      '/v1/ade/extract',
+      multipartFormRequestOptions({ body: apiBody, ...extractOptions }, this),
+    );
+    if (saveTo)
+      return promise._thenUnwrap((data) => {
+        fs.writeFileSync(saveTo, JSON.stringify(data, null, 2));
+        return data;
+      });
+    return promise;
   }
 
   /**
@@ -278,8 +282,21 @@ export class LandingAIADE {
    *
    *     `https://api.va.eu-west-1.landing.ai/v1/ade/parse`.
    */
-  parse(body: TopLevelAPI.ParseParams, options?: RequestOptions): APIPromise<TopLevelAPI.ParseResponse> {
-    return this.post('/v1/ade/parse', multipartFormRequestOptions({ body, ...options }, this));
+  parse(
+    body: TopLevelAPI.ParseParams & { saveTo?: string },
+    options?: RequestOptions,
+  ): APIPromise<TopLevelAPI.ParseResponse> {
+    const { saveTo, ...apiBody } = body;
+    const promise = this.post<TopLevelAPI.ParseResponse>(
+      '/v1/ade/parse',
+      multipartFormRequestOptions({ body: apiBody, ...options }, this),
+    );
+    if (saveTo)
+      return promise._thenUnwrap((data) => {
+        fs.writeFileSync(saveTo, JSON.stringify(data, null, 2));
+        return data;
+      });
+    return promise;
   }
 
   /**
@@ -292,8 +309,21 @@ export class LandingAIADE {
    *
    *     `https://api.va.eu-west-1.landing.ai/v1/ade/split`.
    */
-  split(body: TopLevelAPI.SplitParams, options?: RequestOptions): APIPromise<TopLevelAPI.SplitResponse> {
-    return this.post('/v1/ade/split', multipartFormRequestOptions({ body, ...options }, this));
+  split(
+    body: TopLevelAPI.SplitParams & { saveTo?: string },
+    options?: RequestOptions,
+  ): APIPromise<TopLevelAPI.SplitResponse> {
+    const { saveTo, ...apiBody } = body;
+    const promise = this.post<TopLevelAPI.SplitResponse>(
+      '/v1/ade/split',
+      multipartFormRequestOptions({ body: apiBody, ...options }, this),
+    );
+    if (saveTo)
+      return promise._thenUnwrap((data) => {
+        fs.writeFileSync(saveTo, JSON.stringify(data, null, 2));
+        return data;
+      });
+    return promise;
   }
 
   protected defaultQuery(): Record<string, string | undefined> | undefined {

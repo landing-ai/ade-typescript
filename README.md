@@ -29,7 +29,7 @@ const client = new LandingAIADE({
   environment: 'eu', // defaults to 'production'
 });
 
-const response = await client.parse({ document: fs.createReadStream('path/to/file'), model: 'dpt-2-latest' });
+const response = await client.parse({ document: fs.createReadStream('path/to/file'), model: 'dpt-2-latest', saveTo: 'output.json' });
 
 console.log(response.chunks);
 ```
