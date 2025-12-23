@@ -57,8 +57,9 @@ type Environment = keyof typeof environments;
 
 /**
  * Extract base filename (without extension) from file or URL input.
+ * @internal
  */
-function getInputFilename(
+export function _getInputFilename(
   fileInput: Uploads.Uploadable | string | null | undefined,
   urlInput: string | null | undefined,
 ): string {
@@ -85,8 +86,9 @@ function getInputFilename(
 
 /**
  * Save API response to a JSON file in the specified folder.
+ * @internal
  */
-function saveResponse(saveTo: string, filename: string, methodName: string, result: unknown): void {
+export function _saveResponse(saveTo: string, filename: string, methodName: string, result: unknown): void {
   fs.mkdirSync(saveTo, { recursive: true });
   const outputPath = path.join(saveTo, `${filename}_${methodName}_output.json`);
   fs.writeFileSync(outputPath, JSON.stringify(result, null, 2));
@@ -303,9 +305,9 @@ export class LandingAIADE {
       multipartFormRequestOptions({ body: apiBody, ...extractOptions }, this),
     );
     if (saveTo) {
-      const filename = getInputFilename(apiBody.markdown, apiBody.markdown_url);
+      const filename = _getInputFilename(apiBody.markdown, apiBody.markdown_url);
       return promise._thenUnwrap((data) => {
-        saveResponse(saveTo, filename, 'extract', data);
+        _saveResponse(saveTo, filename, 'extract', data);
         return data;
       });
     }
@@ -332,9 +334,9 @@ export class LandingAIADE {
       multipartFormRequestOptions({ body: apiBody, ...options }, this),
     );
     if (saveTo) {
-      const filename = getInputFilename(apiBody.document, apiBody.document_url);
+      const filename = _getInputFilename(apiBody.document, apiBody.document_url);
       return promise._thenUnwrap((data) => {
-        saveResponse(saveTo, filename, 'parse', data);
+        _saveResponse(saveTo, filename, 'parse', data);
         return data;
       });
     }
@@ -361,9 +363,9 @@ export class LandingAIADE {
       multipartFormRequestOptions({ body: apiBody, ...options }, this),
     );
     if (saveTo) {
-      const filename = getInputFilename(apiBody.markdown, apiBody.markdownUrl);
+      const filename = _getInputFilename(apiBody.markdown, apiBody.markdownUrl);
       return promise._thenUnwrap((data) => {
-        saveResponse(saveTo, filename, 'split', data);
+        _saveResponse(saveTo, filename, 'split', data);
         return data;
       });
     }

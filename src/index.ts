@@ -4,7 +4,7 @@ export { LandingAIADE as default } from './client';
 
 export { type Uploadable, toFile } from './core/uploads';
 export { APIPromise } from './core/api-promise';
-export { LandingAIADE, type ClientOptions } from './client';
+export { LandingAIADE, type ClientOptions, _getInputFilename, _saveResponse } from './client';
 export {
   LandingAIADEError,
   APIError,
