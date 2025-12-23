@@ -1,6 +1,7 @@
 // File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
 
 import * as fs from 'fs';
+import * as path from 'path';
 import type { RequestInit, RequestInfo, BodyInit } from './internal/builtin-types';
 import type { HTTPMethod, PromiseOrValue, MergedRequestInit, FinalizedRequestInit } from './internal/types';
 import { uuid4 } from './internal/utils/uuid';
@@ -37,7 +38,7 @@ import {
 import { type Fetch } from './internal/builtin-types';
 import { HeadersLike, NullableHeaders, buildHeaders } from './internal/headers';
 import { FinalRequestOptions, RequestOptions } from './internal/request-options';
-import { multipartFormRequestOptions } from './internal/uploads';
+import { multipartFormRequestOptions, getName } from './internal/uploads';
 import { readEnv } from './internal/utils/env';
 import {
   type LogLevel,
@@ -53,6 +54,43 @@ const environments = {
   eu: 'https://api.va.eu-west-1.landing.ai',
 };
 type Environment = keyof typeof environments;
+
+/**
+ * Extract base filename (without extension) from file or URL input.
+ */
+function getInputFilename(
+  fileInput: Uploads.Uploadable | string | null | undefined,
+  urlInput: string | null | undefined,
+): string {
+  if (fileInput != null) {
+    if (typeof fileInput === 'string') {
+      return 'output';
+    }
+    const name = getName(fileInput);
+    if (name) {
+      return path.parse(name).name;
+    }
+  }
+  if (urlInput != null) {
+    try {
+      const pathname = new URL(urlInput).pathname;
+      const stem = path.parse(pathname).name;
+      return stem || 'url_input';
+    } catch {
+      return 'url_input';
+    }
+  }
+  return 'output';
+}
+
+/**
+ * Save API response to a JSON file in the specified folder.
+ */
+function saveResponse(saveTo: string, filename: string, methodName: string, result: unknown): void {
+  fs.mkdirSync(saveTo, { recursive: true });
+  const outputPath = path.join(saveTo, `${filename}_${methodName}_output.json`);
+  fs.writeFileSync(outputPath, JSON.stringify(result, null, 2));
+}
 
 export interface ClientOptions {
   /**
@@ -264,11 +302,13 @@ export class LandingAIADE {
       '/v1/ade/extract',
       multipartFormRequestOptions({ body: apiBody, ...extractOptions }, this),
     );
-    if (saveTo)
+    if (saveTo) {
+      const filename = getInputFilename(apiBody.markdown, apiBody.markdown_url);
       return promise._thenUnwrap((data) => {
-        fs.writeFileSync(saveTo, JSON.stringify(data, null, 2));
+        saveResponse(saveTo, filename, 'extract', data);
         return data;
       });
+    }
     return promise;
   }
 
@@ -291,11 +331,13 @@ export class LandingAIADE {
       '/v1/ade/parse',
       multipartFormRequestOptions({ body: apiBody, ...options }, this),
     );
-    if (saveTo)
+    if (saveTo) {
+      const filename = getInputFilename(apiBody.document, apiBody.document_url);
       return promise._thenUnwrap((data) => {
-        fs.writeFileSync(saveTo, JSON.stringify(data, null, 2));
+        saveResponse(saveTo, filename, 'parse', data);
         return data;
       });
+    }
     return promise;
   }
 
@@ -318,11 +360,13 @@ export class LandingAIADE {
       '/v1/ade/split',
       multipartFormRequestOptions({ body: apiBody, ...options }, this),
     );
-    if (saveTo)
+    if (saveTo) {
+      const filename = getInputFilename(apiBody.markdown, apiBody.markdownUrl);
       return promise._thenUnwrap((data) => {
-        fs.writeFileSync(saveTo, JSON.stringify(data, null, 2));
+        saveResponse(saveTo, filename, 'split', data);
         return data;
       });
+    }
     return promise;
   }
 
