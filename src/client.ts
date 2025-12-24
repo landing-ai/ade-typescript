@@ -1,5 +1,7 @@
 // File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
 
+import * as fs from 'fs';
+import * as path from 'path';
 import type { RequestInit, RequestInfo, BodyInit } from './internal/builtin-types';
 import type { HTTPMethod, PromiseOrValue, MergedRequestInit, FinalizedRequestInit } from './internal/types';
 import { uuid4 } from './internal/utils/uuid';
@@ -36,7 +38,7 @@ import {
 import { type Fetch } from './internal/builtin-types';
 import { HeadersLike, NullableHeaders, buildHeaders } from './internal/headers';
 import { FinalRequestOptions, RequestOptions } from './internal/request-options';
-import { multipartFormRequestOptions } from './internal/uploads';
+import { multipartFormRequestOptions, getName } from './internal/uploads';
 import { readEnv } from './internal/utils/env';
 import {
   type LogLevel,
@@ -52,6 +54,45 @@ const environments = {
   eu: 'https://api.va.eu-west-1.landing.ai',
 };
 type Environment = keyof typeof environments;
+
+/**
+ * Extract base filename (without extension) from file or URL input.
+ * @internal
+ */
+export function _getInputFilename(
+  fileInput: Uploads.Uploadable | string | null | undefined,
+  urlInput: string | null | undefined,
+): string {
+  if (fileInput != null) {
+    if (typeof fileInput === 'string') {
+      return 'output';
+    }
+    const name = getName(fileInput);
+    if (name) {
+      return path.parse(name).name;
+    }
+  }
+  if (urlInput != null) {
+    try {
+      const pathname = new URL(urlInput).pathname;
+      const stem = path.parse(pathname).name;
+      return stem || 'url_input';
+    } catch {
+      return 'url_input';
+    }
+  }
+  return 'output';
+}
+
+/**
+ * Save API response to a JSON file in the specified folder.
+ * @internal
+ */
+export function _saveResponse(saveTo: string, filename: string, methodName: string, result: unknown): void {
+  fs.mkdirSync(saveTo, { recursive: true });
+  const outputPath = path.join(saveTo, `${filename}_${methodName}_output.json`);
+  fs.writeFileSync(outputPath, JSON.stringify(result, null, 2));
+}
 
 export interface ClientOptions {
   /**
@@ -254,18 +295,23 @@ export class LandingAIADE {
    *     `https://api.va.eu-west-1.landing.ai/v1/ade/extract`.
    */
   extract(
-    body: TopLevelAPI.ExtractParams,
+    body: TopLevelAPI.ExtractParams & { saveTo?: string },
     options?: RequestOptions,
   ): APIPromise<TopLevelAPI.ExtractResponse> {
-    // Exclude runtime tag header from extract calls
-    const extractOptions = {
-      ...options,
-      headers: {
-        ...options?.headers,
-        runtime_tag: null,
-      },
-    };
-    return this.post('/v1/ade/extract', multipartFormRequestOptions({ body, ...extractOptions }, this));
+    const { saveTo, ...apiBody } = body;
+    const extractOptions = { ...options, headers: { ...options?.headers, runtime_tag: null } };
+    const promise = this.post<TopLevelAPI.ExtractResponse>(
+      '/v1/ade/extract',
+      multipartFormRequestOptions({ body: apiBody, ...extractOptions }, this),
+    );
+    if (saveTo) {
+      const filename = _getInputFilename(apiBody.markdown, apiBody.markdown_url);
+      return promise._thenUnwrap((data) => {
+        _saveResponse(saveTo, filename, 'extract', data);
+        return data;
+      });
+    }
+    return promise;
   }
 
   /**
@@ -278,8 +324,23 @@ export class LandingAIADE {
    *
    *     `https://api.va.eu-west-1.landing.ai/v1/ade/parse`.
    */
-  parse(body: TopLevelAPI.ParseParams, options?: RequestOptions): APIPromise<TopLevelAPI.ParseResponse> {
-    return this.post('/v1/ade/parse', multipartFormRequestOptions({ body, ...options }, this));
+  parse(
+    body: TopLevelAPI.ParseParams & { saveTo?: string },
+    options?: RequestOptions,
+  ): APIPromise<TopLevelAPI.ParseResponse> {
+    const { saveTo, ...apiBody } = body;
+    const promise = this.post<TopLevelAPI.ParseResponse>(
+      '/v1/ade/parse',
+      multipartFormRequestOptions({ body: apiBody, ...options }, this),
+    );
+    if (saveTo) {
+      const filename = _getInputFilename(apiBody.document, apiBody.document_url);
+      return promise._thenUnwrap((data) => {
+        _saveResponse(saveTo, filename, 'parse', data);
+        return data;
+      });
+    }
+    return promise;
   }
 
   /**
@@ -292,8 +353,23 @@ export class LandingAIADE {
    *
    *     `https://api.va.eu-west-1.landing.ai/v1/ade/split`.
    */
-  split(body: TopLevelAPI.SplitParams, options?: RequestOptions): APIPromise<TopLevelAPI.SplitResponse> {
-    return this.post('/v1/ade/split', multipartFormRequestOptions({ body, ...options }, this));
+  split(
+    body: TopLevelAPI.SplitParams & { saveTo?: string },
+    options?: RequestOptions,
+  ): APIPromise<TopLevelAPI.SplitResponse> {
+    const { saveTo, ...apiBody } = body;
+    const promise = this.post<TopLevelAPI.SplitResponse>(
+      '/v1/ade/split',
+      multipartFormRequestOptions({ body: apiBody, ...options }, this),
+    );
+    if (saveTo) {
+      const filename = _getInputFilename(apiBody.markdown, apiBody.markdownUrl);
+      return promise._thenUnwrap((data) => {
+        _saveResponse(saveTo, filename, 'split', data);
+        return data;
+      });
+    }
+    return promise;
   }
 
   protected defaultQuery(): Record<string, string | undefined> | undefined {
