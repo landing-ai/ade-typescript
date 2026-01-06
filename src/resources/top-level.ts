@@ -61,7 +61,9 @@ export interface ParseResponse {
 
   splits: Array<ParseResponse.Split>;
 
-  grounding?: { [key: string]: ParseResponse.Grounding };
+  grounding?: {
+    [key: string]: ParseResponse.ParseResponseGrounding | ParseResponse.ParseResponseTableCellGrounding;
+  };
 }
 
 export namespace ParseResponse {
@@ -95,7 +97,7 @@ export namespace ParseResponse {
     pages: Array<number>;
   }
 
-  export interface Grounding {
+  export interface ParseResponseGrounding {
     box: Shared.ParseGroundingBox;
 
     page: number;
@@ -117,6 +119,46 @@ export namespace ParseResponse {
       | 'chunkKeyValue'
       | 'table'
       | 'tableCell';
+  }
+
+  export interface ParseResponseTableCellGrounding {
+    box: Shared.ParseGroundingBox;
+
+    page: number;
+
+    type:
+      | 'chunkLogo'
+      | 'chunkCard'
+      | 'chunkAttestation'
+      | 'chunkScanCode'
+      | 'chunkForm'
+      | 'chunkTable'
+      | 'chunkFigure'
+      | 'chunkText'
+      | 'chunkMarginalia'
+      | 'chunkTitle'
+      | 'chunkPageHeader'
+      | 'chunkPageFooter'
+      | 'chunkPageNumber'
+      | 'chunkKeyValue'
+      | 'table'
+      | 'tableCell';
+
+    position?: ParseResponseTableCellGrounding.Position | null;
+  }
+
+  export namespace ParseResponseTableCellGrounding {
+    export interface Position {
+      chunk_id: string;
+
+      col: number;
+
+      colspan: number;
+
+      row: number;
+
+      rowspan: number;
+    }
   }
 }
 
