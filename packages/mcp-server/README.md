@@ -56,7 +56,7 @@ If you use Claude Code, you can install the MCP server by running the command be
 environment variables in Claude Code's `.claude.json`, which can be found in your home directory.
 
 ```
-claude mcp add --transport stdio LandingAI_ade_api --env VISION_AGENT_API_KEY="Your VISION_AGENT_API_KEY here." -- npx -y landingai-ade-mcp
+claude mcp add landingai_ade_mcp_api --env VISION_AGENT_API_KEY="Your VISION_AGENT_API_KEY here." -- npx -y landingai-ade-mcp
 ```
 
 ## Code Mode
