@@ -87,7 +87,11 @@ describe('instantiate client', () => {
         error: jest.fn(),
       };
 
-      const client = new LandingAIADE({ logger: logger, logLevel: 'debug', apikey: 'My Apikey' });
+      const client = new LandingAIADE({
+        logger: logger,
+        logLevel: 'debug',
+        apikey: 'My Apikey',
+      });
 
       await forceAPIResponseForClient(client);
       expect(debugMock).toHaveBeenCalled();
@@ -107,7 +111,11 @@ describe('instantiate client', () => {
         error: jest.fn(),
       };
 
-      const client = new LandingAIADE({ logger: logger, logLevel: 'info', apikey: 'My Apikey' });
+      const client = new LandingAIADE({
+        logger: logger,
+        logLevel: 'info',
+        apikey: 'My Apikey',
+      });
 
       await forceAPIResponseForClient(client);
       expect(debugMock).not.toHaveBeenCalled();
@@ -157,7 +165,11 @@ describe('instantiate client', () => {
       };
 
       process.env['LANDINGAI_ADE_LOG'] = 'debug';
-      const client = new LandingAIADE({ logger: logger, logLevel: 'off', apikey: 'My Apikey' });
+      const client = new LandingAIADE({
+        logger: logger,
+        logLevel: 'off',
+        apikey: 'My Apikey',
+      });
 
       await forceAPIResponseForClient(client);
       expect(debugMock).not.toHaveBeenCalled();
@@ -173,7 +185,11 @@ describe('instantiate client', () => {
       };
 
       process.env['LANDINGAI_ADE_LOG'] = 'not a log level';
-      const client = new LandingAIADE({ logger: logger, logLevel: 'debug', apikey: 'My Apikey' });
+      const client = new LandingAIADE({
+        logger: logger,
+        logLevel: 'debug',
+        apikey: 'My Apikey',
+      });
       expect(client.logLevel).toBe('debug');
       expect(warnMock).not.toHaveBeenCalled();
     });
@@ -324,7 +340,11 @@ describe('instantiate client', () => {
         `"Ambiguous URL; The \`baseURL\` option (or LANDINGAI_ADE_BASE_URL env var) and the \`environment\` option are given. If you want to use the environment you must pass baseURL: null"`,
       );
 
-      const client = new LandingAIADE({ apikey: 'My Apikey', baseURL: null, environment: 'production' });
+      const client = new LandingAIADE({
+        apikey: 'My Apikey',
+        baseURL: null,
+        environment: 'production',
+      });
       expect(client.baseURL).toEqual('https://api.va.landing.ai');
     });
 
@@ -556,7 +576,11 @@ describe('retries', () => {
       return new Response(JSON.stringify({ a: 1 }), { headers: { 'Content-Type': 'application/json' } });
     };
 
-    const client = new LandingAIADE({ apikey: 'My Apikey', timeout: 10, fetch: testFetch });
+    const client = new LandingAIADE({
+      apikey: 'My Apikey',
+      timeout: 10,
+      fetch: testFetch,
+    });
 
     expect(await client.request({ path: '/foo', method: 'get' })).toEqual({ a: 1 });
     expect(count).toEqual(2);
@@ -586,7 +610,11 @@ describe('retries', () => {
       return new Response(JSON.stringify({ a: 1 }), { headers: { 'Content-Type': 'application/json' } });
     };
 
-    const client = new LandingAIADE({ apikey: 'My Apikey', fetch: testFetch, maxRetries: 4 });
+    const client = new LandingAIADE({
+      apikey: 'My Apikey',
+      fetch: testFetch,
+      maxRetries: 4,
+    });
 
     expect(await client.request({ path: '/foo', method: 'get' })).toEqual({ a: 1 });
 
@@ -610,7 +638,11 @@ describe('retries', () => {
       capturedRequest = init;
       return new Response(JSON.stringify({ a: 1 }), { headers: { 'Content-Type': 'application/json' } });
     };
-    const client = new LandingAIADE({ apikey: 'My Apikey', fetch: testFetch, maxRetries: 4 });
+    const client = new LandingAIADE({
+      apikey: 'My Apikey',
+      fetch: testFetch,
+      maxRetries: 4,
+    });
 
     expect(
       await client.request({
@@ -672,7 +704,11 @@ describe('retries', () => {
       capturedRequest = init;
       return new Response(JSON.stringify({ a: 1 }), { headers: { 'Content-Type': 'application/json' } });
     };
-    const client = new LandingAIADE({ apikey: 'My Apikey', fetch: testFetch, maxRetries: 4 });
+    const client = new LandingAIADE({
+      apikey: 'My Apikey',
+      fetch: testFetch,
+      maxRetries: 4,
+    });
 
     expect(
       await client.request({

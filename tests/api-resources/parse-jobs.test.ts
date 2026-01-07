@@ -37,7 +37,11 @@ describe('resource parseJobs', () => {
     // ensure the request options are being passed correctly by passing an invalid HTTP method in order to cause an error
     await expect(
       client.parseJobs.list(
-        { page: 0, pageSize: 1, status: 'cancelled' },
+        {
+          page: 0,
+          pageSize: 1,
+          status: 'cancelled',
+        },
         { path: '/_stainless_unknown_path' },
       ),
     ).rejects.toThrow(LandingAIADE.NotFoundError);
