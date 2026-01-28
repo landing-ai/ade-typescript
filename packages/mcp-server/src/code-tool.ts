@@ -2,7 +2,7 @@
 
 import { McpTool, Metadata, ToolCallResult, asErrorResult, asTextContentResult } from './types';
 import { Tool } from '@modelcontextprotocol/sdk/types.js';
-import { readEnv, readEnvOrError } from './server';
+import { readEnv, requireValue } from './server';
 import { WorkerInput, WorkerOutput } from './code-tool-types';
 import { LandingAIADE } from 'landingai-ade';
 
@@ -71,7 +71,10 @@ export function codeTool(): McpTool {
         ...(stainlessAPIKey && { Authorization: stainlessAPIKey }),
         'Content-Type': 'application/json',
         client_envs: JSON.stringify({
-          VISION_AGENT_API_KEY: readEnvOrError('VISION_AGENT_API_KEY') ?? client.apikey ?? undefined,
+          VISION_AGENT_API_KEY: requireValue(
+            readEnv('VISION_AGENT_API_KEY') ?? client.apikey,
+            'set VISION_AGENT_API_KEY environment variable or provide apikey client option',
+          ),
           LANDINGAI_ADE_BASE_URL: readEnv('LANDINGAI_ADE_BASE_URL') ?? client.baseURL ?? undefined,
         }),
       },
