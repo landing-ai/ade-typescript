@@ -1,5 +1,53 @@
 # Changelog
 
+## 2.0.0 (2026-01-29)
+
+Full Changelog: [v1.4.0...v2.0.0](https://github.com/landing-ai/ade-typescript/compare/v1.4.0...v2.0.0)
+
+### ⚠ BREAKING CHANGES
+
+* **mcp:** remove deprecated tool schemes
+* **mcp:** **Migration:** To migrate, simply modify the command used to invoke the MCP server. Currently, the only supported tool scheme is code mode. Now, starting the server with just `node /path/to/mcp/server` or `npx package-name` will invoke code tools: changing your command to one of these is likely all you will need to do.
+
+### Features
+
+* **api:** api update ([13d9b12](https://github.com/landing-ai/ade-typescript/commit/13d9b12cd084034831bacb7242f12f236c97fedb))
+
+
+### Bug Fixes
+
+* **docs:** fix mcp installation instructions for remote servers ([68cd8cf](https://github.com/landing-ai/ade-typescript/commit/68cd8cfb4c449545beac1719a8bd46c45938390e))
+* **mcp:** allow falling back for required env variables ([962add1](https://github.com/landing-ai/ade-typescript/commit/962add1bc77b85af5f4778f52909fda7b1ac42cf))
+* **mcp:** correct code tool api output types ([be27668](https://github.com/landing-ai/ade-typescript/commit/be27668858ca95a0dd7f78c47bb07edc8f8ebbf6))
+* **mcp:** fix env parsing ([6da0ad5](https://github.com/landing-ai/ade-typescript/commit/6da0ad50d286218ca99d40bbc4f6adbb2632cc56))
+* **mcp:** fix options parsing ([90ce5ef](https://github.com/landing-ai/ade-typescript/commit/90ce5eff6f3b9e4ad7803205e3e0f3861a953d67))
+* **mcp:** update code tool prompt ([f62ca61](https://github.com/landing-ai/ade-typescript/commit/f62ca61ed6ff3d3d2aa4c9eb54c6c7c7488c9708))
+
+
+### Chores
+
+* break long lines in snippets into multiline ([30a9864](https://github.com/landing-ai/ade-typescript/commit/30a98641833a064274c1005671de280153a99d33))
+* **ci:** upgrade `actions/github-script` ([c95bb45](https://github.com/landing-ai/ade-typescript/commit/c95bb451133a0124009ad9bb9c47d7dc9c3e00e9))
+* **internal:** codegen related update ([51102db](https://github.com/landing-ai/ade-typescript/commit/51102db9f38f9fdb210bed551cb4fae06c700da4))
+* **internal:** codegen related update ([d26d77a](https://github.com/landing-ai/ade-typescript/commit/d26d77aeb6b8f54f3c33727331e77507a010f8a2))
+* **internal:** codegen related update ([6305f1e](https://github.com/landing-ai/ade-typescript/commit/6305f1ef8cd5501a10f867b9aa2e40d1de0c0e82))
+* **internal:** codegen related update ([26053e4](https://github.com/landing-ai/ade-typescript/commit/26053e428c6588c0eadd5aa18354c1c0eba1472b))
+* **internal:** codegen related update ([d1feaca](https://github.com/landing-ai/ade-typescript/commit/d1feaca85ea299eced09992ab98e3874308fa596))
+* **internal:** codegen related update ([d0199e0](https://github.com/landing-ai/ade-typescript/commit/d0199e0486542276a775d0bcd67100e4a5be988d))
+* **internal:** update `actions/checkout` version ([63a5f11](https://github.com/landing-ai/ade-typescript/commit/63a5f1198efdbf77c581264eb73acdd6de01de62))
+* **internal:** update lock file ([23e8cce](https://github.com/landing-ai/ade-typescript/commit/23e8cce048c2cf01d8a0a98767a74d4fcb04170c))
+* **internal:** upgrade babel, qs, js-yaml ([cccc966](https://github.com/landing-ai/ade-typescript/commit/cccc96679c38ad421d3efc78a959672d3c568636))
+* **mcp:** add intent param to execute tool ([1d8f9ed](https://github.com/landing-ai/ade-typescript/commit/1d8f9edf996cb361babcb721d1c46e3dcc8849b4))
+* **mcp:** pass intent param to execute handler ([bd122d9](https://github.com/landing-ai/ade-typescript/commit/bd122d9d01ca9d9834b986bbf41b1c584301e648))
+* **mcp:** remove deprecated tool schemes ([2170783](https://github.com/landing-ai/ade-typescript/commit/21707831b7723dfdcb40b21db960be28994949f5))
+* **mcp:** up tsconfig lib version to es2022 ([84cc9a5](https://github.com/landing-ai/ade-typescript/commit/84cc9a5a906f47f4fce9d69a40c7a3dad5c5d3ed))
+* **mcp:** upgrade dependencies ([e59cf01](https://github.com/landing-ai/ade-typescript/commit/e59cf01abc6520e9535e36ae4dbf0490d33733ab))
+
+
+### Documentation
+
+* prominently feature MCP server setup in root SDK readmes ([fd39752](https://github.com/landing-ai/ade-typescript/commit/fd397526be86f090251a56248fb0f537491854e9))
+
 ## 1.4.0 (2025-12-18)
 
 Full Changelog: [v1.3.0...v1.4.0](https://github.com/landing-ai/ade-typescript/compare/v1.3.0...v1.4.0)
