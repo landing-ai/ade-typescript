@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.0.1 (2026-01-31)
+
+Full Changelog: [v2.0.0...v2.0.1](https://github.com/landing-ai/ade-typescript/compare/v2.0.0...v2.0.1)
+
+### Bug Fixes
+
+* **mcp:** do not fallback on baseUrl if environment env variable is set ([6502ce6](https://github.com/landing-ai/ade-typescript/commit/6502ce6993f326445d6ecf3e2b5c0855cc297251))
+
 ## 2.0.0 (2026-01-29)
 
 Full Changelog: [v1.4.0...v2.0.0](https://github.com/landing-ai/ade-typescript/compare/v1.4.0...v2.0.0)
