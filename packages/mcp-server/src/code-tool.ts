@@ -75,7 +75,10 @@ export function codeTool(): McpTool {
             readEnv('VISION_AGENT_API_KEY') ?? client.apikey,
             'set VISION_AGENT_API_KEY environment variable or provide apikey client option',
           ),
-          LANDINGAI_ADE_BASE_URL: readEnv('LANDINGAI_ADE_BASE_URL') ?? client.baseURL ?? undefined,
+          LANDINGAI_ADE_BASE_URL:
+            readEnv('LANDINGAI_ADE_BASE_URL') ?? readEnv('LANDINGAI_ADE_ENVIRONMENT') ?
+              undefined
+            : client.baseURL ?? undefined,
         }),
       },
       body: JSON.stringify({
