@@ -117,7 +117,7 @@ For advanced type-safe schemas with full TypeScript inference, see [Using Zod fo
 ### Split
 Split parsed documents into separate sections based on classification rules and identifiers.
 
-```
+```js
 import LandingAIADE from 'landingai-ade';
 import fs from 'fs';
 
@@ -146,7 +146,7 @@ const splitClass = [
 
 // Split using the Markdown string from parse response
 const splitResponse = await client.split({
-  split_class: splitClass,
+  split_class: JSON.stringify(splitClass) as any,
   markdown: parseResponse.markdown, // Pass Markdown string directly
   model: 'split-latest',
 });
