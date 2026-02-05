@@ -442,7 +442,7 @@ export interface ParseJobCreateParams {
    * parameter. Set the parameter to page to split documents at the page level. The
    * splits object in the API output will contain a set of data for each page.
    */
-  split?: 'page' | null;
+  split?: 'page' | 'section' | null;
 }
 
 export interface ParseJobListParams {
