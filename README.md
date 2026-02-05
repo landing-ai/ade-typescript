@@ -113,6 +113,52 @@ const response = await client.extract({
 
 For advanced type-safe schemas with full TypeScript inference, see [Using Zod for Type-Safe Schemas](#using-zod-for-type-safe-schemas).
 
+
+### Split
+Split parsed documents into separate sections based on classification rules and identifiers.
+
+```js
+import LandingAIADE from 'landingai-ade';
+import fs from 'fs';
+
+const client = new LandingAIADE();
+
+// Parse the document
+const parseResponse = await client.parse({
+  document: fs.createReadStream('/path/to/document.pdf'),
+  model: 'dpt-2-latest',
+});
+
+// Define Split Rules
+const splitClass = [
+  {
+    name: 'Bank Statement',
+    description:
+      'Document from a bank that summarizes all account activity over a period of time.',
+  },
+  {
+    name: 'Pay Stub',
+    description:
+      "Document that details an employee's earnings, deductions, and net pay for a specific pay period.",
+    identifier: 'Pay Stub Date',
+  },
+];
+
+// Split using the Markdown string from parse response
+const splitResponse = await client.split({
+  split_class: JSON.stringify(splitClass) as any,
+  markdown: parseResponse.markdown, // Pass Markdown string directly
+  model: 'split-latest',
+});
+
+// Access the splits
+for (const split of splitResponse.splits) {
+  console.log(`Classification: ${split.classification}`);
+  console.log(`Identifier: ${split.identifier}`);
+  console.log(`Pages: ${split.pages}`);
+}
+```
+
 ### Request & Response types
 
 This library includes TypeScript definitions for all request params and response fields. You may import and use them like so:
