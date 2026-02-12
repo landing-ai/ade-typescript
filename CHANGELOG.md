@@ -1,5 +1,33 @@
 # Changelog
 
+## 2.1.0 (2026-02-12)
+
+Full Changelog: [v2.0.1...v2.1.0](https://github.com/landing-ai/ade-typescript/compare/v2.0.1...v2.1.0)
+
+### Features
+
+* **api:** api update ([f226c81](https://github.com/landing-ai/ade-typescript/commit/f226c8153e7a327cb17453f30b0cf124149e099d))
+* **mcp:** add initial server instructions ([9637e2b](https://github.com/landing-ai/ade-typescript/commit/9637e2b345b4cb1e186fa1461dad05a01d4f75bc))
+
+
+### Bug Fixes
+
+* **client:** avoid memory leak with abort signals ([71e4f45](https://github.com/landing-ai/ade-typescript/commit/71e4f451bad8a84377ce0a18e9ad558785d0bb91))
+* **client:** avoid removing abort listener too early ([fc18c1c](https://github.com/landing-ai/ade-typescript/commit/fc18c1c3f7461531b7ed9c17aa60daa1c50b356b))
+* **docs:** fix split example with JSON.stringify workaround ([bfe03a1](https://github.com/landing-ai/ade-typescript/commit/bfe03a15e605ec82bc34b33fe8069e4bcb3edde2))
+
+
+### Chores
+
+* **client:** do not parse responses with empty content-length ([11d7de0](https://github.com/landing-ai/ade-typescript/commit/11d7de08dbb1e9dc1e47b8e4890d907420ab544c))
+* **client:** restructure abort controller binding ([2756931](https://github.com/landing-ai/ade-typescript/commit/275693176957ed1ade35ef5537dcf26735e907af))
+* **internal:** add health check to MCP server when running in HTTP mode ([2c1d9a6](https://github.com/landing-ai/ade-typescript/commit/2c1d9a60503bf07211a2d41e439a34a61268fa81))
+* **internal:** allow basic filtering of methods allowed for MCP code mode ([8707a79](https://github.com/landing-ai/ade-typescript/commit/8707a79e496ff54b2cc8c26f9b9572240e8ac517))
+* **internal:** always generate MCP server dockerfiles and upgrade associated dependencies ([59895a0](https://github.com/landing-ai/ade-typescript/commit/59895a028a0f7e497cf08ab03d2efbea6a073e05))
+* **internal:** avoid type checking errors with ts-reset ([a2f5551](https://github.com/landing-ai/ade-typescript/commit/a2f555110f00b5821aa7076f56c12ffb7a9a7c4d))
+* **internal:** refactor flag parsing for MCP servers and add debug flag ([f835550](https://github.com/landing-ai/ade-typescript/commit/f83555096b55653be8777ae7e1c0f6f0e22da235))
+* **internal:** support oauth authorization code flow for MCP servers ([e66b43d](https://github.com/landing-ai/ade-typescript/commit/e66b43dea81089879b0784423b343ee76058c2b0))
+
 ## 2.0.1 (2026-01-31)
 
 Full Changelog: [v2.0.0...v2.0.1](https://github.com/landing-ai/ade-typescript/compare/v2.0.0...v2.0.1)
