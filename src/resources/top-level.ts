@@ -119,6 +119,20 @@ export namespace ParseResponse {
       | 'chunkKeyValue'
       | 'table'
       | 'tableCell';
+
+    confidence?: number | null;
+
+    low_confidence_spans?: Array<ParseResponseGrounding.LowConfidenceSpan>;
+  }
+
+  export namespace ParseResponseGrounding {
+    export interface LowConfidenceSpan {
+      confidence: number;
+
+      span: Array<unknown>;
+
+      text: string;
+    }
   }
 
   export interface ParseResponseTableCellGrounding {
@@ -143,6 +157,8 @@ export namespace ParseResponse {
       | 'chunkKeyValue'
       | 'table'
       | 'tableCell';
+
+    confidence?: number | null;
 
     position?: ParseResponseTableCellGrounding.Position | null;
   }
@@ -267,7 +283,7 @@ export interface ParseParams {
    * parameter. Set the parameter to page to split documents at the page level. The
    * splits object in the API output will contain a set of data for each page.
    */
-  split?: 'page' | 'section' | null;
+  split?: 'page' | null;
 }
 
 export interface SplitParams {
