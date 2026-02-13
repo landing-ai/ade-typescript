@@ -242,9 +242,9 @@ export interface ExtractParams {
   schema: string;
 
   /**
-   * The Markdown file or Markdown content to extract data from.
+   * Markdown content to extract data from.
    */
-  markdown?: Uploadable | string | null;
+  markdown?: string | null;
 
   /**
    * The URL to the Markdown file to extract data from.
@@ -294,9 +294,9 @@ export interface SplitParams {
   split_class: Array<SplitParams.SplitClass>;
 
   /**
-   * The Markdown file or Markdown content to split.
+   * Markdown content to split.
    */
-  markdown?: Uploadable | string | null;
+  markdown?: string | null;
 
   /**
    * The URL to the Markdown file to split.

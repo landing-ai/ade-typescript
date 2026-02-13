@@ -36,7 +36,7 @@ import {
 import { type Fetch } from './internal/builtin-types';
 import { HeadersLike, NullableHeaders, buildHeaders } from './internal/headers';
 import { FinalRequestOptions, RequestOptions } from './internal/request-options';
-import { multipartFormRequestOptions } from './internal/uploads';
+import { maybeMultipartFormRequestOptions, multipartFormRequestOptions } from './internal/uploads';
 import { readEnv } from './internal/utils/env';
 import {
   type LogLevel,
@@ -257,7 +257,7 @@ export class LandingAIADE {
     body: TopLevelAPI.ExtractParams,
     options?: RequestOptions,
   ): APIPromise<TopLevelAPI.ExtractResponse> {
-    return this.post('/v1/ade/extract', multipartFormRequestOptions({ body, ...options }, this));
+    return this.post('/v1/ade/extract', maybeMultipartFormRequestOptions({ body, ...options }, this));
   }
 
   /**
@@ -285,7 +285,7 @@ export class LandingAIADE {
    *     `https://api.va.eu-west-1.landing.ai/v1/ade/split`.
    */
   split(body: TopLevelAPI.SplitParams, options?: RequestOptions): APIPromise<TopLevelAPI.SplitResponse> {
-    return this.post('/v1/ade/split', multipartFormRequestOptions({ body, ...options }, this));
+    return this.post('/v1/ade/split', maybeMultipartFormRequestOptions({ body, ...options }, this));
   }
 
   protected defaultQuery(): Record<string, string | undefined> | undefined {
