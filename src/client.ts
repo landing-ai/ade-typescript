@@ -38,7 +38,7 @@ import {
 import { type Fetch } from './internal/builtin-types';
 import { HeadersLike, NullableHeaders, buildHeaders } from './internal/headers';
 import { FinalRequestOptions, RequestOptions } from './internal/request-options';
-import { maybeMultipartFormRequestOptions, multipartFormRequestOptions, getName } from './internal/uploads';
+import { multipartFormRequestOptions, getName } from './internal/uploads';
 import { readEnv } from './internal/utils/env';
 import {
   type LogLevel,
@@ -302,7 +302,7 @@ export class LandingAIADE {
     const extractOptions = { ...options, headers: { ...options?.headers, runtime_tag: null } };
     const promise = this.post<TopLevelAPI.ExtractResponse>(
       '/v1/ade/extract',
-      maybeMultipartFormRequestOptions({ body: apiBody, ...extractOptions }, this),
+      multipartFormRequestOptions({ body: apiBody, ...extractOptions }, this),
     );
     if (saveTo) {
       const filename = _getInputFilename(apiBody.markdown, apiBody.markdown_url);
@@ -360,7 +360,7 @@ export class LandingAIADE {
     const { saveTo, ...apiBody } = body;
     const promise = this.post<TopLevelAPI.SplitResponse>(
       '/v1/ade/split',
-      maybeMultipartFormRequestOptions({ body: apiBody, ...options }, this),
+      multipartFormRequestOptions({ body: apiBody, ...options }, this),
     );
     if (saveTo) {
       const filename = _getInputFilename(apiBody.markdown, apiBody.markdownUrl);
