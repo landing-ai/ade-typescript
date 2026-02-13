@@ -1,6 +1,6 @@
 // File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
 
-import LandingAIADE from 'landingai-ade';
+import LandingAIADE, { toFile } from 'landingai-ade';
 
 const client = new LandingAIADE({
   apikey: 'My Apikey',
@@ -24,7 +24,7 @@ describe('top level methods', () => {
   test.skip('extract: required and optional params', async () => {
     const response = await client.extract({
       schema: 'schema',
-      markdown: 'markdown',
+      markdown: await toFile(Buffer.from('# my file contents'), 'README.md'),
       markdown_url: 'markdown_url',
       model: 'model',
     });
@@ -64,7 +64,7 @@ describe('top level methods', () => {
           identifier: 'identifier',
         },
       ],
-      markdown: 'markdown',
+      markdown: await toFile(Buffer.from('# my file contents'), 'README.md'),
       markdownUrl: 'markdownUrl',
       model: 'model',
     });
