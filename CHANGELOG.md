@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.2.0 (2026-02-14)
+
+Full Changelog: [v2.1.0...v2.2.0](https://github.com/landing-ai/ade-typescript/compare/v2.1.0...v2.2.0)
+
+### Features
+
+* **api:** improve multipart openapispec ([34ebd93](https://github.com/landing-ai/ade-typescript/commit/34ebd93c57b94b9d4eadaa82a8f829df5dc86d04))
+* **api:** manual updates ([c5d9d9c](https://github.com/landing-ai/ade-typescript/commit/c5d9d9c8d8b0d5e123c4e1be6fc2dd71c694beeb))
+
+
+### Chores
+
+* **internal:** improve layout of generated MCP server files ([2a54138](https://github.com/landing-ai/ade-typescript/commit/2a5413897f66836852354bbdec63e31870931d81))
+* **mcp:** forward STAINLESS_API_KEY to docs search endpoint ([5fbe6c6](https://github.com/landing-ai/ade-typescript/commit/5fbe6c6659b94b1037b11fea7262a0b1a7e2d1a3))
+
 ## 2.1.0 (2026-02-13)
 
 Full Changelog: [v2.0.1...v2.1.0](https://github.com/landing-ai/ade-typescript/compare/v2.0.1...v2.1.0)
