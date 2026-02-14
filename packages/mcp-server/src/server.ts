@@ -56,7 +56,7 @@ export const newMcpServer = async () =>
   new McpServer(
     {
       name: 'LandingAI_ade_api',
-      version: '2.1.0',
+      version: '2.2.0',
     },
     {
       instructions: await getInstructions(),
