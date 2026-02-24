@@ -60,7 +60,7 @@ $ yarn link landingai-ade
 # With pnpm
 $ pnpm link --global
 $ cd ../my-package
-$ pnpm link -—global landingai-ade
+$ pnpm link --global landingai-ade
 ```
 
 ## Running tests
