@@ -1,5 +1,35 @@
 # Changelog
 
+## 2.3.0 (2026-02-27)
+
+Full Changelog: [v2.2.0...v2.3.0](https://github.com/landing-ai/ade-typescript/compare/v2.2.0...v2.3.0)
+
+### Features
+
+* **mcp:** add an option to disable code tool ([6bf5d29](https://github.com/landing-ai/ade-typescript/commit/6bf5d295c4d9c0eec47cbda9ee3b4dd283b35a90))
+
+
+### Bug Fixes
+
+* **docs/contributing:** correct pnpm link command ([24fe113](https://github.com/landing-ai/ade-typescript/commit/24fe113a4f623f1fdfe2ca4709dcab8cdc92a4b5))
+* **mcp:** initialize SDK lazily to avoid failing the connection on init errors ([8be5ad0](https://github.com/landing-ai/ade-typescript/commit/8be5ad09975e8651dede7b03f697bc7be5343da1))
+* **mcp:** update prompt ([5f373a1](https://github.com/landing-ai/ade-typescript/commit/5f373a103aff24366b49fd6c121a98501e945320))
+
+
+### Chores
+
+* **internal/client:** fix form-urlencoded requests ([4f5400e](https://github.com/landing-ai/ade-typescript/commit/4f5400e4990301650a47e1197d4276f1a26aa57c))
+* **internal:** allow setting x-stainless-api-key header on mcp server requests ([380f4aa](https://github.com/landing-ai/ade-typescript/commit/380f4aab01a9bb587d8395547ab65cb40a56e1c5))
+* **internal:** cache fetch instruction calls in MCP server ([2347f55](https://github.com/landing-ai/ade-typescript/commit/2347f55f8dad6da7be09e31b8040ff3743c30c86))
+* **internal:** fix MCP Dockerfiles so they can be built without buildkit ([bc96cb3](https://github.com/landing-ai/ade-typescript/commit/bc96cb3229da871d2d12d6f657fb577185c98bb8))
+* **internal:** fix MCP Dockerfiles so they can be built without buildkit ([2cdc8ec](https://github.com/landing-ai/ade-typescript/commit/2cdc8eca2dad22e7a1c530311660770a6dffe9ad))
+* **internal:** make MCP code execution location configurable via a flag ([6536209](https://github.com/landing-ai/ade-typescript/commit/6536209b00efc115203d1d0bfd163e6d1fcc1a0b))
+* **internal:** move stringifyQuery implementation to internal function ([73cfd11](https://github.com/landing-ai/ade-typescript/commit/73cfd1112e21736700a17e44daa5de000d361219))
+* **internal:** remove mock server code ([33c575f](https://github.com/landing-ai/ade-typescript/commit/33c575f1c16e88dec56c0c0673e224af0ca214d5))
+* **internal:** upgrade @modelcontextprotocol/sdk and hono ([4ef10d6](https://github.com/landing-ai/ade-typescript/commit/4ef10d61261e58274c8ea7fb21409b89e1f11149))
+* **mcp:** correctly update version in sync with sdk ([2e22bda](https://github.com/landing-ai/ade-typescript/commit/2e22bdad2ffdfb2a8d1ad829ecad2174f053e432))
+* update mock server docs ([4069280](https://github.com/landing-ai/ade-typescript/commit/4069280b7a7cd0484fcad493a442c651c88697ee))
+
 ## 2.2.0 (2026-02-14)
 
 Full Changelog: [v2.1.0...v2.2.0](https://github.com/landing-ai/ade-typescript/compare/v2.1.0...v2.2.0)
