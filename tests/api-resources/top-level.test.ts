@@ -8,7 +8,7 @@ const client = new LandingAIADE({
 });
 
 describe('top level methods', () => {
-  // Prism tests are disabled
+  // Mock server tests are disabled
   test.skip('extract: only required params', async () => {
     const responsePromise = client.extract({ schema: 'schema' });
     const rawResponse = await responsePromise.asResponse();
@@ -20,7 +20,7 @@ describe('top level methods', () => {
     expect(dataAndResponse.response).toBe(rawResponse);
   });
 
-  // Prism tests are disabled
+  // Mock server tests are disabled
   test.skip('extract: required and optional params', async () => {
     const response = await client.extract({
       schema: 'schema',
@@ -30,7 +30,7 @@ describe('top level methods', () => {
     });
   });
 
-  // Prism tests are disabled
+  // Mock server tests are disabled
   test.skip('parse', async () => {
     const responsePromise = client.parse({});
     const rawResponse = await responsePromise.asResponse();
@@ -42,7 +42,7 @@ describe('top level methods', () => {
     expect(dataAndResponse.response).toBe(rawResponse);
   });
 
-  // Prism tests are disabled
+  // Mock server tests are disabled
   test.skip('split: only required params', async () => {
     const responsePromise = client.split({ split_class: [{ name: 'name' }] });
     const rawResponse = await responsePromise.asResponse();
@@ -54,7 +54,7 @@ describe('top level methods', () => {
     expect(dataAndResponse.response).toBe(rawResponse);
   });
 
-  // Prism tests are disabled
+  // Mock server tests are disabled
   test.skip('split: required and optional params', async () => {
     const response = await client.split({
       split_class: [
