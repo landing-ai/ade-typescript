@@ -155,7 +155,7 @@ const remoteStainlessHandler = async ({
     headers: {
       ...(reqContext.stainlessApiKey && { Authorization: reqContext.stainlessApiKey }),
       'Content-Type': 'application/json',
-      client_envs: JSON.stringify({
+      'x-stainless-mcp-client-envs': JSON.stringify({
         VISION_AGENT_API_KEY: requireValue(
           readEnv('VISION_AGENT_API_KEY') ?? client.apikey,
           'set VISION_AGENT_API_KEY environment variable or provide apikey client option',
