@@ -24,7 +24,7 @@ describe('top level methods', () => {
   test.skip('extract: required and optional params', async () => {
     const response = await client.extract({
       schema: 'schema',
-      markdown: await toFile(Buffer.from('# my file contents'), 'README.md'),
+      markdown: await toFile(Buffer.from('Example data'), 'README.md'),
       markdown_url: 'markdown_url',
       model: 'model',
     });
@@ -64,7 +64,7 @@ describe('top level methods', () => {
           identifier: 'identifier',
         },
       ],
-      markdown: await toFile(Buffer.from('# my file contents'), 'README.md'),
+      markdown: await toFile(Buffer.from('Example data'), 'README.md'),
       markdownUrl: 'markdownUrl',
       model: 'model',
     });
