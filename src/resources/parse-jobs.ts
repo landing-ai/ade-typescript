@@ -459,6 +459,11 @@ export interface ParseJobCreateParams {
    * splits object in the API output will contain a set of data for each page.
    */
   split?: 'page' | null;
+
+  /**
+   * The password to use for parsing password-protected documents.
+   */
+  password?: string | null;
 }
 
 export interface ParseJobListParams {
