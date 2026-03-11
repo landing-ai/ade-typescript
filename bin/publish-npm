@@ -62,9 +62,9 @@ else
   TAG="latest"
 fi
 
-# Install OIDC compatible npm version
-npm install --prefix ../oidc/ npm@11.6.2
+# Upgrade to npm version that supports OIDC Trusted Publishing
+npm install -g npm@11.6.2
 
 # Publish with the appropriate tag
-export npm_config_registry='https://registry.npmjs.org'
-../oidc/node_modules/.bin/npm publish --tag "$TAG" --provenance
+# --provenance triggers OIDC authentication with npm Trusted Publishing
+npm publish --tag "$TAG" --provenance --access public
