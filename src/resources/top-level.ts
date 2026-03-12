@@ -256,6 +256,13 @@ export interface ExtractParams {
    * latest version.
    */
   model?: string | null;
+
+  /**
+   * If True, reject schemas with unsupported fields (HTTP 422). If False, prune
+   * unsupported fields and continue. Only applies to extract versions that support
+   * schema validation.
+   */
+  strict?: boolean;
 }
 
 export interface ParseParams {
@@ -277,6 +284,13 @@ export interface ParseParams {
    * The version of the model to use for parsing.
    */
   model?: string | null;
+
+  /**
+   * Password for encrypted document files. If the document is password-protected,
+   * provide the password to decrypt and process the document. Ignored for
+   * unencrypted documents.
+   */
+  password?: string | null;
 
   /**
    * If you want to split documents into smaller sections, include the split

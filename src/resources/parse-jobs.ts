@@ -454,6 +454,13 @@ export interface ParseJobCreateParams {
   output_save_url?: string | null;
 
   /**
+   * Password for encrypted document files. If the document is password-protected,
+   * provide the password to decrypt and process the document. Ignored for
+   * unencrypted documents.
+   */
+  password?: string | null;
+
+  /**
    * If you want to split documents into smaller sections, include the split
    * parameter. Set the parameter to page to split documents at the page level. The
    * splits object in the API output will contain a set of data for each page.
