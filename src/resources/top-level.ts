@@ -256,13 +256,6 @@ export interface ExtractParams {
    * latest version.
    */
   model?: string | null;
-
-  /**
-   * If True, reject schemas with unsupported fields (HTTP 422). If False, prune
-   * unsupported fields and continue. Only applies to extract versions that support
-   * schema validation.
-   */
-  strict?: boolean;
 }
 
 export interface ParseParams {
