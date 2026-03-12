@@ -1,5 +1,24 @@
 # Changelog
 
+## 2.4.0 (2026-03-12)
+
+Full Changelog: [v2.3.3...v2.4.0](https://github.com/landing-ai/ade-typescript/compare/v2.3.3...v2.4.0)
+
+### Features
+
+* **api:** api update ([2ec3fc2](https://github.com/landing-ai/ade-typescript/commit/2ec3fc25182cf52783553d7992be399610d47374))
+* **api:** api update ([23a3511](https://github.com/landing-ai/ade-typescript/commit/23a351185d38063aac921e18ab519e2a0a10e36f))
+
+
+### Bug Fixes
+
+* add --provenance flag to npm publish for OIDC auth ([#54](https://github.com/landing-ai/ade-typescript/issues/54)) ([910f11b](https://github.com/landing-ai/ade-typescript/commit/910f11b31244e715d199da170128a861cd9bb065))
+
+
+### Chores
+
+* **internal:** bump @modelcontextprotocol/sdk, @hono/node-server, and minimatch ([2999dae](https://github.com/landing-ai/ade-typescript/commit/2999dae9b05d375d597490c4165de0d1015af669))
+
 ## 2.3.3 (2026-03-11)
 
 Full Changelog: [v2.3.2...v2.3.3](https://github.com/landing-ai/ade-typescript/compare/v2.3.2...v2.3.3)
