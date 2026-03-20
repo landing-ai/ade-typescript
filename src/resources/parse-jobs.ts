@@ -428,6 +428,13 @@ export namespace ParseJobGetResponse {
 
 export interface ParseJobCreateParams {
   /**
+   * Optional JSON string mapping chunk types to custom parsing prompts. Only the
+   * `figure` key is supported, for example '{"figure":"Describe axis labels in
+   * detail."}'.
+   */
+  custom_prompts?: string | null;
+
+  /**
    * A file to be parsed. The file can be a PDF or an image. See the list of
    * supported file types here: https://docs.landing.ai/ade/ade-file-types. Either
    * this parameter or the `document_url` parameter must be provided.
