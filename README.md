@@ -1,6 +1,9 @@
-# LandingAI ADE TypeScript API Library
+# Agentic Document Extraction TypeScript Library
 
 [![NPM version](<https://img.shields.io/npm/v/landingai-ade.svg?label=npm%20(stable)>)](https://npmjs.org/package/landingai-ade) ![npm bundle size](https://img.shields.io/bundlephobia/minzip/landingai-ade)
+
+**[Playground](https://va.landing.ai) · [Discord](https://discord.com/invite/RVcW3j9RgR) · [Blog](https://landing.ai/blog) · [Docs](https://docs.landing.ai)**
+
 
 This library provides convenient access to the LandingAI ADE REST API from server-side TypeScript or JavaScript.
 
