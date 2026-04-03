@@ -49,6 +49,28 @@ export namespace ExtractResponse {
      * schema.
      */
     schema_violation_error?: string | null;
+
+    /**
+     * Structured warnings from the extraction process. Each warning is an instance of
+     * ExtractWarning with 'code' (e.g. 'nonconformant_schema') and 'msg'
+     * (human-readable description). Present only for extract versions from
+     * extract-20260314 and above that support structured warnings.
+     */
+    warnings?: Array<Metadata.Warning>;
+  }
+
+  export namespace Metadata {
+    export interface Warning {
+      /**
+       * The type of warning, used to translate to a status code downstream
+       */
+      code: 'nonconformant_schema' | 'nonconformant_output';
+
+      /**
+       * Human-readable description of the warning with more details
+       */
+      msg: string;
+    }
   }
 }
 
@@ -256,6 +278,13 @@ export interface ExtractParams {
    * latest version.
    */
   model?: string | null;
+
+  /**
+   * If True, reject schemas with unsupported fields (HTTP 422). If False, prune
+   * unsupported fields and continue. Only applies to extract versions that support
+   * schema validation.
+   */
+  strict?: boolean;
 }
 
 export interface ParseParams {
