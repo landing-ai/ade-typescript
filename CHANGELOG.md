@@ -1,5 +1,42 @@
 # Changelog
 
+## 2.5.0 (2026-04-03)
+
+Full Changelog: [v2.4.0...v2.5.0](https://github.com/landing-ai/ade-typescript/compare/v2.4.0...v2.5.0)
+
+### Features
+
+* **api:** api update ([617fbfc](https://github.com/landing-ai/ade-typescript/commit/617fbfcd04cc4eb598fb371f88c562c6eebf4317))
+* **api:** api update ([73a4ee4](https://github.com/landing-ai/ade-typescript/commit/73a4ee4b44027a107b5d37636e669aacb7d73eb7))
+
+
+### Bug Fixes
+
+* **internal:** gitignore generated `oidc` dir ([a0e93ea](https://github.com/landing-ai/ade-typescript/commit/a0e93ea30e31a440952ba1028492e5e62214d4b5))
+* update heading & added resources ([d35a1c8](https://github.com/landing-ai/ade-typescript/commit/d35a1c80ca2d27749c6ecf6f944968f6ecefedf2))
+
+
+### Chores
+
+* **ci:** escape input path in publish-npm workflow ([eb21ee3](https://github.com/landing-ai/ade-typescript/commit/eb21ee3d692013fabe9e213a5ee762dedd062d0a))
+* **ci:** skip lint on metadata-only changes ([7039675](https://github.com/landing-ai/ade-typescript/commit/7039675fb5f7db55f2de59b79cb96ef23536ac20))
+* **internal:** codegen related update ([e9b3ff8](https://github.com/landing-ai/ade-typescript/commit/e9b3ff899b55542d39c243fb3f72b278a9f0f635))
+* **internal:** fix MCP docker image builds in yarn projects ([407b79f](https://github.com/landing-ai/ade-typescript/commit/407b79f5c6a0c01f6e320b68e7ad7ce23c27433a))
+* **internal:** fix MCP server TS errors that occur with required client options ([8eac4c5](https://github.com/landing-ai/ade-typescript/commit/8eac4c5436383fed00ee44c0174f6f0cddc74de1))
+* **internal:** improve local docs search for MCP servers ([2f87c20](https://github.com/landing-ai/ade-typescript/commit/2f87c204555ab30c0c0bc635a33c5f1998b47620))
+* **internal:** improve local docs search for MCP servers ([99e4843](https://github.com/landing-ai/ade-typescript/commit/99e48439e7a2101d4c174f48e4322ec6bf50789e))
+* **internal:** make generated MCP servers compatible with Cloudflare worker environments ([7a5a4bd](https://github.com/landing-ai/ade-typescript/commit/7a5a4bda9996c9857f09178141803c697fa60187))
+* **internal:** support custom-instructions-path flag in MCP servers ([c560565](https://github.com/landing-ai/ade-typescript/commit/c5605651b43ffbfec32b3b6bdb2edc1a8adc043c))
+* **internal:** support local docs search in MCP servers ([cb6373f](https://github.com/landing-ai/ade-typescript/commit/cb6373f23656abba734b77e5b2fda0bd1c12c011))
+* **internal:** support type annotations when running MCP in local execution mode ([c15d986](https://github.com/landing-ai/ade-typescript/commit/c15d986d10d4f72d338d03d504abc992c321a3d3))
+* **internal:** support x-stainless-mcp-client-envs header in MCP servers ([91c871b](https://github.com/landing-ai/ade-typescript/commit/91c871b968260c9f332cfebdaa53fca6767da337))
+* **internal:** support x-stainless-mcp-client-permissions headers in MCP servers ([8681f79](https://github.com/landing-ai/ade-typescript/commit/8681f7919a0afa3e3b147184ec11834b4223a99a))
+* **internal:** tweak CI branches ([3b24924](https://github.com/landing-ai/ade-typescript/commit/3b24924872a6576f74e783ee1c89ce9024d27dfd))
+* **internal:** update gitignore ([1a1c520](https://github.com/landing-ai/ade-typescript/commit/1a1c52014ddd5d6e9b8396379cb9c430a3edd5cd))
+* **internal:** use link instead of file in MCP server package.json files ([b9875b7](https://github.com/landing-ai/ade-typescript/commit/b9875b794d9201b004b19c7d2b14953b87a0268f))
+* **mcp-server:** add support for session id, forward client info ([95e90ed](https://github.com/landing-ai/ade-typescript/commit/95e90ed628c924dd74075848de8297d07ceb70bd))
+* **mcp-server:** log client info ([7fa1878](https://github.com/landing-ai/ade-typescript/commit/7fa1878b9288d715c8465ea32df06ae319d6b52a))
+
 ## 2.4.0 (2026-03-12)
 
 Full Changelog: [v2.3.3...v2.4.0](https://github.com/landing-ai/ade-typescript/compare/v2.3.3...v2.4.0)

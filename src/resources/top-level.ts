@@ -49,6 +49,28 @@ export namespace ExtractResponse {
      * schema.
      */
     schema_violation_error?: string | null;
+
+    /**
+     * Structured warnings from the extraction process. Each warning is an instance of
+     * ExtractWarning with 'code' (e.g. 'nonconformant_schema') and 'msg'
+     * (human-readable description). Present only for extract versions from
+     * extract-20260314 and above that support structured warnings.
+     */
+    warnings?: Array<Metadata.Warning>;
+  }
+
+  export namespace Metadata {
+    export interface Warning {
+      /**
+       * The type of warning, used to translate to a status code downstream
+       */
+      code: 'nonconformant_schema' | 'nonconformant_output';
+
+      /**
+       * Human-readable description of the warning with more details
+       */
+      msg: string;
+    }
   }
 }
 
@@ -256,9 +278,23 @@ export interface ExtractParams {
    * latest version.
    */
   model?: string | null;
+
+  /**
+   * If True, reject schemas with unsupported fields (HTTP 422). If False, prune
+   * unsupported fields and continue. Only applies to extract versions that support
+   * schema validation.
+   */
+  strict?: boolean;
 }
 
 export interface ParseParams {
+  /**
+   * Optional JSON string mapping chunk types to custom parsing prompts. Only the
+   * `figure` key is supported, for example '{"figure":"Describe axis labels in
+   * detail."}'.
+   */
+  custom_prompts?: string | null;
+
   /**
    * A file to be parsed. The file can be a PDF or an image. See the list of
    * supported file types here: https://docs.landing.ai/ade/ade-file-types. Either
@@ -308,7 +344,7 @@ export interface SplitParams {
   /**
    * The URL to the Markdown file to split.
    */
-  markdownUrl?: string | null;
+  markdown_url?: string | null;
 
   /**
    * Model version to use for split classification. Defaults to the latest version.

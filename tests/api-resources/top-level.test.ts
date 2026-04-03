@@ -27,6 +27,7 @@ describe('top level methods', () => {
       markdown: await toFile(Buffer.from('Example data'), 'README.md'),
       markdown_url: 'markdown_url',
       model: 'model',
+      strict: true,
     });
   });
 
@@ -65,7 +66,7 @@ describe('top level methods', () => {
         },
       ],
       markdown: await toFile(Buffer.from('Example data'), 'README.md'),
-      markdownUrl: 'markdownUrl',
+      markdown_url: 'markdown_url',
       model: 'model',
     });
   });
