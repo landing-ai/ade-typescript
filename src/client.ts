@@ -364,7 +364,7 @@ export class LandingAIADE {
       multipartFormRequestOptions({ body: apiBody, ...options }, this),
     );
     if (saveTo) {
-      const filename = _getInputFilename(apiBody.markdown, apiBody.markdownUrl);
+      const filename = _getInputFilename(apiBody.markdown, apiBody.markdown_url);
       return promise._thenUnwrap((data) => {
         _saveResponse(saveTo, filename, 'split', data);
         return data;
