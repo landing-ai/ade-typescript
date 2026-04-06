@@ -289,11 +289,9 @@ export interface ExtractParams {
 
 export interface ParseParams {
   /**
-   * Optional JSON string mapping chunk types to custom parsing prompts. Only the
-   * `figure` key is supported, for example '{"figure":"Describe axis labels in
-   * detail."}'.
+   * Custom parsing prompts by chunk type. Only `figure` is supported.
    */
-  custom_prompts?: string | null;
+  custom_prompts?: ParseParams.CustomPrompts | null;
 
   /**
    * A file to be parsed. The file can be a PDF or an image. See the list of
@@ -327,6 +325,18 @@ export interface ParseParams {
    * splits object in the API output will contain a set of data for each page.
    */
   split?: 'page' | null;
+}
+
+export namespace ParseParams {
+  /**
+   * Custom parsing prompts by chunk type. Only `figure` is supported.
+   */
+  export interface CustomPrompts {
+    /**
+     * Custom parsing prompt for figure chunks.
+     */
+    figure?: string;
+  }
 }
 
 export interface SplitParams {
