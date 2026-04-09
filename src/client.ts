@@ -90,9 +90,16 @@ export function _getInputFilename(
  * @internal
  */
 export function _saveResponse(saveTo: string, filename: string, methodName: string, result: unknown): void {
-  fs.mkdirSync(saveTo, { recursive: true });
-  const outputPath = path.join(saveTo, `${filename}_${methodName}_output.json`);
-  fs.writeFileSync(outputPath, JSON.stringify(result, null, 2));
+  if (saveTo.endsWith('.json')) {
+    // Full file path mode — write to exact location
+    fs.mkdirSync(path.dirname(saveTo), { recursive: true });
+    fs.writeFileSync(saveTo, JSON.stringify(result, null, 2));
+  } else {
+    // Directory mode — auto-generate filename
+    fs.mkdirSync(saveTo, { recursive: true });
+    const outputPath = path.join(saveTo, `${filename}_${methodName}_output.json`);
+    fs.writeFileSync(outputPath, JSON.stringify(result, null, 2));
+  }
 }
 
 export interface ClientOptions {

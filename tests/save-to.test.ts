@@ -125,4 +125,34 @@ describe('_saveResponse', () => {
     const expectedFile = path.join(nestedDir, 'file_parse_output.json');
     expect(fs.existsSync(expectedFile)).toBe(true);
   });
+
+  it('saves to exact path when saveTo ends with .json', () => {
+    const outputFile = path.join(testDir, 'custom_name.json');
+    const result = { key: 'value' };
+    _saveResponse(outputFile, 'ignored_filename', 'extract', result);
+
+    expect(fs.existsSync(outputFile)).toBe(true);
+    const content = JSON.parse(fs.readFileSync(outputFile, 'utf-8'));
+    expect(content).toEqual(result);
+    expect(fs.existsSync(path.join(testDir, 'ignored_filename_extract_output.json'))).toBe(false);
+  });
+
+  it('creates parent directories for full .json path', () => {
+    const outputFile = path.join(testDir, 'nested', 'deep', 'result.json');
+    const result = { nested: true };
+    _saveResponse(outputFile, 'file', 'parse', result);
+
+    expect(fs.existsSync(outputFile)).toBe(true);
+    const content = JSON.parse(fs.readFileSync(outputFile, 'utf-8'));
+    expect(content).toEqual(result);
+  });
+
+  it('formats JSON with 2-space indentation for full .json path', () => {
+    const outputFile = path.join(testDir, 'formatted.json');
+    const result = { key: 'value' };
+    _saveResponse(outputFile, 'ignored', 'split', result);
+
+    const content = fs.readFileSync(outputFile, 'utf-8');
+    expect(content).toBe(JSON.stringify(result, null, 2));
+  });
 });
