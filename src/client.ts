@@ -86,7 +86,11 @@ export function _getInputFilename(
 }
 
 /**
- * Save API response to a JSON file in the specified folder.
+ * Save API response to a JSON file.
+ *
+ * If saveTo ends with '.json', it is treated as a full file path and the
+ * response is written there directly. Otherwise it is treated as a directory
+ * and the file is auto-named '{filename}_{methodName}_output.json'.
  * @internal
  */
 export function _saveResponse(saveTo: string, filename: string, methodName: string, result: unknown): void {
