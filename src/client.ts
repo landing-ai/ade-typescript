@@ -90,7 +90,8 @@ export function _getInputFilename(
  *
  * If saveTo ends with '.json', it is treated as a full file path and the
  * response is written there directly. Otherwise it is treated as a directory
- * and the file is auto-named '{filename}_{methodName}_output.json'.
+ * and the file is auto-named '{filename}_{methodName}_output.json'
+ * (or '{methodName}_output.json' when filename is 'output').
  * @internal
  */
 export function _saveResponse(saveTo: string, filename: string, methodName: string, result: unknown): void {
@@ -101,9 +102,8 @@ export function _saveResponse(saveTo: string, filename: string, methodName: stri
   } else {
     // Directory mode — auto-generate filename
     fs.mkdirSync(saveTo, { recursive: true });
-    const outputName = filename === 'output'
-      ? `${methodName}_output.json`
-      : `${filename}_${methodName}_output.json`;
+    const outputName =
+      filename === 'output' ? `${methodName}_output.json` : `${filename}_${methodName}_output.json`;
     const outputPath = path.join(saveTo, outputName);
     fs.writeFileSync(outputPath, JSON.stringify(result, null, 2));
   }
