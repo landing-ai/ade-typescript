@@ -86,13 +86,27 @@ export function _getInputFilename(
 }
 
 /**
- * Save API response to a JSON file in the specified folder.
+ * Save API response to a JSON file.
+ *
+ * If saveTo ends with '.json', it is treated as a full file path and the
+ * response is written there directly. Otherwise it is treated as a directory
+ * and the file is auto-named '{filename}_{methodName}_output.json'
+ * (or '{methodName}_output.json' when filename is 'output').
  * @internal
  */
 export function _saveResponse(saveTo: string, filename: string, methodName: string, result: unknown): void {
-  fs.mkdirSync(saveTo, { recursive: true });
-  const outputPath = path.join(saveTo, `${filename}_${methodName}_output.json`);
-  fs.writeFileSync(outputPath, JSON.stringify(result, null, 2));
+  if (saveTo.endsWith('.json')) {
+    // Full file path mode — write to exact location
+    fs.mkdirSync(path.dirname(saveTo), { recursive: true });
+    fs.writeFileSync(saveTo, JSON.stringify(result, null, 2));
+  } else {
+    // Directory mode — auto-generate filename
+    fs.mkdirSync(saveTo, { recursive: true });
+    const outputName =
+      filename === 'output' ? `${methodName}_output.json` : `${filename}_${methodName}_output.json`;
+    const outputPath = path.join(saveTo, outputName);
+    fs.writeFileSync(outputPath, JSON.stringify(result, null, 2));
+  }
 }
 
 export interface ClientOptions {
