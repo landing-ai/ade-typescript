@@ -126,6 +126,15 @@ describe('_saveResponse', () => {
     expect(fs.existsSync(expectedFile)).toBe(true);
   });
 
+  it('skips redundant "output" prefix when filename is "output"', () => {
+    const result = {};
+    for (const method of ['parse', 'extract', 'split']) {
+      _saveResponse(testDir, 'output', method, result);
+      expect(fs.existsSync(path.join(testDir, `${method}_output.json`))).toBe(true);
+      expect(fs.existsSync(path.join(testDir, `output_${method}_output.json`))).toBe(false);
+    }
+  });
+
   it('saves to exact path when saveTo ends with .json', () => {
     const outputFile = path.join(testDir, 'custom_name.json');
     const result = { key: 'value' };

@@ -101,7 +101,10 @@ export function _saveResponse(saveTo: string, filename: string, methodName: stri
   } else {
     // Directory mode — auto-generate filename
     fs.mkdirSync(saveTo, { recursive: true });
-    const outputPath = path.join(saveTo, `${filename}_${methodName}_output.json`);
+    const outputName = filename === 'output'
+      ? `${methodName}_output.json`
+      : `${filename}_${methodName}_output.json`;
+    const outputPath = path.join(saveTo, outputName);
     fs.writeFileSync(outputPath, JSON.stringify(result, null, 2));
   }
 }
