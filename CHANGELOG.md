@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.5.1 (2026-04-10)
+
+Full Changelog: [v2.5.0...v2.5.1](https://github.com/landing-ai/ade-typescript/compare/v2.5.0...v2.5.1)
+
+### Chores
+
+* **internal:** codegen related update ([ecf7e2d](https://github.com/landing-ai/ade-typescript/commit/ecf7e2dadd10b3c4a97a0fe543dae1668f344a03))
+* **internal:** fix MCP server import ordering ([ff8e3c0](https://github.com/landing-ai/ade-typescript/commit/ff8e3c00904eeae629a2c5f9aac717b5bceb2863))
+* **internal:** show error causes in MCP servers when running in local mode ([b747a5a](https://github.com/landing-ai/ade-typescript/commit/b747a5a77fc3ff3a3c974062ad9f961144159794))
+* **mcp-server:** increase local docs search result count from 5 to 10 ([fb6e3c5](https://github.com/landing-ai/ade-typescript/commit/fb6e3c5540b1a391c66c46329bfbd89f312ac431))
+* update SDK settings ([de92563](https://github.com/landing-ai/ade-typescript/commit/de925636d1f9bb6bedc797f41826f7d723665713))
+
 ## 2.5.0 (2026-04-06)
 
 Full Changelog: [v2.4.0...v2.5.0](https://github.com/landing-ai/ade-typescript/compare/v2.4.0...v2.5.0)
