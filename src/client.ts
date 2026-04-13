@@ -20,6 +20,8 @@ import * as Uploads from './core/uploads';
 import * as API from './resources/index';
 import * as TopLevelAPI from './resources/top-level';
 import {
+  ExtractBuildParams,
+  ExtractBuildResponse,
   ExtractParams,
   ExtractResponse,
   ParseParams,
@@ -313,6 +315,24 @@ export class LandingAIADE {
       });
     }
     return promise;
+  }
+
+  /**
+   * Generate a JSON schema from Markdown using AI.
+   *
+   * This endpoint analyzes Markdown content and generates a JSON schema suitable for
+   * use with the extract endpoint. It can also refine an existing schema based on
+   * new documents or iterate on a schema based on prompt instructions.
+   *
+   * For EU users, use this endpoint:
+   *
+   *     `https://api.va.eu-west-1.landing.ai/v1/ade/extract/build-schema`.
+   */
+  extractBuild(
+    body: TopLevelAPI.ExtractBuildParams,
+    options?: RequestOptions,
+  ): APIPromise<TopLevelAPI.ExtractBuildResponse> {
+    return this.post('/v1/ade/extract/build-schema', multipartFormRequestOptions({ body, ...options }, this));
   }
 
   /**
@@ -903,9 +923,11 @@ export declare namespace LandingAIADE {
 
   export {
     type ExtractResponse as ExtractResponse,
+    type ExtractBuildResponse as ExtractBuildResponse,
     type ParseResponse as ParseResponse,
     type SplitResponse as SplitResponse,
     type ExtractParams as ExtractParams,
+    type ExtractBuildParams as ExtractBuildParams,
     type ParseParams as ParseParams,
     type SplitParams as SplitParams,
   };

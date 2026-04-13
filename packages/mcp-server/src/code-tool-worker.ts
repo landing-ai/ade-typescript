@@ -109,6 +109,7 @@ function getTSDiagnostics(code: string): string[] {
 const fuse = new Fuse(
   [
     'client.extract',
+    'client.extractBuild',
     'client.parse',
     'client.split',
     'client.parseJobs.create',

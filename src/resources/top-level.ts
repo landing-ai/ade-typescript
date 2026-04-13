@@ -74,6 +74,59 @@ export namespace ExtractResponse {
   }
 }
 
+export interface ExtractBuildResponse {
+  /**
+   * The generated JSON schema as a string.
+   */
+  extraction_schema: string;
+
+  /**
+   * The metadata for the schema generation process.
+   */
+  metadata: ExtractBuildResponse.Metadata;
+}
+
+export namespace ExtractBuildResponse {
+  /**
+   * The metadata for the schema generation process.
+   */
+  export interface Metadata {
+    credit_usage?: number;
+
+    duration_ms?: number;
+
+    filename?: string | null;
+
+    job_id?: string;
+
+    org_id?: string | null;
+
+    version?: string | null;
+
+    /**
+     * Structured warnings from the extraction process. Each warning is an instance of
+     * ExtractWarning with 'code' (e.g. 'nonconformant_schema') and 'msg'
+     * (human-readable description). Present only for extract versions from
+     * extract-20260314 and above that support structured warnings.
+     */
+    warnings?: Array<Metadata.Warning>;
+  }
+
+  export namespace Metadata {
+    export interface Warning {
+      /**
+       * The type of warning, used to translate to a status code downstream
+       */
+      code: 'nonconformant_schema' | 'nonconformant_output';
+
+      /**
+       * Human-readable description of the warning with more details
+       */
+      msg: string;
+    }
+  }
+}
+
 export interface ParseResponse {
   chunks: Array<ParseResponse.Chunk>;
 
@@ -287,6 +340,35 @@ export interface ExtractParams {
   strict?: boolean;
 }
 
+export interface ExtractBuildParams {
+  /**
+   * URLs to Markdown files to analyze for schema generation.
+   */
+  markdown_urls?: Array<string> | null;
+
+  /**
+   * Markdown files or inline content strings to analyze for schema generation.
+   * Multiple documents can be provided for better schema coverage.
+   */
+  markdowns?: Array<Uploadable | string> | null;
+
+  /**
+   * The version of the model to use for schema generation. Use `extract-latest` to
+   * use the latest version.
+   */
+  model?: string | null;
+
+  /**
+   * Instructions for how to generate or modify the schema.
+   */
+  prompt?: string | null;
+
+  /**
+   * Existing JSON schema to iterate on or refine.
+   */
+  schema?: string | null;
+}
+
 export interface ParseParams {
   /**
    * Custom parsing prompts by chunk type. Only `figure` is supported.
@@ -387,9 +469,11 @@ export namespace SplitParams {
 export declare namespace TopLevel {
   export {
     type ExtractResponse as ExtractResponse,
+    type ExtractBuildResponse as ExtractBuildResponse,
     type ParseResponse as ParseResponse,
     type SplitResponse as SplitResponse,
     type ExtractParams as ExtractParams,
+    type ExtractBuildParams as ExtractBuildParams,
     type ParseParams as ParseParams,
     type SplitParams as SplitParams,
   };

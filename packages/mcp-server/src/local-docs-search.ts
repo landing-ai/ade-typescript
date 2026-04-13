@@ -162,6 +162,43 @@ const EMBEDDED_METHODS: MethodEntry[] = [
     },
   },
   {
+    name: 'extract-build',
+    endpoint: '/v1/ade/extract/build-schema',
+    httpMethod: 'post',
+    summary: 'ADE Build Extract Schema',
+    description:
+      'Generate a JSON schema from Markdown using AI.\n\nThis endpoint analyzes Markdown\n    content and generates a JSON schema suitable for use with the extract endpoint.\n    It can also refine an existing schema based on new documents or iterate on a schema\n    based on prompt instructions.\n\nFor EU users, use this endpoint:\n\n\n    `https://api.va.eu-west-1.landing.ai/v1/ade/extract/build-schema`.',
+    stainlessPath: '(resource) $client > (method) extract-build',
+    qualified: 'client.extractBuild',
+    params: [
+      'markdown_urls?: string[];',
+      'markdowns?: string | string[];',
+      'model?: string;',
+      'prompt?: string;',
+      'schema?: string;',
+    ],
+    response:
+      "{ extraction_schema: string; metadata: { credit_usage?: number; duration_ms?: number; filename?: string; job_id?: string; org_id?: string; version?: string; warnings?: { code: 'nonconformant_schema' | 'nonconformant_output'; msg: string; }[]; }; }",
+    markdown:
+      "## extract-build\n\n`client.extractBuild(markdown_urls?: string[], markdowns?: string | string[], model?: string, prompt?: string, schema?: string): { extraction_schema: string; metadata: object; }`\n\n**post** `/v1/ade/extract/build-schema`\n\nGenerate a JSON schema from Markdown using AI.\n\nThis endpoint analyzes Markdown\n    content and generates a JSON schema suitable for use with the extract endpoint.\n    It can also refine an existing schema based on new documents or iterate on a schema\n    based on prompt instructions.\n\nFor EU users, use this endpoint:\n\n\n    `https://api.va.eu-west-1.landing.ai/v1/ade/extract/build-schema`.\n\n### Parameters\n\n- `markdown_urls?: string[]`\n  URLs to Markdown files to analyze for schema generation.\n\n- `markdowns?: string | string[]`\n  Markdown files or inline content strings to analyze for schema generation. Multiple documents can be provided for better schema coverage.\n\n- `model?: string`\n  The version of the model to use for schema generation. Use `extract-latest` to use the latest version.\n\n- `prompt?: string`\n  Instructions for how to generate or modify the schema.\n\n- `schema?: string`\n  Existing JSON schema to iterate on or refine.\n\n### Returns\n\n- `{ extraction_schema: string; metadata: { credit_usage?: number; duration_ms?: number; filename?: string; job_id?: string; org_id?: string; version?: string; warnings?: { code: 'nonconformant_schema' | 'nonconformant_output'; msg: string; }[]; }; }`\n\n  - `extraction_schema: string`\n  - `metadata: { credit_usage?: number; duration_ms?: number; filename?: string; job_id?: string; org_id?: string; version?: string; warnings?: { code: 'nonconformant_schema' | 'nonconformant_output'; msg: string; }[]; }`\n\n### Example\n\n```typescript\nimport LandingAIADE from 'landingai-ade';\n\nconst client = new LandingAIADE();\n\nconst response = await client.extractBuild();\n\nconsole.log(response);\n```",
+    perLanguage: {
+      http: {
+        example:
+          'curl https://api.va.landing.ai/v1/ade/extract/build-schema \\\n    -H \'Content-Type: multipart/form-data\' \\\n    -H "Authorization: Bearer $VISION_AGENT_API_KEY"',
+      },
+      python: {
+        method: 'extract_build',
+        example:
+          'import os\nfrom landingai_ade import LandingAIADE\n\nclient = LandingAIADE(\n    apikey=os.environ.get("VISION_AGENT_API_KEY"),  # This is the default and can be omitted\n)\nresponse = client.extract_build()\nprint(response.extraction_schema)',
+      },
+      typescript: {
+        method: 'client.extractBuild',
+        example:
+          "import LandingAIADE from 'landingai-ade';\n\nconst client = new LandingAIADE({\n  apikey: process.env['VISION_AGENT_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.extractBuild();\n\nconsole.log(response.extraction_schema);",
+      },
+    },
+  },
+  {
     name: 'create',
     endpoint: '/v1/ade/parse/jobs',
     httpMethod: 'post',
