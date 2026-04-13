@@ -32,8 +32,8 @@ describe('top level methods', () => {
   });
 
   // Mock server tests are disabled
-  test.skip('extractBuild', async () => {
-    const responsePromise = client.extractBuild({});
+  test.skip('extractBuildSchema', async () => {
+    const responsePromise = client.extractBuildSchema({});
     const rawResponse = await responsePromise.asResponse();
     expect(rawResponse).toBeInstanceOf(Response);
     const response = await responsePromise;
