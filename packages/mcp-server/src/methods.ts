@@ -17,6 +17,12 @@ export const sdkMethods: SdkMethod[] = [
     httpPath: '/v1/ade/extract',
   },
   {
+    clientCallName: 'client.extractBuild',
+    fullyQualifiedName: 'extractBuild',
+    httpMethod: 'post',
+    httpPath: '/v1/ade/extract/build-schema',
+  },
+  {
     clientCallName: 'client.parse',
     fullyQualifiedName: 'parse',
     httpMethod: 'post',
