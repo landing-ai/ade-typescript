@@ -74,7 +74,7 @@ export namespace ExtractResponse {
   }
 }
 
-export interface ExtractBuildResponse {
+export interface ExtractBuildSchemaResponse {
   /**
    * The generated JSON schema as a string.
    */
@@ -83,10 +83,10 @@ export interface ExtractBuildResponse {
   /**
    * The metadata for the schema generation process.
    */
-  metadata: ExtractBuildResponse.Metadata;
+  metadata: ExtractBuildSchemaResponse.Metadata;
 }
 
-export namespace ExtractBuildResponse {
+export namespace ExtractBuildSchemaResponse {
   /**
    * The metadata for the schema generation process.
    */
@@ -340,7 +340,7 @@ export interface ExtractParams {
   strict?: boolean;
 }
 
-export interface ExtractBuildParams {
+export interface ExtractBuildSchemaParams {
   /**
    * URLs to Markdown files to analyze for schema generation.
    */
@@ -469,11 +469,11 @@ export namespace SplitParams {
 export declare namespace TopLevel {
   export {
     type ExtractResponse as ExtractResponse,
-    type ExtractBuildResponse as ExtractBuildResponse,
+    type ExtractBuildSchemaResponse as ExtractBuildSchemaResponse,
     type ParseResponse as ParseResponse,
     type SplitResponse as SplitResponse,
     type ExtractParams as ExtractParams,
-    type ExtractBuildParams as ExtractBuildParams,
+    type ExtractBuildSchemaParams as ExtractBuildSchemaParams,
     type ParseParams as ParseParams,
     type SplitParams as SplitParams,
   };
