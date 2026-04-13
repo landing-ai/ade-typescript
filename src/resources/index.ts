@@ -11,9 +11,11 @@ export {
 } from './parse-jobs';
 export {
   type ExtractResponse,
+  type ExtractBuildSchemaResponse,
   type ParseResponse,
   type SplitResponse,
   type ExtractParams,
+  type ExtractBuildSchemaParams,
   type ParseParams,
   type SplitParams,
 } from './top-level';
