@@ -121,7 +121,7 @@ const EMBEDDED_METHODS: MethodEntry[] = [
       typescript: {
         method: 'client.parse',
         example:
-          "import LandingAIADE from 'landingai-ade';\n\nconst client = new LandingAIADE({\n  apikey: process.env['VISION_AGENT_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.parse();\n\nconsole.log(response.chunks);",
+          "import fs from 'fs';\nimport LandingAIADE from 'landingai-ade';\n\nconst client = new LandingAIADE({\n  apikey: process.env['VISION_AGENT_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.parse();\n\nconsole.log(response.chunks);",
       },
     },
   },
@@ -232,7 +232,7 @@ const EMBEDDED_METHODS: MethodEntry[] = [
       typescript: {
         method: 'client.parseJobs.create',
         example:
-          "import LandingAIADE from 'landingai-ade';\n\nconst client = new LandingAIADE({\n  apikey: process.env['VISION_AGENT_API_KEY'], // This is the default and can be omitted\n});\n\nconst parseJob = await client.parseJobs.create();\n\nconsole.log(parseJob.job_id);",
+          "import fs from 'fs';\nimport LandingAIADE from 'landingai-ade';\n\nconst client = new LandingAIADE({\n  apikey: process.env['VISION_AGENT_API_KEY'], // This is the default and can be omitted\n});\n\nconst parseJob = await client.parseJobs.create();\n\nconsole.log(parseJob.job_id);",
       },
     },
   },
