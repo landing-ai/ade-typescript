@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.6.1 (2026-04-14)
+
+Full Changelog: [v2.6.0...v2.6.1](https://github.com/landing-ai/ade-typescript/compare/v2.6.0...v2.6.1)
+
+### Chores
+
+* fix example snippet imports ([439c93d](https://github.com/landing-ai/ade-typescript/commit/439c93dd1c49155bd49f052bddbe165656964c6b))
+
 ## 2.6.0 (2026-04-13)
 
 Full Changelog: [v2.5.0...v2.6.0](https://github.com/landing-ai/ade-typescript/compare/v2.5.0...v2.6.0)
