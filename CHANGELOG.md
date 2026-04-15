@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.6.2 (2026-04-15)
+
+Full Changelog: [v2.6.1...v2.6.2](https://github.com/landing-ai/ade-typescript/compare/v2.6.1...v2.6.2)
+
+### Chores
+
+* update SDK settings ([60f792d](https://github.com/landing-ai/ade-typescript/commit/60f792d860001e2e9f44526f4da48cd9a7714130))
+
 ## 2.6.1 (2026-04-14)
 
 Full Changelog: [v2.6.0...v2.6.1](https://github.com/landing-ai/ade-typescript/compare/v2.6.0...v2.6.1)
