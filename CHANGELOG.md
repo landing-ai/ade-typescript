@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.7.0 (2026-04-22)
+
+Full Changelog: [v2.6.2...v2.7.0](https://github.com/landing-ai/ade-typescript/compare/v2.6.2...v2.7.0)
+
+### Features
+
+* **api:** api update ([a5a2449](https://github.com/landing-ai/ade-typescript/commit/a5a2449ce5a95c32f2aea15a9333f3414437617e))
+* **api:** classify api ([d8cf332](https://github.com/landing-ai/ade-typescript/commit/d8cf332dc41beafbefb404f3de4af100b442e86d))
+* **api:** section api ([3d1c2f0](https://github.com/landing-ai/ade-typescript/commit/3d1c2f04610e32507e5ebdc3082c929fb8d8b2a6))
+
 ## 2.6.2 (2026-04-15)
 
 Full Changelog: [v2.6.1...v2.6.2](https://github.com/landing-ai/ade-typescript/compare/v2.6.1...v2.6.2)
