@@ -20,6 +20,8 @@ import * as Uploads from './core/uploads';
 import * as API from './resources/index';
 import * as TopLevelAPI from './resources/top-level';
 import {
+  ClassifyParams,
+  ClassifyResponse,
   ExtractBuildSchemaParams,
   ExtractBuildSchemaResponse,
   ExtractParams,
@@ -285,6 +287,24 @@ export class LandingAIADE {
    */
   #baseURLOverridden(): boolean {
     return this.baseURL !== environments[this._options.environment || 'production'];
+  }
+
+  /**
+   * Classify the pages of a document into classes you define.
+   *
+   * This endpoint accepts PDFs, images, and other supported file types (either as a
+   * `document` upload or `document_url`) together with a list of `classes`, and
+   * returns a classification result for each page.
+   *
+   * For EU users, use this endpoint:
+   *
+   * `https://api.va.eu-west-1.landing.ai/v1/ade/classify`.
+   */
+  classify(
+    body: TopLevelAPI.ClassifyParams,
+    options?: RequestOptions,
+  ): APIPromise<TopLevelAPI.ClassifyResponse> {
+    return this.post('/v1/ade/classify', multipartFormRequestOptions({ body, ...options }, this));
   }
 
   /**
@@ -922,10 +942,12 @@ export declare namespace LandingAIADE {
   export type RequestOptions = Opts.RequestOptions;
 
   export {
+    type ClassifyResponse as ClassifyResponse,
     type ExtractResponse as ExtractResponse,
     type ExtractBuildSchemaResponse as ExtractBuildSchemaResponse,
     type ParseResponse as ParseResponse,
     type SplitResponse as SplitResponse,
+    type ClassifyParams as ClassifyParams,
     type ExtractParams as ExtractParams,
     type ExtractBuildSchemaParams as ExtractBuildSchemaParams,
     type ParseParams as ParseParams,

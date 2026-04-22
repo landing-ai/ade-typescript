@@ -3,6 +3,64 @@
 import * as Shared from './shared';
 import { type Uploadable } from '../core/uploads';
 
+/**
+ * Response model for the classify endpoint.
+ */
+export interface ClassifyResponse {
+  classification: Array<ClassifyResponse.Classification>;
+
+  /**
+   * Metadata for the classify response.
+   */
+  metadata: ClassifyResponse.Metadata;
+}
+
+export namespace ClassifyResponse {
+  /**
+   * A single page-level classification result.
+   */
+  export interface Classification {
+    /**
+     * Predicted class label or 'unknown'.
+     */
+    class: string;
+
+    /**
+     * Page number (1-based).
+     */
+    page: number;
+
+    /**
+     * Reason for the classification (for debugging).
+     */
+    reason?: string;
+
+    /**
+     * Proposed class when the prediction is 'unknown'.
+     */
+    suggested_class?: string | null;
+  }
+
+  /**
+   * Metadata for the classify response.
+   */
+  export interface Metadata {
+    credit_usage: number;
+
+    duration_ms: number;
+
+    filename: string;
+
+    page_count: number;
+
+    job_id?: string;
+
+    org_id?: string | null;
+
+    version?: string | null;
+  }
+}
+
 export interface ExtractResponse {
   /**
    * The extracted key-value pairs.
@@ -308,6 +366,50 @@ export namespace SplitResponse {
   }
 }
 
+export interface ClassifyParams {
+  /**
+   * The possible classes that can be assigned to pages in the document. Each entry
+   * is an object with a `class` name and an optional `description`. Only one class
+   * is assigned per page; unclassifiable pages receive 'unknown'. Can be provided as
+   * a JSON string in form data.
+   */
+  classes: Array<ClassifyParams.Class>;
+
+  /**
+   * A file to be classified. Either this parameter or the `document_url` parameter
+   * must be provided.
+   */
+  document?: Uploadable | null;
+
+  /**
+   * The URL of the document to be classified. Either this parameter or the
+   * `document` parameter must be provided.
+   */
+  document_url?: string | null;
+
+  /**
+   * Classification model version. Defaults to the latest.
+   */
+  model?: string | null;
+}
+
+export namespace ClassifyParams {
+  /**
+   * A single classification option: a class name plus optional description.
+   */
+  export interface Class {
+    /**
+     * Name of the class.
+     */
+    class: string;
+
+    /**
+     * Detailed description of what this class represents.
+     */
+    description?: string | null;
+  }
+}
+
 export interface ExtractParams {
   /**
    * JSON schema for field extraction. This schema determines what key-values pairs
@@ -468,10 +570,12 @@ export namespace SplitParams {
 
 export declare namespace TopLevel {
   export {
+    type ClassifyResponse as ClassifyResponse,
     type ExtractResponse as ExtractResponse,
     type ExtractBuildSchemaResponse as ExtractBuildSchemaResponse,
     type ParseResponse as ParseResponse,
     type SplitResponse as SplitResponse,
+    type ClassifyParams as ClassifyParams,
     type ExtractParams as ExtractParams,
     type ExtractBuildSchemaParams as ExtractBuildSchemaParams,
     type ParseParams as ParseParams,

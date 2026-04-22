@@ -11,6 +11,12 @@ export type SdkMethod = {
 
 export const sdkMethods: SdkMethod[] = [
   {
+    clientCallName: 'client.classify',
+    fullyQualifiedName: 'classify',
+    httpMethod: 'post',
+    httpPath: '/v1/ade/classify',
+  },
+  {
     clientCallName: 'client.extract',
     fullyQualifiedName: 'extract',
     httpMethod: 'post',
