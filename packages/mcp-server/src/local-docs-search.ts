@@ -198,6 +198,42 @@ const EMBEDDED_METHODS: MethodEntry[] = [
     },
   },
   {
+    name: 'section',
+    endpoint: '/v1/ade/section',
+    httpMethod: 'post',
+    summary: 'ADE Section',
+    description:
+      'Section parsed markdown into a hierarchical table of contents.\n\nThis endpoint accepts the markdown output from /ade/parse\n(with reference anchors) and returns a flat, reading-order list of\nsections with hierarchy levels and reference ranges.\n\nFor EU users, use this endpoint:\n\n`https://api.va.eu-west-1.landing.ai/v1/ade/section`.',
+    stainlessPath: '(resource) $client > (method) section',
+    qualified: 'client.section',
+    params: [
+      'guidelines?: string;',
+      'markdown?: string | string;',
+      'markdown_url?: string;',
+      'model?: string;',
+    ],
+    response:
+      '{ metadata: { credit_usage: number; duration_ms: number; filename: string; job_id?: string; org_id?: string; version?: string; }; table_of_contents: { level: number; section_number: string; start_reference: string; title: string; }[]; table_of_contents_md: string; }',
+    markdown:
+      "## section\n\n`client.section(guidelines?: string, markdown?: string | string, markdown_url?: string, model?: string): { metadata: object; table_of_contents: object[]; table_of_contents_md: string; }`\n\n**post** `/v1/ade/section`\n\nSection parsed markdown into a hierarchical table of contents.\n\nThis endpoint accepts the markdown output from /ade/parse\n(with reference anchors) and returns a flat, reading-order list of\nsections with hierarchy levels and reference ranges.\n\nFor EU users, use this endpoint:\n\n`https://api.va.eu-west-1.landing.ai/v1/ade/section`.\n\n### Parameters\n\n- `guidelines?: string`\n  Natural-language instructions to control hierarchy. Examples: 'Group by topic', 'Treat each numbered section as a top-level entry'.\n\n- `markdown?: string | string`\n  Parsed markdown with reference anchors (<a id='...'></a>). This is the markdown field from a parse response.\n\n- `markdown_url?: string`\n  URL to fetch the markdown from.\n\n- `model?: string`\n  Section model version. Defaults to latest.\n\n### Returns\n\n- `{ metadata: { credit_usage: number; duration_ms: number; filename: string; job_id?: string; org_id?: string; version?: string; }; table_of_contents: { level: number; section_number: string; start_reference: string; title: string; }[]; table_of_contents_md: string; }`\n  Response model for section endpoint.\n\n  - `metadata: { credit_usage: number; duration_ms: number; filename: string; job_id?: string; org_id?: string; version?: string; }`\n  - `table_of_contents: { level: number; section_number: string; start_reference: string; title: string; }[]`\n  - `table_of_contents_md: string`\n\n### Example\n\n```typescript\nimport LandingAIADE from 'landingai-ade';\n\nconst client = new LandingAIADE();\n\nconst response = await client.section();\n\nconsole.log(response);\n```",
+    perLanguage: {
+      http: {
+        example:
+          'curl https://api.va.landing.ai/v1/ade/section \\\n    -H \'Content-Type: multipart/form-data\' \\\n    -H "Authorization: Bearer $VISION_AGENT_API_KEY"',
+      },
+      python: {
+        method: 'section',
+        example:
+          'import os\nfrom landingai_ade import LandingAIADE\n\nclient = LandingAIADE(\n    apikey=os.environ.get("VISION_AGENT_API_KEY"),  # This is the default and can be omitted\n)\nresponse = client.section()\nprint(response.metadata)',
+      },
+      typescript: {
+        method: 'client.section',
+        example:
+          "import LandingAIADE from 'landingai-ade';\n\nconst client = new LandingAIADE({\n  apikey: process.env['VISION_AGENT_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.section();\n\nconsole.log(response.metadata);",
+      },
+    },
+  },
+  {
     name: 'extract-build-schema',
     endpoint: '/v1/ade/extract/build-schema',
     httpMethod: 'post',

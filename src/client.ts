@@ -28,6 +28,8 @@ import {
   ExtractResponse,
   ParseParams,
   ParseResponse,
+  SectionParams,
+  SectionResponse,
   SplitParams,
   SplitResponse,
 } from './resources/top-level';
@@ -382,6 +384,24 @@ export class LandingAIADE {
       });
     }
     return promise;
+  }
+
+  /**
+   * Section parsed markdown into a hierarchical table of contents.
+   *
+   * This endpoint accepts the markdown output from /ade/parse (with reference
+   * anchors) and returns a flat, reading-order list of sections with hierarchy
+   * levels and reference ranges.
+   *
+   * For EU users, use this endpoint:
+   *
+   * `https://api.va.eu-west-1.landing.ai/v1/ade/section`.
+   */
+  section(
+    body: TopLevelAPI.SectionParams,
+    options?: RequestOptions,
+  ): APIPromise<TopLevelAPI.SectionResponse> {
+    return this.post('/v1/ade/section', multipartFormRequestOptions({ body, ...options }, this));
   }
 
   /**
@@ -946,11 +966,13 @@ export declare namespace LandingAIADE {
     type ExtractResponse as ExtractResponse,
     type ExtractBuildSchemaResponse as ExtractBuildSchemaResponse,
     type ParseResponse as ParseResponse,
+    type SectionResponse as SectionResponse,
     type SplitResponse as SplitResponse,
     type ClassifyParams as ClassifyParams,
     type ExtractParams as ExtractParams,
     type ExtractBuildSchemaParams as ExtractBuildSchemaParams,
     type ParseParams as ParseParams,
+    type SectionParams as SectionParams,
     type SplitParams as SplitParams,
   };
 

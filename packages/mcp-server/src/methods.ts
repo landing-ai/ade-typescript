@@ -35,6 +35,12 @@ export const sdkMethods: SdkMethod[] = [
     httpPath: '/v1/ade/parse',
   },
   {
+    clientCallName: 'client.section',
+    fullyQualifiedName: 'section',
+    httpMethod: 'post',
+    httpPath: '/v1/ade/section',
+  },
+  {
     clientCallName: 'client.split',
     fullyQualifiedName: 'split',
     httpMethod: 'post',
