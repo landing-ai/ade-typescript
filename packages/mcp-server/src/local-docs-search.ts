@@ -162,6 +162,42 @@ const EMBEDDED_METHODS: MethodEntry[] = [
     },
   },
   {
+    name: 'classify',
+    endpoint: '/v1/ade/classify',
+    httpMethod: 'post',
+    summary: 'ADE Classify',
+    description:
+      'Classify the pages of a document into classes you define.\n\nThis endpoint accepts PDFs, images, and other supported file types\n(either as a `document` upload or `document_url`) together with a\nlist of `classes`, and returns a classification result for each page.\n\nFor EU users, use this endpoint:\n\n`https://api.va.eu-west-1.landing.ai/v1/ade/classify`.',
+    stainlessPath: '(resource) $client > (method) classify',
+    qualified: 'client.classify',
+    params: [
+      'classes: { class: string; description?: string; }[];',
+      'document?: string;',
+      'document_url?: string;',
+      'model?: string;',
+    ],
+    response:
+      '{ classification: { class: string; page: number; reason?: string; suggested_class?: string; }[]; metadata: { credit_usage: number; duration_ms: number; filename: string; page_count: number; job_id?: string; org_id?: string; version?: string; }; }',
+    markdown:
+      "## classify\n\n`client.classify(classes: { class: string; description?: string; }[], document?: string, document_url?: string, model?: string): { classification: object[]; metadata: object; }`\n\n**post** `/v1/ade/classify`\n\nClassify the pages of a document into classes you define.\n\nThis endpoint accepts PDFs, images, and other supported file types\n(either as a `document` upload or `document_url`) together with a\nlist of `classes`, and returns a classification result for each page.\n\nFor EU users, use this endpoint:\n\n`https://api.va.eu-west-1.landing.ai/v1/ade/classify`.\n\n### Parameters\n\n- `classes: { class: string; description?: string; }[]`\n  The possible classes that can be assigned to pages in the document. Each entry is an object with a `class` name and an optional `description`. Only one class is assigned per page; unclassifiable pages receive 'unknown'. Can be provided as a JSON string in form data.\n\n- `document?: string`\n  A file to be classified. Either this parameter or the `document_url` parameter must be provided.\n\n- `document_url?: string`\n  The URL of the document to be classified. Either this parameter or the `document` parameter must be provided.\n\n- `model?: string`\n  Classification model version. Defaults to the latest.\n\n### Returns\n\n- `{ classification: { class: string; page: number; reason?: string; suggested_class?: string; }[]; metadata: { credit_usage: number; duration_ms: number; filename: string; page_count: number; job_id?: string; org_id?: string; version?: string; }; }`\n  Response model for the classify endpoint.\n\n  - `classification: { class: string; page: number; reason?: string; suggested_class?: string; }[]`\n  - `metadata: { credit_usage: number; duration_ms: number; filename: string; page_count: number; job_id?: string; org_id?: string; version?: string; }`\n\n### Example\n\n```typescript\nimport LandingAIADE from 'landingai-ade';\n\nconst client = new LandingAIADE();\n\nconst response = await client.classify({ classes: [{ class: 'class' }] });\n\nconsole.log(response);\n```",
+    perLanguage: {
+      http: {
+        example:
+          'curl https://api.va.landing.ai/v1/ade/classify \\\n    -H \'Content-Type: multipart/form-data\' \\\n    -H "Authorization: Bearer $VISION_AGENT_API_KEY" \\\n    -F classes=\'[{"class":"class"}]\'',
+      },
+      python: {
+        method: 'classify',
+        example:
+          'import os\nfrom landingai_ade import LandingAIADE\n\nclient = LandingAIADE(\n    apikey=os.environ.get("VISION_AGENT_API_KEY"),  # This is the default and can be omitted\n)\nresponse = client.classify(\n    classes=[{\n        "class": "class"\n    }],\n)\nprint(response.classification)',
+      },
+      typescript: {
+        method: 'client.classify',
+        example:
+          "import fs from 'fs';\nimport LandingAIADE from 'landingai-ade';\n\nconst client = new LandingAIADE({\n  apikey: process.env['VISION_AGENT_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.classify({ classes: [{ class: 'class' }] });\n\nconsole.log(response.classification);",
+      },
+    },
+  },
+  {
     name: 'extract-build-schema',
     endpoint: '/v1/ade/extract/build-schema',
     httpMethod: 'post',
