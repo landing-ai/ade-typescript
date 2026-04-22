@@ -26,7 +26,7 @@ export namespace ClassifyResponse {
     class: string;
 
     /**
-     * Page number (1-based).
+     * Page number (0-based).
      */
     page: number;
 
