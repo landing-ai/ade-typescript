@@ -10,10 +10,12 @@ export {
   type ParseJobListParams,
 } from './parse-jobs';
 export {
+  type ClassifyResponse,
   type ExtractResponse,
   type ExtractBuildSchemaResponse,
   type ParseResponse,
   type SplitResponse,
+  type ClassifyParams,
   type ExtractParams,
   type ExtractBuildSchemaParams,
   type ParseParams,
