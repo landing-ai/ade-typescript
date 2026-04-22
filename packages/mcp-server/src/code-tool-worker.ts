@@ -112,6 +112,7 @@ const fuse = new Fuse(
     'client.extract',
     'client.extractBuildSchema',
     'client.parse',
+    'client.section',
     'client.split',
     'client.parseJobs.create',
     'client.parseJobs.get',

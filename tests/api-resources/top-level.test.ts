@@ -78,6 +78,18 @@ describe('top level methods', () => {
   });
 
   // Mock server tests are disabled
+  test.skip('section', async () => {
+    const responsePromise = client.section({});
+    const rawResponse = await responsePromise.asResponse();
+    expect(rawResponse).toBeInstanceOf(Response);
+    const response = await responsePromise;
+    expect(response).not.toBeInstanceOf(Response);
+    const dataAndResponse = await responsePromise.withResponse();
+    expect(dataAndResponse.data).toBe(response);
+    expect(dataAndResponse.response).toBe(rawResponse);
+  });
+
+  // Mock server tests are disabled
   test.skip('split: only required params', async () => {
     const responsePromise = client.split({ split_class: [{ name: 'name' }] });
     const rawResponse = await responsePromise.asResponse();

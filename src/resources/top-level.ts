@@ -312,6 +312,52 @@ export namespace ParseResponse {
 }
 
 /**
+ * Response model for section endpoint.
+ */
+export interface SectionResponse {
+  /**
+   * Public metadata for section response.
+   */
+  metadata: SectionResponse.Metadata;
+
+  table_of_contents: Array<SectionResponse.TableOfContent>;
+
+  table_of_contents_md: string;
+}
+
+export namespace SectionResponse {
+  /**
+   * Public metadata for section response.
+   */
+  export interface Metadata {
+    credit_usage: number;
+
+    duration_ms: number;
+
+    filename: string;
+
+    job_id?: string;
+
+    org_id?: string | null;
+
+    version?: string | null;
+  }
+
+  /**
+   * A single entry in the flat table of contents.
+   */
+  export interface TableOfContent {
+    level: number;
+
+    section_number: string;
+
+    start_reference: string;
+
+    title: string;
+  }
+}
+
+/**
  * Response model for split classification endpoint.
  */
 export interface SplitResponse {
@@ -523,6 +569,30 @@ export namespace ParseParams {
   }
 }
 
+export interface SectionParams {
+  /**
+   * Natural-language instructions to control hierarchy. Examples: 'Group by topic',
+   * 'Treat each numbered section as a top-level entry'.
+   */
+  guidelines?: string | null;
+
+  /**
+   * Parsed markdown with reference anchors (<a id='...'></a>). This is the markdown
+   * field from a parse response.
+   */
+  markdown?: Uploadable | string | null;
+
+  /**
+   * URL to fetch the markdown from.
+   */
+  markdown_url?: string | null;
+
+  /**
+   * Section model version. Defaults to latest.
+   */
+  model?: string | null;
+}
+
 export interface SplitParams {
   /**
    * List of split classification options/configuration. Can be provided as JSON
@@ -574,11 +644,13 @@ export declare namespace TopLevel {
     type ExtractResponse as ExtractResponse,
     type ExtractBuildSchemaResponse as ExtractBuildSchemaResponse,
     type ParseResponse as ParseResponse,
+    type SectionResponse as SectionResponse,
     type SplitResponse as SplitResponse,
     type ClassifyParams as ClassifyParams,
     type ExtractParams as ExtractParams,
     type ExtractBuildSchemaParams as ExtractBuildSchemaParams,
     type ParseParams as ParseParams,
+    type SectionParams as SectionParams,
     type SplitParams as SplitParams,
   };
 }
