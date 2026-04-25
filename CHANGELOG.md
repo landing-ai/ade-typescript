@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.7.1 (2026-04-25)
+
+Full Changelog: [v2.7.0...v2.7.1](https://github.com/landing-ai/ade-typescript/compare/v2.7.0...v2.7.1)
+
+### Chores
+
+* **internal:** more robust bootstrap script ([77238f8](https://github.com/landing-ai/ade-typescript/commit/77238f846b1f05c18d5b7d42dd83ed0f36138785))
+* restructure docs search code ([3448dd8](https://github.com/landing-ai/ade-typescript/commit/3448dd89eedb10acbb33b1db3f9e89885e0b0df5))
+
+
+### Documentation
+
+* add theme-aware LandingAI logo to README ([ef41a1a](https://github.com/landing-ai/ade-typescript/commit/ef41a1a221ae143e520573d4e853147052a1d1c4))
+
 ## 2.7.0 (2026-04-22)
 
 Full Changelog: [v2.6.2...v2.7.0](https://github.com/landing-ai/ade-typescript/compare/v2.6.2...v2.7.0)

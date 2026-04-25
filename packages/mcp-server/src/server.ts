@@ -29,7 +29,7 @@ export const newMcpServer = async ({
   new McpServer(
     {
       name: 'LandingAI_ade_api',
-      version: '2.7.0',
+      version: '2.7.1',
     },
     {
       instructions: await getInstructions({ stainlessApiKey, customInstructionsPath }),
