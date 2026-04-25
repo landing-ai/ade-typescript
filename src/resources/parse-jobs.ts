@@ -20,10 +20,7 @@ export class ParseJobs extends APIResource {
    *     `https://api.va.eu-west-1.landing.ai/v1/ade/parse/jobs`.
    */
   create(body: ParseJobCreateParams, options?: RequestOptions): APIPromise<ParseJobCreateResponse> {
-    return this._client.post(
-      '/v1/ade/parse/jobs',
-      multipartFormRequestOptions({ body, ...options }, this._client),
-    );
+    return this._client.post('/v1/ade/parse/jobs', multipartFormRequestOptions({ body, ...options }, this._client));
   }
 
   /**
@@ -32,10 +29,7 @@ export class ParseJobs extends APIResource {
    *
    * `https://api.va.eu-west-1.landing.ai/v1/ade/parse/jobs`.
    */
-  list(
-    query: ParseJobListParams | null | undefined = {},
-    options?: RequestOptions,
-  ): APIPromise<ParseJobListResponse> {
+  list(query: ParseJobListParams | null | undefined = {}, options?: RequestOptions): APIPromise<ParseJobListResponse> {
     return this._client.get('/v1/ade/parse/jobs', { query, ...options });
   }
 
@@ -138,9 +132,7 @@ export namespace ParseJobGetResponse {
 
     splits: Array<ParseResponse.Split>;
 
-    grounding?: {
-      [key: string]: ParseResponse.ParseResponseGrounding | ParseResponse.ParseResponseTableCellGrounding;
-    };
+    grounding?: { [key: string]: ParseResponse.ParseResponseGrounding | ParseResponse.ParseResponseTableCellGrounding };
   }
 
   export namespace ParseResponse {
@@ -179,23 +171,7 @@ export namespace ParseJobGetResponse {
 
       page: number;
 
-      type:
-        | 'chunkLogo'
-        | 'chunkCard'
-        | 'chunkAttestation'
-        | 'chunkScanCode'
-        | 'chunkForm'
-        | 'chunkTable'
-        | 'chunkFigure'
-        | 'chunkText'
-        | 'chunkMarginalia'
-        | 'chunkTitle'
-        | 'chunkPageHeader'
-        | 'chunkPageFooter'
-        | 'chunkPageNumber'
-        | 'chunkKeyValue'
-        | 'table'
-        | 'tableCell';
+      type: 'chunkLogo' | 'chunkCard' | 'chunkAttestation' | 'chunkScanCode' | 'chunkForm' | 'chunkTable' | 'chunkFigure' | 'chunkText' | 'chunkMarginalia' | 'chunkTitle' | 'chunkPageHeader' | 'chunkPageFooter' | 'chunkPageNumber' | 'chunkKeyValue' | 'table' | 'tableCell';
 
       confidence?: number | null;
 
@@ -217,23 +193,7 @@ export namespace ParseJobGetResponse {
 
       page: number;
 
-      type:
-        | 'chunkLogo'
-        | 'chunkCard'
-        | 'chunkAttestation'
-        | 'chunkScanCode'
-        | 'chunkForm'
-        | 'chunkTable'
-        | 'chunkFigure'
-        | 'chunkText'
-        | 'chunkMarginalia'
-        | 'chunkTitle'
-        | 'chunkPageHeader'
-        | 'chunkPageFooter'
-        | 'chunkPageNumber'
-        | 'chunkKeyValue'
-        | 'table'
-        | 'tableCell';
+      type: 'chunkLogo' | 'chunkCard' | 'chunkAttestation' | 'chunkScanCode' | 'chunkForm' | 'chunkTable' | 'chunkFigure' | 'chunkText' | 'chunkMarginalia' | 'chunkTitle' | 'chunkPageHeader' | 'chunkPageFooter' | 'chunkPageNumber' | 'chunkKeyValue' | 'table' | 'tableCell';
 
       confidence?: number | null;
 
@@ -508,6 +468,6 @@ export declare namespace ParseJobs {
     type ParseJobListResponse as ParseJobListResponse,
     type ParseJobGetResponse as ParseJobGetResponse,
     type ParseJobCreateParams as ParseJobCreateParams,
-    type ParseJobListParams as ParseJobListParams,
+    type ParseJobListParams as ParseJobListParams
   };
 }
