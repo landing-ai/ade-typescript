@@ -10,7 +10,9 @@ const config: JestConfigWithTsJest = {
     '^landingai-ade-mcp$': '<rootDir>/src/index.ts',
     '^landingai-ade-mcp/(.*)$': '<rootDir>/src/$1',
   },
-  modulePathIgnorePatterns: ['<rootDir>/dist/'],
+  modulePathIgnorePatterns: [
+    '<rootDir>/dist/',
+  ],
   testPathIgnorePatterns: ['scripts'],
 };
 
