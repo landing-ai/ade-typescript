@@ -2,14 +2,20 @@
 
 Types:
 
+- <code><a href="./src/resources/top-level.ts">ClassifyResponse</a></code>
 - <code><a href="./src/resources/top-level.ts">ExtractResponse</a></code>
+- <code><a href="./src/resources/top-level.ts">ExtractBuildSchemaResponse</a></code>
 - <code><a href="./src/resources/top-level.ts">ParseResponse</a></code>
+- <code><a href="./src/resources/top-level.ts">SectionResponse</a></code>
 - <code><a href="./src/resources/top-level.ts">SplitResponse</a></code>
 
 Methods:
 
+- <code title="post /v1/ade/classify">client.<a href="./src/index.ts">classify</a>({ ...params }) -> ClassifyResponse</code>
 - <code title="post /v1/ade/extract">client.<a href="./src/index.ts">extract</a>({ ...params }) -> ExtractResponse</code>
+- <code title="post /v1/ade/extract/build-schema">client.<a href="./src/index.ts">extractBuildSchema</a>({ ...params }) -> ExtractBuildSchemaResponse</code>
 - <code title="post /v1/ade/parse">client.<a href="./src/index.ts">parse</a>({ ...params }) -> ParseResponse</code>
+- <code title="post /v1/ade/section">client.<a href="./src/index.ts">section</a>({ ...params }) -> SectionResponse</code>
 - <code title="post /v1/ade/split">client.<a href="./src/index.ts">split</a>({ ...params }) -> SplitResponse</code>
 
 # Shared

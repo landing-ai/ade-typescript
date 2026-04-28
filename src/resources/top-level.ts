@@ -3,6 +3,64 @@
 import * as Shared from './shared';
 import { type Uploadable } from '../core/uploads';
 
+/**
+ * Response model for the classify endpoint.
+ */
+export interface ClassifyResponse {
+  classification: Array<ClassifyResponse.Classification>;
+
+  /**
+   * Metadata for the classify response.
+   */
+  metadata: ClassifyResponse.Metadata;
+}
+
+export namespace ClassifyResponse {
+  /**
+   * A single page-level classification result.
+   */
+  export interface Classification {
+    /**
+     * Predicted class label or 'unknown'.
+     */
+    class: string;
+
+    /**
+     * Page number (0-based).
+     */
+    page: number;
+
+    /**
+     * Reason for the classification (for debugging).
+     */
+    reason?: string;
+
+    /**
+     * Proposed class when the prediction is 'unknown'.
+     */
+    suggested_class?: string | null;
+  }
+
+  /**
+   * Metadata for the classify response.
+   */
+  export interface Metadata {
+    credit_usage: number;
+
+    duration_ms: number;
+
+    filename: string;
+
+    page_count: number;
+
+    job_id?: string;
+
+    org_id?: string | null;
+
+    version?: string | null;
+  }
+}
+
 export interface ExtractResponse {
   /**
    * The extracted key-value pairs.
@@ -49,6 +107,59 @@ export namespace ExtractResponse {
      * schema.
      */
     schema_violation_error?: string | null;
+
+    /**
+     * Structured warnings from the extraction process. Each warning is an instance of
+     * ExtractWarning with 'code' (e.g. 'nonconformant_schema') and 'msg'
+     * (human-readable description). Present only for extract versions from
+     * extract-20260314 and above that support structured warnings.
+     */
+    warnings?: Array<Metadata.Warning>;
+  }
+
+  export namespace Metadata {
+    export interface Warning {
+      /**
+       * The type of warning, used to translate to a status code downstream
+       */
+      code: 'nonconformant_schema' | 'nonconformant_output';
+
+      /**
+       * Human-readable description of the warning with more details
+       */
+      msg: string;
+    }
+  }
+}
+
+export interface ExtractBuildSchemaResponse {
+  /**
+   * The generated JSON schema as a string.
+   */
+  extraction_schema: string;
+
+  /**
+   * The metadata for the schema generation process.
+   */
+  metadata: ExtractBuildSchemaResponse.Metadata;
+}
+
+export namespace ExtractBuildSchemaResponse {
+  /**
+   * The metadata for the schema generation process.
+   */
+  export interface Metadata {
+    credit_usage?: number;
+
+    duration_ms?: number;
+
+    filename?: string | null;
+
+    job_id?: string;
+
+    org_id?: string | null;
+
+    version?: string | null;
 
     /**
      * Structured warnings from the extraction process. Each warning is an instance of
@@ -201,6 +312,52 @@ export namespace ParseResponse {
 }
 
 /**
+ * Response model for section endpoint.
+ */
+export interface SectionResponse {
+  /**
+   * Public metadata for section response.
+   */
+  metadata: SectionResponse.Metadata;
+
+  table_of_contents: Array<SectionResponse.TableOfContent>;
+
+  table_of_contents_md: string;
+}
+
+export namespace SectionResponse {
+  /**
+   * Public metadata for section response.
+   */
+  export interface Metadata {
+    credit_usage: number;
+
+    duration_ms: number;
+
+    filename: string;
+
+    job_id?: string;
+
+    org_id?: string | null;
+
+    version?: string | null;
+  }
+
+  /**
+   * A single entry in the flat table of contents.
+   */
+  export interface TableOfContent {
+    level: number;
+
+    section_number: string;
+
+    start_reference: string;
+
+    title: string;
+  }
+}
+
+/**
  * Response model for split classification endpoint.
  */
 export interface SplitResponse {
@@ -255,6 +412,50 @@ export namespace SplitResponse {
   }
 }
 
+export interface ClassifyParams {
+  /**
+   * The possible classes that can be assigned to pages in the document. Each entry
+   * is an object with a `class` name and an optional `description`. Only one class
+   * is assigned per page; unclassifiable pages receive 'unknown'. Can be provided as
+   * a JSON string in form data.
+   */
+  classes: Array<ClassifyParams.Class>;
+
+  /**
+   * A file to be classified. Either this parameter or the `document_url` parameter
+   * must be provided.
+   */
+  document?: Uploadable | null;
+
+  /**
+   * The URL of the document to be classified. Either this parameter or the
+   * `document` parameter must be provided.
+   */
+  document_url?: string | null;
+
+  /**
+   * Classification model version. Defaults to the latest.
+   */
+  model?: string | null;
+}
+
+export namespace ClassifyParams {
+  /**
+   * A single classification option: a class name plus optional description.
+   */
+  export interface Class {
+    /**
+     * Name of the class.
+     */
+    class: string;
+
+    /**
+     * Detailed description of what this class represents.
+     */
+    description?: string | null;
+  }
+}
+
 export interface ExtractParams {
   /**
    * JSON schema for field extraction. This schema determines what key-values pairs
@@ -285,6 +486,35 @@ export interface ExtractParams {
    * schema validation.
    */
   strict?: boolean;
+}
+
+export interface ExtractBuildSchemaParams {
+  /**
+   * URLs to Markdown files to analyze for schema generation.
+   */
+  markdown_urls?: Array<string> | null;
+
+  /**
+   * Markdown files or inline content strings to analyze for schema generation.
+   * Multiple documents can be provided for better schema coverage.
+   */
+  markdowns?: Array<Uploadable | string> | null;
+
+  /**
+   * The version of the model to use for schema generation. Use `extract-latest` to
+   * use the latest version.
+   */
+  model?: string | null;
+
+  /**
+   * Instructions for how to generate or modify the schema.
+   */
+  prompt?: string | null;
+
+  /**
+   * Existing JSON schema to iterate on or refine.
+   */
+  schema?: string | null;
 }
 
 export interface ParseParams {
@@ -339,6 +569,30 @@ export namespace ParseParams {
   }
 }
 
+export interface SectionParams {
+  /**
+   * Natural-language instructions to control hierarchy. Examples: 'Group by topic',
+   * 'Treat each numbered section as a top-level entry'.
+   */
+  guidelines?: string | null;
+
+  /**
+   * Parsed markdown with reference anchors (<a id='...'></a>). This is the markdown
+   * field from a parse response.
+   */
+  markdown?: Uploadable | string | null;
+
+  /**
+   * URL to fetch the markdown from.
+   */
+  markdown_url?: string | null;
+
+  /**
+   * Section model version. Defaults to latest.
+   */
+  model?: string | null;
+}
+
 export interface SplitParams {
   /**
    * List of split classification options/configuration. Can be provided as JSON
@@ -386,11 +640,17 @@ export namespace SplitParams {
 
 export declare namespace TopLevel {
   export {
+    type ClassifyResponse as ClassifyResponse,
     type ExtractResponse as ExtractResponse,
+    type ExtractBuildSchemaResponse as ExtractBuildSchemaResponse,
     type ParseResponse as ParseResponse,
+    type SectionResponse as SectionResponse,
     type SplitResponse as SplitResponse,
+    type ClassifyParams as ClassifyParams,
     type ExtractParams as ExtractParams,
+    type ExtractBuildSchemaParams as ExtractBuildSchemaParams,
     type ParseParams as ParseParams,
+    type SectionParams as SectionParams,
     type SplitParams as SplitParams,
   };
 }

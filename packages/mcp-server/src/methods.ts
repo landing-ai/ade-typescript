@@ -11,16 +11,34 @@ export type SdkMethod = {
 
 export const sdkMethods: SdkMethod[] = [
   {
+    clientCallName: 'client.classify',
+    fullyQualifiedName: 'classify',
+    httpMethod: 'post',
+    httpPath: '/v1/ade/classify',
+  },
+  {
     clientCallName: 'client.extract',
     fullyQualifiedName: 'extract',
     httpMethod: 'post',
     httpPath: '/v1/ade/extract',
   },
   {
+    clientCallName: 'client.extractBuildSchema',
+    fullyQualifiedName: 'extractBuildSchema',
+    httpMethod: 'post',
+    httpPath: '/v1/ade/extract/build-schema',
+  },
+  {
     clientCallName: 'client.parse',
     fullyQualifiedName: 'parse',
     httpMethod: 'post',
     httpPath: '/v1/ade/parse',
+  },
+  {
+    clientCallName: 'client.section',
+    fullyQualifiedName: 'section',
+    httpMethod: 'post',
+    httpPath: '/v1/ade/section',
   },
   {
     clientCallName: 'client.split',

@@ -20,10 +20,16 @@ import * as Uploads from './core/uploads';
 import * as API from './resources/index';
 import * as TopLevelAPI from './resources/top-level';
 import {
+  ClassifyParams,
+  ClassifyResponse,
+  ExtractBuildSchemaParams,
+  ExtractBuildSchemaResponse,
   ExtractParams,
   ExtractResponse,
   ParseParams,
   ParseResponse,
+  SectionParams,
+  SectionResponse,
   SplitParams,
   SplitResponse,
 } from './resources/top-level';
@@ -300,6 +306,24 @@ export class LandingAIADE {
   }
 
   /**
+   * Classify the pages of a document into classes you define.
+   *
+   * This endpoint accepts PDFs, images, and other supported file types (either as a
+   * `document` upload or `document_url`) together with a list of `classes`, and
+   * returns a classification result for each page.
+   *
+   * For EU users, use this endpoint:
+   *
+   * `https://api.va.eu-west-1.landing.ai/v1/ade/classify`.
+   */
+  classify(
+    body: TopLevelAPI.ClassifyParams,
+    options?: RequestOptions,
+  ): APIPromise<TopLevelAPI.ClassifyResponse> {
+    return this.post('/v1/ade/classify', multipartFormRequestOptions({ body, ...options }, this));
+  }
+
+  /**
    * Extract structured data from Markdown using a JSON schema.
    *
    * This endpoint processes Markdown content and extracts structured data according
@@ -330,6 +354,24 @@ export class LandingAIADE {
   }
 
   /**
+   * Generate a JSON schema from Markdown using AI.
+   *
+   * This endpoint analyzes Markdown content and generates a JSON schema suitable for
+   * use with the extract endpoint. It can also refine an existing schema based on
+   * new documents or iterate on a schema based on prompt instructions.
+   *
+   * For EU users, use this endpoint:
+   *
+   *     `https://api.va.eu-west-1.landing.ai/v1/ade/extract/build-schema`.
+   */
+  extractBuildSchema(
+    body: TopLevelAPI.ExtractBuildSchemaParams,
+    options?: RequestOptions,
+  ): APIPromise<TopLevelAPI.ExtractBuildSchemaResponse> {
+    return this.post('/v1/ade/extract/build-schema', multipartFormRequestOptions({ body, ...options }, this));
+  }
+
+  /**
    * Parse a document or spreadsheet.
    *
    * This endpoint parses documents (PDF, images) and spreadsheets (XLSX, CSV) into
@@ -356,6 +398,24 @@ export class LandingAIADE {
       });
     }
     return promise;
+  }
+
+  /**
+   * Section parsed markdown into a hierarchical table of contents.
+   *
+   * This endpoint accepts the markdown output from /ade/parse (with reference
+   * anchors) and returns a flat, reading-order list of sections with hierarchy
+   * levels and reference ranges.
+   *
+   * For EU users, use this endpoint:
+   *
+   * `https://api.va.eu-west-1.landing.ai/v1/ade/section`.
+   */
+  section(
+    body: TopLevelAPI.SectionParams,
+    options?: RequestOptions,
+  ): APIPromise<TopLevelAPI.SectionResponse> {
+    return this.post('/v1/ade/section', multipartFormRequestOptions({ body, ...options }, this));
   }
 
   /**
@@ -916,11 +976,17 @@ export declare namespace LandingAIADE {
   export type RequestOptions = Opts.RequestOptions;
 
   export {
+    type ClassifyResponse as ClassifyResponse,
     type ExtractResponse as ExtractResponse,
+    type ExtractBuildSchemaResponse as ExtractBuildSchemaResponse,
     type ParseResponse as ParseResponse,
+    type SectionResponse as SectionResponse,
     type SplitResponse as SplitResponse,
+    type ClassifyParams as ClassifyParams,
     type ExtractParams as ExtractParams,
+    type ExtractBuildSchemaParams as ExtractBuildSchemaParams,
     type ParseParams as ParseParams,
+    type SectionParams as SectionParams,
     type SplitParams as SplitParams,
   };
 

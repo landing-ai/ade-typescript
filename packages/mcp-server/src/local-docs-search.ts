@@ -121,7 +121,7 @@ const EMBEDDED_METHODS: MethodEntry[] = [
       typescript: {
         method: 'client.parse',
         example:
-          "import LandingAIADE from 'landingai-ade';\n\nconst client = new LandingAIADE({\n  apikey: process.env['VISION_AGENT_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.parse();\n\nconsole.log(response.chunks);",
+          "import fs from 'fs';\nimport LandingAIADE from 'landingai-ade';\n\nconst client = new LandingAIADE({\n  apikey: process.env['VISION_AGENT_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.parse();\n\nconsole.log(response.chunks);",
       },
     },
   },
@@ -162,6 +162,115 @@ const EMBEDDED_METHODS: MethodEntry[] = [
     },
   },
   {
+    name: 'classify',
+    endpoint: '/v1/ade/classify',
+    httpMethod: 'post',
+    summary: 'ADE Classify',
+    description:
+      'Classify the pages of a document into classes you define.\n\nThis endpoint accepts PDFs, images, and other supported file types\n(either as a `document` upload or `document_url`) together with a\nlist of `classes`, and returns a classification result for each page.\n\nFor EU users, use this endpoint:\n\n`https://api.va.eu-west-1.landing.ai/v1/ade/classify`.',
+    stainlessPath: '(resource) $client > (method) classify',
+    qualified: 'client.classify',
+    params: [
+      'classes: { class: string; description?: string; }[];',
+      'document?: string;',
+      'document_url?: string;',
+      'model?: string;',
+    ],
+    response:
+      '{ classification: { class: string; page: number; reason?: string; suggested_class?: string; }[]; metadata: { credit_usage: number; duration_ms: number; filename: string; page_count: number; job_id?: string; org_id?: string; version?: string; }; }',
+    markdown:
+      "## classify\n\n`client.classify(classes: { class: string; description?: string; }[], document?: string, document_url?: string, model?: string): { classification: object[]; metadata: object; }`\n\n**post** `/v1/ade/classify`\n\nClassify the pages of a document into classes you define.\n\nThis endpoint accepts PDFs, images, and other supported file types\n(either as a `document` upload or `document_url`) together with a\nlist of `classes`, and returns a classification result for each page.\n\nFor EU users, use this endpoint:\n\n`https://api.va.eu-west-1.landing.ai/v1/ade/classify`.\n\n### Parameters\n\n- `classes: { class: string; description?: string; }[]`\n  The possible classes that can be assigned to pages in the document. Each entry is an object with a `class` name and an optional `description`. Only one class is assigned per page; unclassifiable pages receive 'unknown'. Can be provided as a JSON string in form data.\n\n- `document?: string`\n  A file to be classified. Either this parameter or the `document_url` parameter must be provided.\n\n- `document_url?: string`\n  The URL of the document to be classified. Either this parameter or the `document` parameter must be provided.\n\n- `model?: string`\n  Classification model version. Defaults to the latest.\n\n### Returns\n\n- `{ classification: { class: string; page: number; reason?: string; suggested_class?: string; }[]; metadata: { credit_usage: number; duration_ms: number; filename: string; page_count: number; job_id?: string; org_id?: string; version?: string; }; }`\n  Response model for the classify endpoint.\n\n  - `classification: { class: string; page: number; reason?: string; suggested_class?: string; }[]`\n  - `metadata: { credit_usage: number; duration_ms: number; filename: string; page_count: number; job_id?: string; org_id?: string; version?: string; }`\n\n### Example\n\n```typescript\nimport LandingAIADE from 'landingai-ade';\n\nconst client = new LandingAIADE();\n\nconst response = await client.classify({ classes: [{ class: 'class' }] });\n\nconsole.log(response);\n```",
+    perLanguage: {
+      http: {
+        example:
+          'curl https://api.va.landing.ai/v1/ade/classify \\\n    -H \'Content-Type: multipart/form-data\' \\\n    -H "Authorization: Bearer $VISION_AGENT_API_KEY" \\\n    -F classes=\'[{"class":"class"}]\'',
+      },
+      python: {
+        method: 'classify',
+        example:
+          'import os\nfrom landingai_ade import LandingAIADE\n\nclient = LandingAIADE(\n    apikey=os.environ.get("VISION_AGENT_API_KEY"),  # This is the default and can be omitted\n)\nresponse = client.classify(\n    classes=[{\n        "class": "class"\n    }],\n)\nprint(response.classification)',
+      },
+      typescript: {
+        method: 'client.classify',
+        example:
+          "import fs from 'fs';\nimport LandingAIADE from 'landingai-ade';\n\nconst client = new LandingAIADE({\n  apikey: process.env['VISION_AGENT_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.classify({ classes: [{ class: 'class' }] });\n\nconsole.log(response.classification);",
+      },
+    },
+  },
+  {
+    name: 'section',
+    endpoint: '/v1/ade/section',
+    httpMethod: 'post',
+    summary: 'ADE Section',
+    description:
+      'Section parsed markdown into a hierarchical table of contents.\n\nThis endpoint accepts the markdown output from /ade/parse\n(with reference anchors) and returns a flat, reading-order list of\nsections with hierarchy levels and reference ranges.\n\nFor EU users, use this endpoint:\n\n`https://api.va.eu-west-1.landing.ai/v1/ade/section`.',
+    stainlessPath: '(resource) $client > (method) section',
+    qualified: 'client.section',
+    params: [
+      'guidelines?: string;',
+      'markdown?: string | string;',
+      'markdown_url?: string;',
+      'model?: string;',
+    ],
+    response:
+      '{ metadata: { credit_usage: number; duration_ms: number; filename: string; job_id?: string; org_id?: string; version?: string; }; table_of_contents: { level: number; section_number: string; start_reference: string; title: string; }[]; table_of_contents_md: string; }',
+    markdown:
+      "## section\n\n`client.section(guidelines?: string, markdown?: string | string, markdown_url?: string, model?: string): { metadata: object; table_of_contents: object[]; table_of_contents_md: string; }`\n\n**post** `/v1/ade/section`\n\nSection parsed markdown into a hierarchical table of contents.\n\nThis endpoint accepts the markdown output from /ade/parse\n(with reference anchors) and returns a flat, reading-order list of\nsections with hierarchy levels and reference ranges.\n\nFor EU users, use this endpoint:\n\n`https://api.va.eu-west-1.landing.ai/v1/ade/section`.\n\n### Parameters\n\n- `guidelines?: string`\n  Natural-language instructions to control hierarchy. Examples: 'Group by topic', 'Treat each numbered section as a top-level entry'.\n\n- `markdown?: string | string`\n  Parsed markdown with reference anchors (<a id='...'></a>). This is the markdown field from a parse response.\n\n- `markdown_url?: string`\n  URL to fetch the markdown from.\n\n- `model?: string`\n  Section model version. Defaults to latest.\n\n### Returns\n\n- `{ metadata: { credit_usage: number; duration_ms: number; filename: string; job_id?: string; org_id?: string; version?: string; }; table_of_contents: { level: number; section_number: string; start_reference: string; title: string; }[]; table_of_contents_md: string; }`\n  Response model for section endpoint.\n\n  - `metadata: { credit_usage: number; duration_ms: number; filename: string; job_id?: string; org_id?: string; version?: string; }`\n  - `table_of_contents: { level: number; section_number: string; start_reference: string; title: string; }[]`\n  - `table_of_contents_md: string`\n\n### Example\n\n```typescript\nimport LandingAIADE from 'landingai-ade';\n\nconst client = new LandingAIADE();\n\nconst response = await client.section();\n\nconsole.log(response);\n```",
+    perLanguage: {
+      http: {
+        example:
+          'curl https://api.va.landing.ai/v1/ade/section \\\n    -H \'Content-Type: multipart/form-data\' \\\n    -H "Authorization: Bearer $VISION_AGENT_API_KEY"',
+      },
+      python: {
+        method: 'section',
+        example:
+          'import os\nfrom landingai_ade import LandingAIADE\n\nclient = LandingAIADE(\n    apikey=os.environ.get("VISION_AGENT_API_KEY"),  # This is the default and can be omitted\n)\nresponse = client.section()\nprint(response.metadata)',
+      },
+      typescript: {
+        method: 'client.section',
+        example:
+          "import LandingAIADE from 'landingai-ade';\n\nconst client = new LandingAIADE({\n  apikey: process.env['VISION_AGENT_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.section();\n\nconsole.log(response.metadata);",
+      },
+    },
+  },
+  {
+    name: 'extract-build-schema',
+    endpoint: '/v1/ade/extract/build-schema',
+    httpMethod: 'post',
+    summary: 'ADE Build Extract Schema',
+    description:
+      'Generate a JSON schema from Markdown using AI.\n\nThis endpoint analyzes Markdown\n    content and generates a JSON schema suitable for use with the extract endpoint.\n    It can also refine an existing schema based on new documents or iterate on a schema\n    based on prompt instructions.\n\nFor EU users, use this endpoint:\n\n\n    `https://api.va.eu-west-1.landing.ai/v1/ade/extract/build-schema`.',
+    stainlessPath: '(resource) $client > (method) extract-build-schema',
+    qualified: 'client.extractBuildSchema',
+    params: [
+      'markdown_urls?: string[];',
+      'markdowns?: string | string[];',
+      'model?: string;',
+      'prompt?: string;',
+      'schema?: string;',
+    ],
+    response:
+      "{ extraction_schema: string; metadata: { credit_usage?: number; duration_ms?: number; filename?: string; job_id?: string; org_id?: string; version?: string; warnings?: { code: 'nonconformant_schema' | 'nonconformant_output'; msg: string; }[]; }; }",
+    markdown:
+      "## extract-build-schema\n\n`client.extractBuildSchema(markdown_urls?: string[], markdowns?: string | string[], model?: string, prompt?: string, schema?: string): { extraction_schema: string; metadata: object; }`\n\n**post** `/v1/ade/extract/build-schema`\n\nGenerate a JSON schema from Markdown using AI.\n\nThis endpoint analyzes Markdown\n    content and generates a JSON schema suitable for use with the extract endpoint.\n    It can also refine an existing schema based on new documents or iterate on a schema\n    based on prompt instructions.\n\nFor EU users, use this endpoint:\n\n\n    `https://api.va.eu-west-1.landing.ai/v1/ade/extract/build-schema`.\n\n### Parameters\n\n- `markdown_urls?: string[]`\n  URLs to Markdown files to analyze for schema generation.\n\n- `markdowns?: string | string[]`\n  Markdown files or inline content strings to analyze for schema generation. Multiple documents can be provided for better schema coverage.\n\n- `model?: string`\n  The version of the model to use for schema generation. Use `extract-latest` to use the latest version.\n\n- `prompt?: string`\n  Instructions for how to generate or modify the schema.\n\n- `schema?: string`\n  Existing JSON schema to iterate on or refine.\n\n### Returns\n\n- `{ extraction_schema: string; metadata: { credit_usage?: number; duration_ms?: number; filename?: string; job_id?: string; org_id?: string; version?: string; warnings?: { code: 'nonconformant_schema' | 'nonconformant_output'; msg: string; }[]; }; }`\n\n  - `extraction_schema: string`\n  - `metadata: { credit_usage?: number; duration_ms?: number; filename?: string; job_id?: string; org_id?: string; version?: string; warnings?: { code: 'nonconformant_schema' | 'nonconformant_output'; msg: string; }[]; }`\n\n### Example\n\n```typescript\nimport LandingAIADE from 'landingai-ade';\n\nconst client = new LandingAIADE();\n\nconst response = await client.extractBuildSchema();\n\nconsole.log(response);\n```",
+    perLanguage: {
+      http: {
+        example:
+          'curl https://api.va.landing.ai/v1/ade/extract/build-schema \\\n    -H \'Content-Type: multipart/form-data\' \\\n    -H "Authorization: Bearer $VISION_AGENT_API_KEY"',
+      },
+      python: {
+        method: 'extract_build_schema',
+        example:
+          'import os\nfrom landingai_ade import LandingAIADE\n\nclient = LandingAIADE(\n    apikey=os.environ.get("VISION_AGENT_API_KEY"),  # This is the default and can be omitted\n)\nresponse = client.extract_build_schema()\nprint(response.extraction_schema)',
+      },
+      typescript: {
+        method: 'client.extractBuildSchema',
+        example:
+          "import LandingAIADE from 'landingai-ade';\n\nconst client = new LandingAIADE({\n  apikey: process.env['VISION_AGENT_API_KEY'], // This is the default and can be omitted\n});\n\nconst response = await client.extractBuildSchema();\n\nconsole.log(response.extraction_schema);",
+      },
+    },
+  },
+  {
     name: 'create',
     endpoint: '/v1/ade/parse/jobs',
     httpMethod: 'post',
@@ -195,7 +304,7 @@ const EMBEDDED_METHODS: MethodEntry[] = [
       typescript: {
         method: 'client.parseJobs.create',
         example:
-          "import LandingAIADE from 'landingai-ade';\n\nconst client = new LandingAIADE({\n  apikey: process.env['VISION_AGENT_API_KEY'], // This is the default and can be omitted\n});\n\nconst parseJob = await client.parseJobs.create();\n\nconsole.log(parseJob.job_id);",
+          "import fs from 'fs';\nimport LandingAIADE from 'landingai-ade';\n\nconst client = new LandingAIADE({\n  apikey: process.env['VISION_AGENT_API_KEY'], // This is the default and can be omitted\n});\n\nconst parseJob = await client.parseJobs.create();\n\nconsole.log(parseJob.job_id);",
       },
     },
   },

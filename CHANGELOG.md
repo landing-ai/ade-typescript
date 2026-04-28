@@ -1,5 +1,50 @@
 # Changelog
 
+## 2.7.0 (2026-04-22)
+
+Full Changelog: [v2.6.2...v2.7.0](https://github.com/landing-ai/ade-typescript/compare/v2.6.2...v2.7.0)
+
+### Features
+
+* **api:** api update ([a5a2449](https://github.com/landing-ai/ade-typescript/commit/a5a2449ce5a95c32f2aea15a9333f3414437617e))
+* **api:** classify api ([d8cf332](https://github.com/landing-ai/ade-typescript/commit/d8cf332dc41beafbefb404f3de4af100b442e86d))
+* **api:** section api ([3d1c2f0](https://github.com/landing-ai/ade-typescript/commit/3d1c2f04610e32507e5ebdc3082c929fb8d8b2a6))
+
+## 2.6.2 (2026-04-15)
+
+Full Changelog: [v2.6.1...v2.6.2](https://github.com/landing-ai/ade-typescript/compare/v2.6.1...v2.6.2)
+
+### Chores
+
+* update SDK settings ([60f792d](https://github.com/landing-ai/ade-typescript/commit/60f792d860001e2e9f44526f4da48cd9a7714130))
+
+## 2.6.1 (2026-04-14)
+
+Full Changelog: [v2.6.0...v2.6.1](https://github.com/landing-ai/ade-typescript/compare/v2.6.0...v2.6.1)
+
+### Chores
+
+* fix example snippet imports ([439c93d](https://github.com/landing-ai/ade-typescript/commit/439c93dd1c49155bd49f052bddbe165656964c6b))
+
+## 2.6.0 (2026-04-13)
+
+Full Changelog: [v2.5.0...v2.6.0](https://github.com/landing-ai/ade-typescript/compare/v2.5.0...v2.6.0)
+
+### Features
+
+* **api:** extract build ([e7324de](https://github.com/landing-ai/ade-typescript/commit/e7324de5efab7a3f6e55c1878356e991f264560b))
+* **api:** extract-build-schema ([4630aea](https://github.com/landing-ai/ade-typescript/commit/4630aeafb171f9b770af75b148bc8f20a715b97a))
+
+
+### Chores
+
+* **internal:** codegen related update ([78e87b3](https://github.com/landing-ai/ade-typescript/commit/78e87b39e27e32128029edd4aa50f3382dbe1fcf))
+* **internal:** codegen related update ([ecf7e2d](https://github.com/landing-ai/ade-typescript/commit/ecf7e2dadd10b3c4a97a0fe543dae1668f344a03))
+* **internal:** fix MCP server import ordering ([ff8e3c0](https://github.com/landing-ai/ade-typescript/commit/ff8e3c00904eeae629a2c5f9aac717b5bceb2863))
+* **internal:** show error causes in MCP servers when running in local mode ([b747a5a](https://github.com/landing-ai/ade-typescript/commit/b747a5a77fc3ff3a3c974062ad9f961144159794))
+* **mcp-server:** increase local docs search result count from 5 to 10 ([fb6e3c5](https://github.com/landing-ai/ade-typescript/commit/fb6e3c5540b1a391c66c46329bfbd89f312ac431))
+* update SDK settings ([de92563](https://github.com/landing-ai/ade-typescript/commit/de925636d1f9bb6bedc797f41826f7d723665713))
+
 ## 2.5.0 (2026-04-06)
 
 Full Changelog: [v2.4.0...v2.5.0](https://github.com/landing-ai/ade-typescript/compare/v2.4.0...v2.5.0)

@@ -9,6 +9,28 @@ const client = new LandingAIADE({
 
 describe('top level methods', () => {
   // Mock server tests are disabled
+  test.skip('classify: only required params', async () => {
+    const responsePromise = client.classify({ classes: [{ class: 'class' }] });
+    const rawResponse = await responsePromise.asResponse();
+    expect(rawResponse).toBeInstanceOf(Response);
+    const response = await responsePromise;
+    expect(response).not.toBeInstanceOf(Response);
+    const dataAndResponse = await responsePromise.withResponse();
+    expect(dataAndResponse.data).toBe(response);
+    expect(dataAndResponse.response).toBe(rawResponse);
+  });
+
+  // Mock server tests are disabled
+  test.skip('classify: required and optional params', async () => {
+    const response = await client.classify({
+      classes: [{ class: 'class', description: 'description' }],
+      document: await toFile(Buffer.from('Example data'), 'README.md'),
+      document_url: 'document_url',
+      model: 'model',
+    });
+  });
+
+  // Mock server tests are disabled
   test.skip('extract: only required params', async () => {
     const responsePromise = client.extract({ schema: 'schema' });
     const rawResponse = await responsePromise.asResponse();
@@ -32,8 +54,32 @@ describe('top level methods', () => {
   });
 
   // Mock server tests are disabled
+  test.skip('extractBuildSchema', async () => {
+    const responsePromise = client.extractBuildSchema({});
+    const rawResponse = await responsePromise.asResponse();
+    expect(rawResponse).toBeInstanceOf(Response);
+    const response = await responsePromise;
+    expect(response).not.toBeInstanceOf(Response);
+    const dataAndResponse = await responsePromise.withResponse();
+    expect(dataAndResponse.data).toBe(response);
+    expect(dataAndResponse.response).toBe(rawResponse);
+  });
+
+  // Mock server tests are disabled
   test.skip('parse', async () => {
     const responsePromise = client.parse({});
+    const rawResponse = await responsePromise.asResponse();
+    expect(rawResponse).toBeInstanceOf(Response);
+    const response = await responsePromise;
+    expect(response).not.toBeInstanceOf(Response);
+    const dataAndResponse = await responsePromise.withResponse();
+    expect(dataAndResponse.data).toBe(response);
+    expect(dataAndResponse.response).toBe(rawResponse);
+  });
+
+  // Mock server tests are disabled
+  test.skip('section', async () => {
+    const responsePromise = client.section({});
     const rawResponse = await responsePromise.asResponse();
     expect(rawResponse).toBeInstanceOf(Response);
     const response = await responsePromise;
