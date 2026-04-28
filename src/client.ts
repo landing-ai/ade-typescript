@@ -94,14 +94,19 @@ export function _getInputFilename(
 /**
  * Save API response to a JSON file.
  *
- * If saveTo ends with '.json', it is treated as a full file path and the
- * response is written there directly. Otherwise it is treated as a directory
- * and the file is auto-named '{filename}_{methodName}_output.json'
- * (or '{methodName}_output.json' when filename is 'output').
+ * Has two modes:
+ *   1. Full-path mode — if `saveTo` has a `.json` suffix (case-insensitive),
+ *      it is treated as a full file path and the response is written there
+ *      directly. Parent directories are created automatically.
+ *   2. Directory mode — otherwise `saveTo` is treated as a directory and
+ *      the file is auto-named `{filename}_{methodName}_output.json`, except
+ *      when `filename` is `'output'` (no input filename could be derived) —
+ *      in that case the redundant prefix is dropped and the file is named
+ *      `{methodName}_output.json`.
  * @internal
  */
 export function _saveResponse(saveTo: string, filename: string, methodName: string, result: unknown): void {
-  if (saveTo.endsWith('.json')) {
+  if (saveTo.toLowerCase().endsWith('.json')) {
     // Full file path mode — write to exact location
     fs.mkdirSync(path.dirname(saveTo), { recursive: true });
     fs.writeFileSync(saveTo, JSON.stringify(result, null, 2));
