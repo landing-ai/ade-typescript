@@ -17,15 +17,41 @@ import * as Errors from './core/error';
 import * as Uploads from './core/uploads';
 import * as API from './resources/index';
 import * as TopLevelAPI from './resources/top-level';
-import { ClassifyParams, ClassifyResponse, ExtractBuildSchemaParams, ExtractBuildSchemaResponse, ExtractParams, ExtractResponse, ParseParams, ParseResponse, SectionParams, SectionResponse, SplitParams, SplitResponse } from './resources/top-level';
+import {
+  ClassifyParams,
+  ClassifyResponse,
+  ExtractBuildSchemaParams,
+  ExtractBuildSchemaResponse,
+  ExtractParams,
+  ExtractResponse,
+  ParseParams,
+  ParseResponse,
+  SectionParams,
+  SectionResponse,
+  SplitParams,
+  SplitResponse,
+} from './resources/top-level';
 import { APIPromise } from './core/api-promise';
-import { ParseJobCreateParams, ParseJobCreateResponse, ParseJobGetResponse, ParseJobListParams, ParseJobListResponse, ParseJobs } from './resources/parse-jobs';
+import {
+  ParseJobCreateParams,
+  ParseJobCreateResponse,
+  ParseJobGetResponse,
+  ParseJobListParams,
+  ParseJobListResponse,
+  ParseJobs,
+} from './resources/parse-jobs';
 import { type Fetch } from './internal/builtin-types';
 import { HeadersLike, NullableHeaders, buildHeaders } from './internal/headers';
 import { FinalRequestOptions, RequestOptions } from './internal/request-options';
 import { multipartFormRequestOptions } from './internal/uploads';
 import { readEnv } from './internal/utils/env';
-import { type LogLevel, type Logger, formatRequestDetails, loggerFor, parseLogLevel } from './internal/utils/log';
+import {
+  type LogLevel,
+  type Logger,
+  formatRequestDetails,
+  loggerFor,
+  parseLogLevel,
+} from './internal/utils/log';
 import { isEmptyObj } from './internal/utils/values';
 
 const environments = {
@@ -123,7 +149,7 @@ export interface ClientOptions {
 }
 
 /**
- * API Client for interfacing with the LandingAI ADE API. 
+ * API Client for interfacing with the LandingAI ADE API.
  */
 export class LandingAIADE {
   apikey: string;
@@ -160,7 +186,7 @@ export class LandingAIADE {
   }: ClientOptions = {}) {
     if (apikey === undefined) {
       throw new Errors.LandingAIADEError(
-        'The VISION_AGENT_API_KEY environment variable is missing or empty; either provide it, or instantiate the LandingAIADE client with an apikey option, like new LandingAIADE({ apikey: \'My Apikey\' }).'
+        "The VISION_AGENT_API_KEY environment variable is missing or empty; either provide it, or instantiate the LandingAIADE client with an apikey option, like new LandingAIADE({ apikey: 'My Apikey' }).",
       );
     }
 
@@ -173,8 +199,8 @@ export class LandingAIADE {
 
     if (baseURL && opts.environment) {
       throw new Errors.LandingAIADEError(
-        'Ambiguous URL; The `baseURL` option (or LANDINGAI_ADE_BASE_URL env var) and the `environment` option are given. If you want to use the environment you must pass baseURL: null'
-      )
+        'Ambiguous URL; The `baseURL` option (or LANDINGAI_ADE_BASE_URL env var) and the `environment` option are given. If you want to use the environment you must pass baseURL: null',
+      );
     }
 
     this.baseURL = options.baseURL || environments[options.environment || 'production'];
@@ -183,7 +209,10 @@ export class LandingAIADE {
     const defaultLogLevel = 'warn';
     // Set default logLevel early so that we can log a warning in parseLogLevel.
     this.logLevel = defaultLogLevel;
-    this.logLevel = parseLogLevel(options.logLevel, 'ClientOptions.logLevel', this) ?? parseLogLevel(readEnv('LANDINGAI_ADE_LOG'), 'process.env[\'LANDINGAI_ADE_LOG\']', this) ?? defaultLogLevel;
+    this.logLevel =
+      parseLogLevel(options.logLevel, 'ClientOptions.logLevel', this) ??
+      parseLogLevel(readEnv('LANDINGAI_ADE_LOG'), "process.env['LANDINGAI_ADE_LOG']", this) ??
+      defaultLogLevel;
     this.fetchOptions = options.fetchOptions;
     this.maxRetries = options.maxRetries ?? 2;
     this.fetch = options.fetch ?? Shims.getDefaultFetch();
@@ -209,7 +238,7 @@ export class LandingAIADE {
       fetch: this.fetch,
       fetchOptions: this.fetchOptions,
       apikey: this.apikey,
-      ...options
+      ...options,
     });
     return client;
   }
@@ -232,7 +261,10 @@ export class LandingAIADE {
    *
    * `https://api.va.eu-west-1.landing.ai/v1/ade/classify`.
    */
-  classify(body: TopLevelAPI.ClassifyParams, options?: RequestOptions): APIPromise<TopLevelAPI.ClassifyResponse> {
+  classify(
+    body: TopLevelAPI.ClassifyParams,
+    options?: RequestOptions,
+  ): APIPromise<TopLevelAPI.ClassifyResponse> {
     return this.post('/v1/ade/classify', multipartFormRequestOptions({ body, ...options }, this));
   }
 
@@ -246,7 +278,10 @@ export class LandingAIADE {
    *
    *     `https://api.va.eu-west-1.landing.ai/v1/ade/extract`.
    */
-  extract(body: TopLevelAPI.ExtractParams, options?: RequestOptions): APIPromise<TopLevelAPI.ExtractResponse> {
+  extract(
+    body: TopLevelAPI.ExtractParams,
+    options?: RequestOptions,
+  ): APIPromise<TopLevelAPI.ExtractResponse> {
     return this.post('/v1/ade/extract', multipartFormRequestOptions({ body, ...options }, this));
   }
 
@@ -261,7 +296,10 @@ export class LandingAIADE {
    *
    *     `https://api.va.eu-west-1.landing.ai/v1/ade/extract/build-schema`.
    */
-  extractBuildSchema(body: TopLevelAPI.ExtractBuildSchemaParams, options?: RequestOptions): APIPromise<TopLevelAPI.ExtractBuildSchemaResponse> {
+  extractBuildSchema(
+    body: TopLevelAPI.ExtractBuildSchemaParams,
+    options?: RequestOptions,
+  ): APIPromise<TopLevelAPI.ExtractBuildSchemaResponse> {
     return this.post('/v1/ade/extract/build-schema', multipartFormRequestOptions({ body, ...options }, this));
   }
 
@@ -290,7 +328,10 @@ export class LandingAIADE {
    *
    * `https://api.va.eu-west-1.landing.ai/v1/ade/section`.
    */
-  section(body: TopLevelAPI.SectionParams, options?: RequestOptions): APIPromise<TopLevelAPI.SectionResponse> {
+  section(
+    body: TopLevelAPI.SectionParams,
+    options?: RequestOptions,
+  ): APIPromise<TopLevelAPI.SectionResponse> {
     return this.post('/v1/ade/section', multipartFormRequestOptions({ body, ...options }, this));
   }
 
@@ -309,7 +350,7 @@ export class LandingAIADE {
   }
 
   protected defaultQuery(): Record<string, string | undefined> | undefined {
-    return this._options.defaultQuery
+    return this._options.defaultQuery;
   }
 
   protected validateHeaders({ values, nulls }: NullableHeaders) {
@@ -344,7 +385,11 @@ export class LandingAIADE {
     return Errors.APIError.generate(status, error, message, headers);
   }
 
-  buildURL(path: string, query: Record<string, unknown> | null | undefined, defaultBaseURL?: string | undefined): string {
+  buildURL(
+    path: string,
+    query: Record<string, unknown> | null | undefined,
+    defaultBaseURL?: string | undefined,
+  ): string {
     const baseURL = (!this.#baseURLOverridden() && defaultBaseURL) || this.baseURL;
     const url =
       isAbsoluteURL(path) ?
@@ -432,7 +477,9 @@ export class LandingAIADE {
 
     await this.prepareOptions(options);
 
-    const { req, url, timeout } = await this.buildRequest(options, { retryCount: maxRetries - retriesRemaining });
+    const { req, url, timeout } = await this.buildRequest(options, {
+      retryCount: maxRetries - retriesRemaining,
+    });
 
     await this.prepareRequest(req, { url, options });
 
@@ -441,7 +488,16 @@ export class LandingAIADE {
     const retryLogStr = retryOfRequestLogID === undefined ? '' : `, retryOf: ${retryOfRequestLogID}`;
     const startTime = Date.now();
 
-    loggerFor(this).debug(`[${requestLogID}] sending request`, formatRequestDetails({ retryOfRequestLogID, method: options.method, url, options, headers: req.headers }));
+    loggerFor(this).debug(
+      `[${requestLogID}] sending request`,
+      formatRequestDetails({
+        retryOfRequestLogID,
+        method: options.method,
+        url,
+        options,
+        headers: req.headers,
+      }),
+    );
 
     if (options.signal?.aborted) {
       throw new Errors.APIUserAbortError();
@@ -460,21 +516,45 @@ export class LandingAIADE {
       // deno throws "TypeError: error sending request for url (https://example/): client error (Connect): tcp connect error: Operation timed out (os error 60): Operation timed out (os error 60)"
       // undici throws "TypeError: fetch failed" with cause "ConnectTimeoutError: Connect Timeout Error (attempted address: example:443, timeout: 1ms)"
       // others do not provide enough information to distinguish timeouts from other connection errors
-      const isTimeout = isAbortError(response) || /timed? ?out/i.test(String(response) + ('cause' in response ? String(response.cause) : ''))
+      const isTimeout =
+        isAbortError(response) ||
+        /timed? ?out/i.test(String(response) + ('cause' in response ? String(response.cause) : ''));
       if (retriesRemaining) {
-        loggerFor(this).info(`[${requestLogID}] connection ${isTimeout ? 'timed out' : 'failed'} - ${retryMessage}`)
-        loggerFor(this).debug(`[${requestLogID}] connection ${isTimeout ? 'timed out' : 'failed'} (${retryMessage})`, formatRequestDetails({ retryOfRequestLogID, url, durationMs: headersTime - startTime, message: response.message }));
+        loggerFor(this).info(
+          `[${requestLogID}] connection ${isTimeout ? 'timed out' : 'failed'} - ${retryMessage}`,
+        );
+        loggerFor(this).debug(
+          `[${requestLogID}] connection ${isTimeout ? 'timed out' : 'failed'} (${retryMessage})`,
+          formatRequestDetails({
+            retryOfRequestLogID,
+            url,
+            durationMs: headersTime - startTime,
+            message: response.message,
+          }),
+        );
         return this.retryRequest(options, retriesRemaining, retryOfRequestLogID ?? requestLogID);
       }
-      loggerFor(this).info(`[${requestLogID}] connection ${isTimeout ? 'timed out' : 'failed'} - error; no more retries left`)
-      loggerFor(this).debug(`[${requestLogID}] connection ${isTimeout ? 'timed out' : 'failed'} (error; no more retries left)`, formatRequestDetails({ retryOfRequestLogID, url, durationMs: headersTime - startTime, message: response.message }));
+      loggerFor(this).info(
+        `[${requestLogID}] connection ${isTimeout ? 'timed out' : 'failed'} - error; no more retries left`,
+      );
+      loggerFor(this).debug(
+        `[${requestLogID}] connection ${isTimeout ? 'timed out' : 'failed'} (error; no more retries left)`,
+        formatRequestDetails({
+          retryOfRequestLogID,
+          url,
+          durationMs: headersTime - startTime,
+          message: response.message,
+        }),
+      );
       if (isTimeout) {
         throw new Errors.APIConnectionTimeoutError();
       }
       throw new Errors.APIConnectionError({ cause: response });
     }
 
-    const responseInfo = `[${requestLogID}${retryLogStr}] ${req.method} ${url} ${response.ok ? 'succeeded' : 'failed'} with status ${response.status} in ${headersTime - startTime}ms`;
+    const responseInfo = `[${requestLogID}${retryLogStr}] ${req.method} ${url} ${
+      response.ok ? 'succeeded' : 'failed'
+    } with status ${response.status} in ${headersTime - startTime}ms`;
 
     if (!response.ok) {
       const shouldRetry = await this.shouldRetry(response);
@@ -483,27 +563,60 @@ export class LandingAIADE {
 
         // We don't need the body of this response.
         await Shims.CancelReadableStream(response.body);
-        loggerFor(this).info(`${responseInfo} - ${retryMessage}`)
-        loggerFor(this).debug(`[${requestLogID}] response error (${retryMessage})`, formatRequestDetails({ retryOfRequestLogID, url: response.url, status: response.status, headers: response.headers, durationMs: headersTime - startTime }));
-        return this.retryRequest(options, retriesRemaining, retryOfRequestLogID ?? requestLogID, response.headers);
+        loggerFor(this).info(`${responseInfo} - ${retryMessage}`);
+        loggerFor(this).debug(
+          `[${requestLogID}] response error (${retryMessage})`,
+          formatRequestDetails({
+            retryOfRequestLogID,
+            url: response.url,
+            status: response.status,
+            headers: response.headers,
+            durationMs: headersTime - startTime,
+          }),
+        );
+        return this.retryRequest(
+          options,
+          retriesRemaining,
+          retryOfRequestLogID ?? requestLogID,
+          response.headers,
+        );
       }
 
       const retryMessage = shouldRetry ? `error; no more retries left` : `error; not retryable`;
 
-      loggerFor(this).info(`${responseInfo} - ${retryMessage}`)
+      loggerFor(this).info(`${responseInfo} - ${retryMessage}`);
 
       const errText = await response.text().catch((err: any) => castToError(err).message);
       const errJSON = safeJSON(errText) as any;
       const errMessage = errJSON ? undefined : errText;
 
-      loggerFor(this).debug(`[${requestLogID}] response error (${retryMessage})`, formatRequestDetails({ retryOfRequestLogID, url: response.url, status: response.status, headers: response.headers, message: errMessage, durationMs: Date.now() - startTime }));
+      loggerFor(this).debug(
+        `[${requestLogID}] response error (${retryMessage})`,
+        formatRequestDetails({
+          retryOfRequestLogID,
+          url: response.url,
+          status: response.status,
+          headers: response.headers,
+          message: errMessage,
+          durationMs: Date.now() - startTime,
+        }),
+      );
 
       const err = this.makeStatusError(response.status, errJSON, errMessage, response.headers);
       throw err;
     }
 
-    loggerFor(this).info(responseInfo)
-    loggerFor(this).debug(`[${requestLogID}] response start`, formatRequestDetails({ retryOfRequestLogID, url: response.url, status: response.status, headers: response.headers, durationMs: headersTime - startTime }));
+    loggerFor(this).info(responseInfo);
+    loggerFor(this).debug(
+      `[${requestLogID}] response start`,
+      formatRequestDetails({
+        retryOfRequestLogID,
+        url: response.url,
+        status: response.status,
+        headers: response.headers,
+        durationMs: headersTime - startTime,
+      }),
+    );
 
     return { response, options, controller, requestLogID, retryOfRequestLogID, startTime };
   }
@@ -520,7 +633,9 @@ export class LandingAIADE {
 
     const timeout = setTimeout(abort, ms);
 
-    const isReadableBody = ((globalThis as any).ReadableStream && options.body instanceof (globalThis as any).ReadableStream) || (typeof options.body === "object" && options.body !== null && Symbol.asyncIterator in options.body);
+    const isReadableBody =
+      ((globalThis as any).ReadableStream && options.body instanceof (globalThis as any).ReadableStream) ||
+      (typeof options.body === 'object' && options.body !== null && Symbol.asyncIterator in options.body);
 
     const fetchOptions: RequestInit = {
       signal: controller.signal as any,
@@ -535,7 +650,6 @@ export class LandingAIADE {
     }
 
     try {
-
       // use undefined this binding; fetch errors if bound to something else in browser/cloudflare
       return await this.fetch.call(undefined, url, fetchOptions);
     } finally {
@@ -636,11 +750,12 @@ export class LandingAIADE {
     const req: FinalizedRequestInit = {
       method,
       headers: reqHeaders,
-      ...(options.signal && { signal: options.signal}),
-      ...((globalThis as any).ReadableStream && body instanceof (globalThis as any).ReadableStream && { duplex: "half" }),
+      ...(options.signal && { signal: options.signal }),
+      ...((globalThis as any).ReadableStream &&
+        body instanceof (globalThis as any).ReadableStream && { duplex: 'half' }),
       ...(body && { body }),
-      ...(this.fetchOptions as any ?? {}),
-      ...(options.fetchOptions as any ?? {}),
+      ...((this.fetchOptions as any) ?? {}),
+      ...((options.fetchOptions as any) ?? {}),
     };
 
     return { req, url, timeout: options.timeout };
@@ -665,15 +780,17 @@ export class LandingAIADE {
 
     const headers = buildHeaders([
       idempotencyHeaders,
-      {Accept: 'application/json',
-      'User-Agent': this.getUserAgent(),
-      'X-Stainless-Retry-Count': String(retryCount),
-      ...(options.timeout ? { 'X-Stainless-Timeout': String(Math.trunc(options.timeout / 1000)) } : {}),
-      ...getPlatformHeaders()},
+      {
+        Accept: 'application/json',
+        'User-Agent': this.getUserAgent(),
+        'X-Stainless-Retry-Count': String(retryCount),
+        ...(options.timeout ? { 'X-Stainless-Timeout': String(Math.trunc(options.timeout / 1000)) } : {}),
+        ...getPlatformHeaders(),
+      },
       await this.authHeaders(options),
       this._options.defaultHeaders,
       bodyHeaders,
-      options.headers
+      options.headers,
     ]);
 
     this.validateHeaders(headers);
@@ -700,11 +817,9 @@ export class LandingAIADE {
       ArrayBuffer.isView(body) ||
       body instanceof ArrayBuffer ||
       body instanceof DataView ||
-      (
-        typeof body === 'string' &&
+      (typeof body === 'string' &&
         // Preserve legacy string encoding behavior for now
-        headers.values.has('content-type')
-      ) ||
+        headers.values.has('content-type')) ||
       // `Blob` is superset of `File`
       ((globalThis as any).Blob && body instanceof (globalThis as any).Blob) ||
       // `FormData` -> `multipart/form-data`
@@ -735,7 +850,7 @@ export class LandingAIADE {
   }
 
   static LandingAIADE = this;
-  static DEFAULT_TIMEOUT = 480000 // 8 minutes
+  static DEFAULT_TIMEOUT = 480000; // 8 minutes
 
   static LandingAIADEError = Errors.LandingAIADEError;
   static APIError = Errors.APIError;
@@ -759,32 +874,32 @@ export class LandingAIADE {
 LandingAIADE.ParseJobs = ParseJobs;
 
 export declare namespace LandingAIADE {
-      export type RequestOptions = Opts.RequestOptions;
+  export type RequestOptions = Opts.RequestOptions;
 
-      export {
-  type ClassifyResponse as ClassifyResponse,
-  type ExtractResponse as ExtractResponse,
-  type ExtractBuildSchemaResponse as ExtractBuildSchemaResponse,
-  type ParseResponse as ParseResponse,
-  type SectionResponse as SectionResponse,
-  type SplitResponse as SplitResponse,
-  type ClassifyParams as ClassifyParams,
-  type ExtractParams as ExtractParams,
-  type ExtractBuildSchemaParams as ExtractBuildSchemaParams,
-  type ParseParams as ParseParams,
-  type SectionParams as SectionParams,
-  type SplitParams as SplitParams
-};
+  export {
+    type ClassifyResponse as ClassifyResponse,
+    type ExtractResponse as ExtractResponse,
+    type ExtractBuildSchemaResponse as ExtractBuildSchemaResponse,
+    type ParseResponse as ParseResponse,
+    type SectionResponse as SectionResponse,
+    type SplitResponse as SplitResponse,
+    type ClassifyParams as ClassifyParams,
+    type ExtractParams as ExtractParams,
+    type ExtractBuildSchemaParams as ExtractBuildSchemaParams,
+    type ParseParams as ParseParams,
+    type SectionParams as SectionParams,
+    type SplitParams as SplitParams,
+  };
 
-export {
-  ParseJobs as ParseJobs,
-  type ParseJobCreateResponse as ParseJobCreateResponse,
-  type ParseJobListResponse as ParseJobListResponse,
-  type ParseJobGetResponse as ParseJobGetResponse,
-  type ParseJobCreateParams as ParseJobCreateParams,
-  type ParseJobListParams as ParseJobListParams
-};
+  export {
+    ParseJobs as ParseJobs,
+    type ParseJobCreateResponse as ParseJobCreateResponse,
+    type ParseJobListResponse as ParseJobListResponse,
+    type ParseJobGetResponse as ParseJobGetResponse,
+    type ParseJobCreateParams as ParseJobCreateParams,
+    type ParseJobListParams as ParseJobListParams,
+  };
 
-export type ParseGroundingBox = API.ParseGroundingBox;
-export type ParseMetadata = API.ParseMetadata;
-    }
+  export type ParseGroundingBox = API.ParseGroundingBox;
+  export type ParseMetadata = API.ParseMetadata;
+}

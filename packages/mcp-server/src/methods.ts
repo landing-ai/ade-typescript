@@ -7,54 +7,64 @@ export type SdkMethod = {
   fullyQualifiedName: string;
   httpMethod?: 'get' | 'post' | 'put' | 'patch' | 'delete' | 'query';
   httpPath?: string;
-}
+};
 
-export const sdkMethods: SdkMethod[] = [{
-  clientCallName: 'client.classify',
-  fullyQualifiedName: 'classify',
-  httpMethod: 'post',
-  httpPath: '/v1/ade/classify',
-},{
-  clientCallName: 'client.extract',
-  fullyQualifiedName: 'extract',
-  httpMethod: 'post',
-  httpPath: '/v1/ade/extract',
-},{
-  clientCallName: 'client.extractBuildSchema',
-  fullyQualifiedName: 'extractBuildSchema',
-  httpMethod: 'post',
-  httpPath: '/v1/ade/extract/build-schema',
-},{
-  clientCallName: 'client.parse',
-  fullyQualifiedName: 'parse',
-  httpMethod: 'post',
-  httpPath: '/v1/ade/parse',
-},{
-  clientCallName: 'client.section',
-  fullyQualifiedName: 'section',
-  httpMethod: 'post',
-  httpPath: '/v1/ade/section',
-},{
-  clientCallName: 'client.split',
-  fullyQualifiedName: 'split',
-  httpMethod: 'post',
-  httpPath: '/v1/ade/split',
-},{
-  clientCallName: 'client.parseJobs.create',
-  fullyQualifiedName: 'parseJobs.create',
-  httpMethod: 'post',
-  httpPath: '/v1/ade/parse/jobs',
-},{
-  clientCallName: 'client.parseJobs.list',
-  fullyQualifiedName: 'parseJobs.list',
-  httpMethod: 'get',
-  httpPath: '/v1/ade/parse/jobs',
-},{
-  clientCallName: 'client.parseJobs.get',
-  fullyQualifiedName: 'parseJobs.get',
-  httpMethod: 'get',
-  httpPath: '/v1/ade/parse/jobs/{job_id}',
-}];
+export const sdkMethods: SdkMethod[] = [
+  {
+    clientCallName: 'client.classify',
+    fullyQualifiedName: 'classify',
+    httpMethod: 'post',
+    httpPath: '/v1/ade/classify',
+  },
+  {
+    clientCallName: 'client.extract',
+    fullyQualifiedName: 'extract',
+    httpMethod: 'post',
+    httpPath: '/v1/ade/extract',
+  },
+  {
+    clientCallName: 'client.extractBuildSchema',
+    fullyQualifiedName: 'extractBuildSchema',
+    httpMethod: 'post',
+    httpPath: '/v1/ade/extract/build-schema',
+  },
+  {
+    clientCallName: 'client.parse',
+    fullyQualifiedName: 'parse',
+    httpMethod: 'post',
+    httpPath: '/v1/ade/parse',
+  },
+  {
+    clientCallName: 'client.section',
+    fullyQualifiedName: 'section',
+    httpMethod: 'post',
+    httpPath: '/v1/ade/section',
+  },
+  {
+    clientCallName: 'client.split',
+    fullyQualifiedName: 'split',
+    httpMethod: 'post',
+    httpPath: '/v1/ade/split',
+  },
+  {
+    clientCallName: 'client.parseJobs.create',
+    fullyQualifiedName: 'parseJobs.create',
+    httpMethod: 'post',
+    httpPath: '/v1/ade/parse/jobs',
+  },
+  {
+    clientCallName: 'client.parseJobs.list',
+    fullyQualifiedName: 'parseJobs.list',
+    httpMethod: 'get',
+    httpPath: '/v1/ade/parse/jobs',
+  },
+  {
+    clientCallName: 'client.parseJobs.get',
+    fullyQualifiedName: 'parseJobs.get',
+    httpMethod: 'get',
+    httpPath: '/v1/ade/parse/jobs/{job_id}',
+  },
+];
 
 function allowedMethodsForCodeTool(options: McpOptions | undefined): SdkMethod[] | undefined {
   if (!options) {
@@ -69,9 +79,9 @@ function allowedMethodsForCodeTool(options: McpOptions | undefined): SdkMethod[]
 
     if (options.codeAllowHttpGets) {
       // Add all methods that map to an HTTP GET
-      sdkMethods.filter((method) => method.httpMethod === 'get').forEach(
-        (method) => allowedMethodsSet.add(method)
-      );
+      sdkMethods
+        .filter((method) => method.httpMethod === 'get')
+        .forEach((method) => allowedMethodsSet.add(method));
     }
 
     if (options.codeAllowedMethods) {
@@ -80,13 +90,15 @@ function allowedMethodsForCodeTool(options: McpOptions | undefined): SdkMethod[]
         try {
           return new RegExp(pattern);
         } catch (e) {
-          throw new Error(`Invalid regex pattern for allowed method: "${pattern}": ${e instanceof Error ? e.message : e}`);
+          throw new Error(
+            `Invalid regex pattern for allowed method: "${pattern}": ${e instanceof Error ? e.message : e}`,
+          );
         }
       });
 
-      sdkMethods.filter((method) =>
-          allowedRegexps.some((regexp) => regexp.test(method.fullyQualifiedName))
-        ).forEach((method) => allowedMethodsSet.add(method));
+      sdkMethods
+        .filter((method) => allowedRegexps.some((regexp) => regexp.test(method.fullyQualifiedName)))
+        .forEach((method) => allowedMethodsSet.add(method));
     }
 
     allowedMethods = Array.from(allowedMethodsSet);
@@ -101,12 +113,14 @@ function allowedMethodsForCodeTool(options: McpOptions | undefined): SdkMethod[]
       try {
         return new RegExp(pattern);
       } catch (e) {
-        throw new Error(`Invalid regex pattern for blocked method: "${pattern}": ${e instanceof Error ? e.message : e}`);
+        throw new Error(
+          `Invalid regex pattern for blocked method: "${pattern}": ${e instanceof Error ? e.message : e}`,
+        );
       }
     });
 
-    allowedMethods = allowedMethods.filter((method) =>
-      !blockedRegexps.some((regexp) => regexp.test(method.fullyQualifiedName))
+    allowedMethods = allowedMethods.filter(
+      (method) => !blockedRegexps.some((regexp) => regexp.test(method.fullyQualifiedName)),
     );
   }
 
