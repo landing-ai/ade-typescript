@@ -322,10 +322,22 @@ export class LandingAIADE {
    * `https://api.va.eu-west-1.landing.ai/v1/ade/classify`.
    */
   classify(
-    body: TopLevelAPI.ClassifyParams,
+    body: TopLevelAPI.ClassifyParams & { saveTo?: string },
     options?: RequestOptions,
   ): APIPromise<TopLevelAPI.ClassifyResponse> {
-    return this.post('/v1/ade/classify', multipartFormRequestOptions({ body, ...options }, this));
+    const { saveTo, ...apiBody } = body;
+    const promise = this.post<TopLevelAPI.ClassifyResponse>(
+      '/v1/ade/classify',
+      multipartFormRequestOptions({ body: apiBody, ...options }, this),
+    );
+    if (saveTo) {
+      const filename = _getInputFilename(apiBody.document, apiBody.document_url);
+      return promise._thenUnwrap((data) => {
+        _saveResponse(saveTo, filename, 'classify', data);
+        return data;
+      });
+    }
+    return promise;
   }
 
   /**
@@ -417,10 +429,22 @@ export class LandingAIADE {
    * `https://api.va.eu-west-1.landing.ai/v1/ade/section`.
    */
   section(
-    body: TopLevelAPI.SectionParams,
+    body: TopLevelAPI.SectionParams & { saveTo?: string },
     options?: RequestOptions,
   ): APIPromise<TopLevelAPI.SectionResponse> {
-    return this.post('/v1/ade/section', multipartFormRequestOptions({ body, ...options }, this));
+    const { saveTo, ...apiBody } = body;
+    const promise = this.post<TopLevelAPI.SectionResponse>(
+      '/v1/ade/section',
+      multipartFormRequestOptions({ body: apiBody, ...options }, this),
+    );
+    if (saveTo) {
+      const filename = _getInputFilename(apiBody.markdown, apiBody.markdown_url);
+      return promise._thenUnwrap((data) => {
+        _saveResponse(saveTo, filename, 'section', data);
+        return data;
+      });
+    }
+    return promise;
   }
 
   /**
