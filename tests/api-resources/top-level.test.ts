@@ -2,7 +2,10 @@
 
 import LandingAIADE, { toFile } from 'landingai-ade';
 
-const client = new LandingAIADE({ apikey: 'My Apikey', baseURL: process.env["TEST_API_BASE_URL"] ?? 'http://127.0.0.1:4010' });
+const client = new LandingAIADE({
+  apikey: 'My Apikey',
+  baseURL: process.env['TEST_API_BASE_URL'] ?? 'http://127.0.0.1:4010',
+});
 
 describe('top level methods', () => {
   // Mock server tests are disabled
@@ -20,11 +23,11 @@ describe('top level methods', () => {
   // Mock server tests are disabled
   test.skip('classify: required and optional params', async () => {
     const response = await client.classify({
-    classes: [{ class: 'class', description: 'description' }],
-    document: await toFile(Buffer.from('Example data'), 'README.md'),
-    document_url: 'document_url',
-    model: 'model',
-  });
+      classes: [{ class: 'class', description: 'description' }],
+      document: await toFile(Buffer.from('Example data'), 'README.md'),
+      document_url: 'document_url',
+      model: 'model',
+    });
   });
 
   // Mock server tests are disabled
@@ -42,12 +45,12 @@ describe('top level methods', () => {
   // Mock server tests are disabled
   test.skip('extract: required and optional params', async () => {
     const response = await client.extract({
-    schema: 'schema',
-    markdown: await toFile(Buffer.from('Example data'), 'README.md'),
-    markdown_url: 'markdown_url',
-    model: 'model',
-    strict: true,
-  });
+      schema: 'schema',
+      markdown: await toFile(Buffer.from('Example data'), 'README.md'),
+      markdown_url: 'markdown_url',
+      model: 'model',
+      strict: true,
+    });
   });
 
   // Mock server tests are disabled
@@ -101,14 +104,16 @@ describe('top level methods', () => {
   // Mock server tests are disabled
   test.skip('split: required and optional params', async () => {
     const response = await client.split({
-    split_class: [{
-    name: 'name',
-    description: 'description',
-    identifier: 'identifier',
-  }],
-    markdown: await toFile(Buffer.from('Example data'), 'README.md'),
-    markdown_url: 'markdown_url',
-    model: 'model',
-  });
+      split_class: [
+        {
+          name: 'name',
+          description: 'description',
+          identifier: 'identifier',
+        },
+      ],
+      markdown: await toFile(Buffer.from('Example data'), 'README.md'),
+      markdown_url: 'markdown_url',
+      model: 'model',
+    });
   });
 });

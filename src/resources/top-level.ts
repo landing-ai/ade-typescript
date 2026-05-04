@@ -194,7 +194,9 @@ export interface ParseResponse {
 
   splits: Array<ParseResponse.Split>;
 
-  grounding?: { [key: string]: ParseResponse.ParseResponseGrounding | ParseResponse.ParseResponseTableCellGrounding };
+  grounding?: {
+    [key: string]: ParseResponse.ParseResponseGrounding | ParseResponse.ParseResponseTableCellGrounding;
+  };
 }
 
 export namespace ParseResponse {
@@ -233,7 +235,23 @@ export namespace ParseResponse {
 
     page: number;
 
-    type: 'chunkLogo' | 'chunkCard' | 'chunkAttestation' | 'chunkScanCode' | 'chunkForm' | 'chunkTable' | 'chunkFigure' | 'chunkText' | 'chunkMarginalia' | 'chunkTitle' | 'chunkPageHeader' | 'chunkPageFooter' | 'chunkPageNumber' | 'chunkKeyValue' | 'table' | 'tableCell';
+    type:
+      | 'chunkLogo'
+      | 'chunkCard'
+      | 'chunkAttestation'
+      | 'chunkScanCode'
+      | 'chunkForm'
+      | 'chunkTable'
+      | 'chunkFigure'
+      | 'chunkText'
+      | 'chunkMarginalia'
+      | 'chunkTitle'
+      | 'chunkPageHeader'
+      | 'chunkPageFooter'
+      | 'chunkPageNumber'
+      | 'chunkKeyValue'
+      | 'table'
+      | 'tableCell';
 
     confidence?: number | null;
 
@@ -255,7 +273,23 @@ export namespace ParseResponse {
 
     page: number;
 
-    type: 'chunkLogo' | 'chunkCard' | 'chunkAttestation' | 'chunkScanCode' | 'chunkForm' | 'chunkTable' | 'chunkFigure' | 'chunkText' | 'chunkMarginalia' | 'chunkTitle' | 'chunkPageHeader' | 'chunkPageFooter' | 'chunkPageNumber' | 'chunkKeyValue' | 'table' | 'tableCell';
+    type:
+      | 'chunkLogo'
+      | 'chunkCard'
+      | 'chunkAttestation'
+      | 'chunkScanCode'
+      | 'chunkForm'
+      | 'chunkTable'
+      | 'chunkFigure'
+      | 'chunkText'
+      | 'chunkMarginalia'
+      | 'chunkTitle'
+      | 'chunkPageHeader'
+      | 'chunkPageFooter'
+      | 'chunkPageNumber'
+      | 'chunkKeyValue'
+      | 'table'
+      | 'tableCell';
 
     confidence?: number | null;
 
@@ -617,6 +651,6 @@ export declare namespace TopLevel {
     type ExtractBuildSchemaParams as ExtractBuildSchemaParams,
     type ParseParams as ParseParams,
     type SectionParams as SectionParams,
-    type SplitParams as SplitParams
+    type SplitParams as SplitParams,
   };
 }
