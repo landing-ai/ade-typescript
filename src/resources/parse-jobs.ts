@@ -83,6 +83,12 @@ export namespace ParseJobListResponse {
 
     status: string;
 
+    /**
+     * Unix timestamp (seconds) for when the job was created. Mirrors received_at;
+     * exposed so clients have an explicit creation time.
+     */
+    created_at?: number;
+
     failure_reason?: string | null;
   }
 }
@@ -102,6 +108,12 @@ export interface ParseJobGetResponse {
   received_at: number;
 
   status: string;
+
+  /**
+   * Unix timestamp (seconds) for when the job was created. Mirrors received_at;
+   * exposed so clients have an explicit creation time.
+   */
+  created_at?: number;
 
   /**
    * The parsed output (ParseResponse for documents, SpreadsheetParseResponse for
