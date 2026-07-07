@@ -1,5 +1,3 @@
-// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
-
 import { pino, type Level, type Logger } from 'pino';
 import pretty from 'pino-pretty';
 

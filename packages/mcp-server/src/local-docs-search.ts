@@ -1,5 +1,3 @@
-// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
-
 import MiniSearch from 'minisearch';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';

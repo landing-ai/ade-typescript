@@ -1,5 +1,3 @@
-// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
-
 import * as fs from 'fs';
 import * as path from 'path';
 import type { RequestInit, RequestInfo, BodyInit } from './internal/builtin-types';
