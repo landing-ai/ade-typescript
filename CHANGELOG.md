@@ -1,5 +1,42 @@
 # Changelog
 
+## 2.8.0 (2026-07-07)
+
+Full Changelog: [v2.7.0...v2.8.0](https://github.com/landing-ai/ade-typescript/compare/v2.7.0...v2.8.0)
+
+### Features
+
+* **api:** api update ([84b0115](https://github.com/landing-ai/ade-typescript/commit/84b01152d2eb23b747680545ed215c0eed2ffa43))
+* **api:** api update ([d016cff](https://github.com/landing-ai/ade-typescript/commit/d016cff85c96d9788fc7662035fd3a0d14317f8d))
+* smart saveTo with full path support ([#62](https://github.com/landing-ai/ade-typescript/issues/62)) ([07d331c](https://github.com/landing-ai/ade-typescript/commit/07d331c70405ff473c1a9103691a83700194abd9))
+* support setting headers via env ([8c0dcaa](https://github.com/landing-ai/ade-typescript/commit/8c0dcaa961a089524f1e5c9f6863c3a401ec5d7f))
+
+
+### Bug Fixes
+
+* **client:** send content-type header for requests with an omitted optional body ([7602129](https://github.com/landing-ai/ade-typescript/commit/7602129f40e5a4426a7617fa1620befb2b4c085e))
+* **mcp:** use `pure-lockfile` when building mcp server ([bc610bf](https://github.com/landing-ai/ade-typescript/commit/bc610bf6cb8d48eb6ec17a84e28e20ea3282d229))
+* **typescript:** upgrade tsc-multi so that it works with Node 26 ([c806c9a](https://github.com/landing-ai/ade-typescript/commit/c806c9a5589b01113e5c20067155e1dcdf6171cb))
+
+
+### Chores
+
+* avoid formatting file that gets changed during releases ([f957ae3](https://github.com/landing-ai/ade-typescript/commit/f957ae3574310510d5c8cd1659d9cbebbf8a6133))
+* **format:** run eslint and prettier separately ([f1a5229](https://github.com/landing-ai/ade-typescript/commit/f1a52294bff2ad83a93623b20c504c30e4826d3c))
+* **formatter:** run prettier and eslint separately ([1b6bb12](https://github.com/landing-ai/ade-typescript/commit/1b6bb12d413be5e8daf9cfe953b9cfbe5e112bf5))
+* **formatter:** run prettier and eslint separately ([df9a292](https://github.com/landing-ai/ade-typescript/commit/df9a292818945bb6a841d550480b4e0f3aee0d95))
+* **internal:** codegen related update ([7a6d587](https://github.com/landing-ai/ade-typescript/commit/7a6d587f9f6f6a258ab3885cb62ecb55ce8ee7f3))
+* **internal:** codegen related update ([a327e56](https://github.com/landing-ai/ade-typescript/commit/a327e566ac72a7ccc74675d828fa0672f20a7735))
+* **internal:** more robust bootstrap script ([90a945d](https://github.com/landing-ai/ade-typescript/commit/90a945d06dde88523f34ecf06826bc8c42e719af))
+* redact api-key headers in debug logs ([28bca32](https://github.com/landing-ai/ade-typescript/commit/28bca32c832eaa458cd326aaa125ac8d34f1a59a))
+* restructure docs search code ([eeab84f](https://github.com/landing-ai/ade-typescript/commit/eeab84ff6421e024691a9a93f210801a5cf5aa96))
+* **tests:** remove redundant File import ([4b2d378](https://github.com/landing-ai/ade-typescript/commit/4b2d378717674376fb232dd57a0804d645ca36e8))
+
+
+### Documentation
+
+* add theme-aware LandingAI logo to README ([ef41a1a](https://github.com/landing-ai/ade-typescript/commit/ef41a1a221ae143e520573d4e853147052a1d1c4))
+
 ## 2.7.0 (2026-04-22)
 
 Full Changelog: [v2.6.2...v2.7.0](https://github.com/landing-ai/ade-typescript/compare/v2.6.2...v2.7.0)
