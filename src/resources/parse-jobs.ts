@@ -74,8 +74,7 @@ export namespace ParseJobListResponse {
     job_id: string;
 
     /**
-     * Job completion progress as a decimal from 0 to 1, where 0 is not started, 1 is
-     * finished, and values between 0 and 1 indicate work in progress.
+     * Job completion as a decimal from 0 (not started) to 1 (complete).
      */
     progress: number;
 
