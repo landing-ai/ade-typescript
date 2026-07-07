@@ -1,7 +1,6 @@
 import fs from 'fs';
 import type { ResponseLike } from 'landingai-ade/internal/to-file';
 import { toFile } from 'landingai-ade/core/uploads';
-import { File } from 'node:buffer';
 
 class MyClass {
   name: string = 'foo';

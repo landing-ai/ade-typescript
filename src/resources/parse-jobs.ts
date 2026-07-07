@@ -74,14 +74,19 @@ export namespace ParseJobListResponse {
     job_id: string;
 
     /**
-     * Job completion progress as a decimal from 0 to 1, where 0 is not started, 1 is
-     * finished, and values between 0 and 1 indicate work in progress.
+     * Job completion as a decimal from 0 (not started) to 1 (complete).
      */
     progress: number;
 
     received_at: number;
 
     status: string;
+
+    /**
+     * Unix timestamp (seconds) for when the job was created. Mirrors received_at;
+     * exposed so clients have an explicit creation time.
+     */
+    created_at?: number;
 
     failure_reason?: string | null;
   }
@@ -102,6 +107,12 @@ export interface ParseJobGetResponse {
   received_at: number;
 
   status: string;
+
+  /**
+   * Unix timestamp (seconds) for when the job was created. Mirrors received_at;
+   * exposed so clients have an explicit creation time.
+   */
+  created_at?: number;
 
   /**
    * The parsed output (ParseResponse for documents, SpreadsheetParseResponse for
