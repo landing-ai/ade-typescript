@@ -8,8 +8,10 @@
 #      package.json + manifest.json,
 #   3. prepends a changelog section (grouped by Conventional Commit prefixes)
 #      to CHANGELOG.md,
-#   4. lands that as a "release: x.y.z" commit directly on main,
-#   5. tags it and creates the GitHub Release, which triggers
+#   4. builds and tests the stamped tree — the release aborts here, before
+#      any commit or tag exists, if anything is red,
+#   5. lands that as a "release: x.y.z" commit directly on main,
+#   6. tags it and creates the GitHub Release, which triggers
 #      .github/workflows/publish-npm.yml (root package + packages/mcp-server
 #      + DXT release asset).
 #
@@ -99,6 +101,17 @@ jobs:
             "${{ github.repository }}" "$PREV_TAG" "$NEXT" > /tmp/release-notes.md
           { head -n 2 CHANGELOG.md; cat /tmp/release-notes.md; echo; tail -n +3 CHANGELOG.md; } > /tmp/changelog.md
           mv /tmp/changelog.md CHANGELOG.md
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - name: Build and test the stamped tree
+        run: |
+          ./scripts/bootstrap
+          ./scripts/build
+          ./scripts/test
 
       - name: Commit, tag, and create the GitHub Release
         env:
