@@ -1,5 +1,3 @@
-// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
-
 import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { Metadata, McpRequestContext, asTextContentResult } from './types';
 import { getLogger } from './logger';

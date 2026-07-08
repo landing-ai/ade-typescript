@@ -1,5 +1,3 @@
-// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
-
 import * as Shared from './shared';
 import { type Uploadable } from '../core/uploads';
 

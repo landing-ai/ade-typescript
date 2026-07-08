@@ -1,5 +1,3 @@
-// File generated from our OpenAPI spec by Stainless. See CONTRIBUTING.md for details.
-
 import { stringifyQuery } from 'landingai-ade/internal/utils/query';
 
 describe(stringifyQuery, () => {
