@@ -32,12 +32,13 @@ export class V2 extends V2Resource {
   async parse(body: V2ParseParams & { saveTo?: string }, options?: RequestOptions): Promise<V2ParseResponse> {
     const { saveTo, ...rest } = body;
     try {
-      // A 504 here means the server cancelled the (long-running) work; retrying
-      // just re-runs a doomed request and multiplies the wait. Disable retries
-      // for the sync path (the caller can override via `options.maxRetries`).
+      // A 504 means the server cancelled the (long-running) work, so retrying
+      // re-runs a doomed request. Cap retries at 1 (below the client default) so
+      // a 504 costs at most 2 attempts, while a transient connection blip on this
+      // long sync call can still recover once. Caller can override via options.
       const result = await this._client.post<V2ParseResponse>(
         this.v2Url('/v2/parse'),
-        multipartFormRequestOptions({ body: buildParseForm(rest), maxRetries: 0, ...options }, this._client),
+        multipartFormRequestOptions({ body: buildParseForm(rest), maxRetries: 1, ...options }, this._client),
       );
       if (saveTo) {
         const filename = _getInputFilename(rest.document ?? null, rest.document_url ?? null);
@@ -65,7 +66,7 @@ export class V2 extends V2Resource {
     try {
       const result = await this._client.post<V2ExtractResult>(this.v2Url('/v2/extract'), {
         body: buildExtractBody(rest),
-        maxRetries: 0, // see parse(): a 504 is a cancelled sync request, not worth retrying
+        maxRetries: 1, // see parse(): cap sync retries so a 504 costs <= 2 attempts
         ...options,
       });
       if (saveTo) {
@@ -96,8 +97,8 @@ export class V2 extends V2Resource {
       const result = await this._client.post<V2WorkflowResult>(
         this.v2Url('/v2/workflow'),
         multipart ?
-          multipartFormRequestOptions({ body: reqBody, maxRetries: 0, ...options }, this._client)
-        : { body: reqBody, maxRetries: 0, ...options }, // see parse(): don't retry a cancelled 504
+          multipartFormRequestOptions({ body: reqBody, maxRetries: 1, ...options }, this._client)
+        : { body: reqBody, maxRetries: 1, ...options }, // see parse(): cap sync retries
       );
       if (saveTo) {
         _saveResponse(saveTo, _getInputFilename(null, null), 'workflow', result);
