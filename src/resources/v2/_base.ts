@@ -34,10 +34,10 @@ export function cleanQuery(query: Record<string, unknown>): Record<string, unkno
 export function buildJobList(jobs: Array<Job>, env: Record<string, unknown>): JobList {
   return {
     jobs,
-    hasMore: typeof env['has_more'] === 'boolean' ? (env['has_more'] as boolean) : false,
-    orgId: typeof env['org_id'] === 'string' ? (env['org_id'] as string) : null,
+    has_more: typeof env['has_more'] === 'boolean' ? (env['has_more'] as boolean) : false,
+    org_id: typeof env['org_id'] === 'string' ? (env['org_id'] as string) : null,
     page: typeof env['page'] === 'number' ? (env['page'] as number) : null,
-    pageSize: typeof env['page_size'] === 'number' ? (env['page_size'] as number) : null,
+    page_size: typeof env['page_size'] === 'number' ? (env['page_size'] as number) : null,
   };
 }
 
@@ -109,17 +109,17 @@ export async function pollUntilTerminal(
 
   for (;;) {
     const job = await getJob();
-    if (job.isTerminal) {
+    if (job.is_terminal) {
       if (raiseOnFailure && job.error !== null) {
         throw new JobFailedError(
-          `Job ${job.jobId} ended ${job.status}: ${job.error.message || job.error.code || 'unknown error'}`,
+          `Job ${job.job_id} ended ${job.status}: ${job.error.message || job.error.code || 'unknown error'}`,
         );
       }
       return job;
     }
     if (clock.now() >= deadline) {
       throw new JobWaitTimeoutError(
-        `Job ${job.jobId} did not finish within ${timeout}ms (last status: ${job.status}).`,
+        `Job ${job.job_id} did not finish within ${timeout}ms (last status: ${job.status}).`,
       );
     }
     await clock.sleep(Math.min(delay, Math.max(0, deadline - clock.now())));

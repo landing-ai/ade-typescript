@@ -61,7 +61,7 @@ describe('client.v2 routing', () => {
   test('parseJobs.create normalizes the create envelope', async () => {
     const { client, calls } = stubClient(() => jsonResponse({ job_id: 'pj-1' }, 202));
     const job = await client.v2.parseJobs.create({ document: await toFile(Buffer.from('x'), 'a.pdf') });
-    expect(job.jobId).toBe('pj-1');
+    expect(job.job_id).toBe('pj-1');
     expect(job.status).toBe('pending');
     expect(calls.some((u) => u === 'https://aide.staging.landing.ai/v2/parse/jobs')).toBe(true);
   });
@@ -82,7 +82,7 @@ describe('client.v2 routing', () => {
     );
     const job = await client.v2.extractJobs.get('ej-1');
     expect(job.status).toBe('completed');
-    expect(job.isTerminal).toBe(true);
+    expect(job.is_terminal).toBe(true);
     expect(calls.some((u) => u === 'https://aide.staging.landing.ai/v2/extract/jobs/ej-1')).toBe(true);
   });
 
@@ -91,9 +91,9 @@ describe('client.v2 routing', () => {
       jsonResponse({ jobs: [{ job_id: 'a', status: 'pending' }], has_more: true, org_id: 'o' }),
     );
     const list = await client.v2.parseJobs.list({ page: 0, page_size: 10 });
-    expect(list.jobs[0]!.jobId).toBe('a');
-    expect(list.hasMore).toBe(true);
-    expect(list.orgId).toBe('o');
+    expect(list.jobs[0]!.job_id).toBe('a');
+    expect(list.has_more).toBe(true);
+    expect(list.org_id).toBe('o');
   });
 
   test('extractJobs.create sends service_tier in the JSON body', async () => {
@@ -108,7 +108,7 @@ describe('client.v2 routing', () => {
       markdown: 'hi',
       service_tier: 'priority',
     });
-    expect(job.jobId).toBe('ej-2');
+    expect(job.job_id).toBe('ej-2');
     expect(JSON.parse(String(sentBody))).toMatchObject({ service_tier: 'priority' });
   });
 
@@ -139,7 +139,7 @@ describe('client.v2 routing', () => {
       steps: [{ name: 'parse-extract', document: '$inputs.report', schema: { type: 'object' } }],
       service_tier: 'priority',
     });
-    expect(job.jobId).toBe('wj-1');
+    expect(job.job_id).toBe('wj-1');
     expect(job.status).toBe('pending');
     expect(JSON.parse(String(sentBody))).toMatchObject({ service_tier: 'priority' });
   });

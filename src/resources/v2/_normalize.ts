@@ -77,14 +77,14 @@ function isoError(raw: Record<string, unknown>): JobError | null {
 function baseIsoJob(raw: Record<string, unknown>): Job {
   const status = toStatus(raw['status']);
   return {
-    jobId: String(raw['job_id']),
+    job_id: String(raw['job_id']),
     status,
-    createdAt: toDate(raw['created_at']),
-    completedAt: toDate(raw['completed_at']),
+    created_at: toDate(raw['created_at']),
+    completed_at: toDate(raw['completed_at']),
     progress: toProgress(raw['progress']),
     result: null,
     error: isoError(raw),
-    isTerminal: isTerminalStatus(status),
+    is_terminal: isTerminalStatus(status),
     raw,
   };
 }
@@ -105,14 +105,14 @@ export function normalizeParseJob(raw: Record<string, unknown>): Job {
   const created = raw['created_at'] ?? raw['received_at'];
 
   return {
-    jobId: String(raw['job_id']),
+    job_id: String(raw['job_id']),
     status,
-    createdAt: toDate(created),
-    completedAt: null, // the parse envelope has no completed_at
+    created_at: toDate(created),
+    completed_at: null, // the parse envelope has no completed_at
     progress: toProgress(raw['progress']),
     result,
     error,
-    isTerminal: isTerminalStatus(status),
+    is_terminal: isTerminalStatus(status),
     raw,
   };
 }

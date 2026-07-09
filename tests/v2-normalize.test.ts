@@ -16,10 +16,10 @@ describe('normalizeParseJob', () => {
       output_url: null,
       data: { markdown: '# hi', metadata: { job_id: 'p1', page_count: 1 } },
     });
-    expect(job.jobId).toBe('p1');
+    expect(job.job_id).toBe('p1');
     expect(job.status).toBe('completed');
-    expect(job.isTerminal).toBe(true);
-    expect(job.createdAt?.getUTCFullYear()).toBe(2023);
+    expect(job.is_terminal).toBe(true);
+    expect(job.created_at?.getUTCFullYear()).toBe(2023);
     expect((job.result as any)?.markdown).toBe('# hi');
     expect(job.error).toBeNull();
     expect(job.raw['org_id']).toBe('o1'); // envelope-only fields preserved
@@ -27,8 +27,8 @@ describe('normalizeParseJob', () => {
 
   test('epoch-zero created_at is preserved (not treated as missing)', () => {
     const job = normalizeParseJob({ job_id: 'p', status: 'pending', created_at: 0, received_at: 123 });
-    expect(job.createdAt).not.toBeNull();
-    expect(job.createdAt?.getTime()).toBe(0); // 1970-01-01, not the received_at fallback
+    expect(job.created_at).not.toBeNull();
+    expect(job.created_at?.getTime()).toBe(0); // 1970-01-01, not the received_at fallback
   });
 
   test('failure_reason maps to error.message', () => {
@@ -45,9 +45,9 @@ describe('normalizeParseJob', () => {
 
   test('minimal create envelope defaults to pending', () => {
     const job = normalizeParseJob({ job_id: 'parse-x' });
-    expect(job.jobId).toBe('parse-x');
+    expect(job.job_id).toBe('parse-x');
     expect(job.status).toBe('pending');
-    expect(job.isTerminal).toBe(false);
+    expect(job.is_terminal).toBe(false);
     expect(job.result).toBeNull();
   });
 
@@ -73,8 +73,8 @@ describe('normalizeExtractJob', () => {
       },
     });
     expect(job.status).toBe('completed');
-    expect(job.createdAt?.getUTCFullYear()).toBe(2026);
-    expect(job.completedAt).not.toBeNull();
+    expect(job.created_at?.getUTCFullYear()).toBe(2026);
+    expect(job.completed_at).not.toBeNull();
     expect((job.result as any)?.metadata.version).toBe('extract-1');
   });
 
@@ -108,8 +108,8 @@ describe('normalizeWorkflowJob', () => {
       },
     });
     expect(job.status).toBe('completed');
-    expect(job.isTerminal).toBe(true);
-    expect(job.completedAt).not.toBeNull();
+    expect(job.is_terminal).toBe(true);
+    expect(job.completed_at).not.toBeNull();
     expect((job.result as any)?.output['parse-extract'].extract.extraction.revenue).toBe('1M');
   });
 

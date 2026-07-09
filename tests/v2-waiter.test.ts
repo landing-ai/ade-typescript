@@ -4,14 +4,14 @@ import { Job, JobStatus } from 'landingai-ade/resources/v2/types';
 
 function makeJob(status: JobStatus, error: Job['error'] = null): Job {
   return {
-    jobId: 'j',
+    job_id: 'j',
     status,
-    createdAt: null,
-    completedAt: null,
+    created_at: null,
+    completed_at: null,
     progress: null,
     result: null,
     error,
-    isTerminal: status === 'completed' || status === 'failed' || status === 'cancelled',
+    is_terminal: status === 'completed' || status === 'failed' || status === 'cancelled',
     raw: {},
   };
 }

@@ -27,13 +27,13 @@ export interface JobError {
  * for any field not surfaced here (e.g. `org_id`, `output_url`, `version`).
  */
 export interface Job {
-  jobId: string;
+  job_id: string;
 
   status: JobStatus;
 
-  createdAt: Date | null;
+  created_at: Date | null;
 
-  completedAt: Date | null;
+  completed_at: Date | null;
 
   progress: number | null;
 
@@ -42,25 +42,25 @@ export interface Job {
   error: JobError | null;
 
   /** `true` when `status` is `completed`, `failed`, or `cancelled`. */
-  isTerminal: boolean;
+  is_terminal: boolean;
 
   raw: Record<string, unknown>;
 }
 
 /**
- * A page of normalized jobs plus the pagination envelope. `orgId` is populated
- * for parse listings, `page`/`pageSize` for extract/workflow listings.
+ * A page of normalized jobs plus the pagination envelope. `org_id` is populated
+ * for parse listings, `page`/`page_size` for extract/workflow listings.
  */
 export interface JobList {
   jobs: Array<Job>;
 
-  hasMore: boolean;
+  has_more: boolean;
 
-  orgId: string | null;
+  org_id: string | null;
 
   page: number | null;
 
-  pageSize: number | null;
+  page_size: number | null;
 }
 
 /** Billing summary: the service tier the request ran in and the credits charged. */

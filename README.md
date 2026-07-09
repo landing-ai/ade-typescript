@@ -196,7 +196,7 @@ const extracted = await client.v2.extract({
 });
 ```
 
-`schema` accepts a JSON-Schema object or a JSON-encoded string. A synchronous 504 surfaces as `V2SyncTimeoutError` — use the async jobs route below for long-running documents.
+`schema` accepts a JSON-Schema object or a JSON-encoded string. For type-safe schemas, define them with Zod and pass `z.toJSONSchema(MySchema)` (see [Using Zod for Type-Safe Schemas](#using-zod-for-type-safe-schemas)). A synchronous 504 surfaces as `V2SyncTimeoutError` — use the async jobs route below for long-running documents.
 
 #### Async jobs
 
@@ -208,7 +208,7 @@ const job = await client.v2.parseJobs.create({
   document: fs.createReadStream('large.pdf'),
   service_tier: 'priority',
 });
-const done = await client.v2.parseJobs.wait(job.jobId, { timeout: 600000, raiseOnFailure: true });
+const done = await client.v2.parseJobs.wait(job.job_id, { timeout: 600000, raiseOnFailure: true });
 console.log(done.status, done.result);
 
 // client.v2.extractJobs.{create,get,list,wait} mirror the same shape for extract jobs.
