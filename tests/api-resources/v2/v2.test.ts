@@ -25,7 +25,7 @@ describe('client.v2 routing', () => {
     const { client, calls } = stubClient(() => jsonResponse({ file_ref: 'ref-1' }));
     const ref = await client.v2.files.upload({ file: await toFile(Buffer.from('hi'), 'a.md') });
     expect(ref).toBe('ref-1');
-    expect(calls.some((u) => u === 'https://aide.staging.landing.ai/v1/files')).toBe(true);
+    expect(calls.some((u) => u === 'https://api.ade.staging.landing.ai/v1/files')).toBe(true);
   });
 
   test('parse routes to the V2 host and returns a 206 partial result', async () => {
@@ -34,7 +34,7 @@ describe('client.v2 routing', () => {
     );
     const res = await client.v2.parse({ document: await toFile(Buffer.from('%PDF'), 'a.pdf') });
     expect(res.metadata?.failed_pages).toEqual([2]);
-    expect(calls.some((u) => u === 'https://aide.staging.landing.ai/v2/parse')).toBe(true);
+    expect(calls.some((u) => u === 'https://api.ade.staging.landing.ai/v2/parse')).toBe(true);
   });
 
   test('extract sends a JSON body to the V2 host', async () => {
@@ -48,7 +48,7 @@ describe('client.v2 routing', () => {
     );
     const res = await client.v2.extract({ schema: { type: 'object' }, markdown: 'hi' });
     expect(res.metadata.version).toBe('v');
-    expect(calls.some((u) => u === 'https://aide.staging.landing.ai/v2/extract')).toBe(true);
+    expect(calls.some((u) => u === 'https://api.ade.staging.landing.ai/v2/extract')).toBe(true);
   });
 
   test('a 504 on a sync call surfaces as V2SyncTimeoutError', async () => {
@@ -78,7 +78,7 @@ describe('client.v2 routing', () => {
     const job = await client.v2.parseJobs.create({ document: await toFile(Buffer.from('x'), 'a.pdf') });
     expect(job.job_id).toBe('pj-1');
     expect(job.status).toBe('pending');
-    expect(calls.some((u) => u === 'https://aide.staging.landing.ai/v2/parse/jobs')).toBe(true);
+    expect(calls.some((u) => u === 'https://api.ade.staging.landing.ai/v2/parse/jobs')).toBe(true);
   });
 
   test('extractJobs.get normalizes a completed job', async () => {
@@ -98,7 +98,7 @@ describe('client.v2 routing', () => {
     const job = await client.v2.extractJobs.get('ej-1');
     expect(job.status).toBe('completed');
     expect(job.is_terminal).toBe(true);
-    expect(calls.some((u) => u === 'https://aide.staging.landing.ai/v2/extract/jobs/ej-1')).toBe(true);
+    expect(calls.some((u) => u === 'https://api.ade.staging.landing.ai/v2/extract/jobs/ej-1')).toBe(true);
   });
 
   test('parseJobs.list builds a JobList with the pagination envelope', async () => {
@@ -139,7 +139,7 @@ describe('client.v2 routing', () => {
       steps: [{ name: 'parse-extract', document: '$inputs.report', schema: { type: 'object' } }],
     });
     expect(res.metadata.job_id).toBe('w');
-    expect(calls.some((u) => u === 'https://aide.staging.landing.ai/v2/workflow')).toBe(true);
+    expect(calls.some((u) => u === 'https://api.ade.staging.landing.ai/v2/workflow')).toBe(true);
   });
 
   test('workflowJobs.create sends service_tier and normalizes the job', async () => {

@@ -176,27 +176,44 @@ for (const split of splitResponse.splits) {
 
 `client.v2` is a new, **additive** sub-client for LandingAI's next-generation ADE gateway. It does not change anything about the V1 usage above — `client.parse`, `client.extract`, `client.parseJobs`, etc. keep working exactly as documented. Use `client.v2.*` for the newer parse/extract surface.
 
-The V2 gateway lives on its own host (`aide.[env].landing.ai`), separate from the V1 host (`api.va.[env].landing.ai`). Select the environment the same way as V1 — via the `environment` option or the `LANDINGAI_ADE_ENVIRONMENT` env var:
+The V2 gateway lives on its own host (`api.ade.[env].landing.ai`), separate from the V1 host (`api.va.[env].landing.ai`). Select the environment the same way as V1, via the `environment` argument or the `LANDINGAI_ADE_ENVIRONMENT` env var:
 
-<!-- prettier-ignore -->
 ```ts
-import fs from 'fs';
 import LandingAIADE from 'landingai-ade';
 
 const client = new LandingAIADE({
   apikey: process.env['VISION_AGENT_API_KEY'],
-  environment: 'staging', // 'production' | 'eu' | 'staging' | 'dev'
-});
-
-// Synchronous parse / extract
-const parsed = await client.v2.parse({ document: fs.createReadStream('doc.pdf') });
-const extracted = await client.v2.extract({
-  schema: { type: 'object', properties: { title: { type: 'string' } } },
-  markdown: parsed.markdown ?? '',
+  // one of "production" (default), "eu", "staging", "dev"
+  // can also be set via the LANDINGAI_ADE_ENVIRONMENT env var instead of passing it here
+  environment: 'staging',
 });
 ```
 
-`schema` accepts a JSON-Schema object or a JSON-encoded string. For type-safe schemas, define them with Zod and pass `z.toJSONSchema(MySchema)` (see [Using Zod for Type-Safe Schemas](#using-zod-for-type-safe-schemas)). A synchronous 504 surfaces as `V2SyncTimeoutError` — use the async jobs route below for long-running documents.
+#### V2 Parse
+
+Parse a document synchronously. Returns a `V2ParseResponse` (on a partial success the HTTP status is 206 and `metadata.failed_pages` lists the unparsed pages). A synchronous 504 surfaces as `V2SyncTimeoutError` — use `parseJobs` (below) for long-running documents.
+
+```ts
+import fs from 'fs';
+
+const response = await client.v2.parse({
+  document: fs.createReadStream('path/to/file.pdf'),
+});
+console.log(response.markdown);
+```
+
+#### V2 Extract
+
+Extract structured data from Markdown using a JSON schema. Provide exactly one of `markdown`, `markdown_ref` (from `client.v2.files.upload`), or `markdown_url`.
+
+```ts
+const response = await client.v2.extract({
+  schema: { type: 'object', properties: { title: { type: 'string' } } },
+  markdown: 'some markdown',
+});
+```
+
+`schema` accepts a JSON-Schema object or a JSON-encoded string. For type-safe schemas, define them with Zod and pass `z.toJSONSchema(MySchema)` (see [Using Zod for Type-Safe Schemas](#using-zod-for-type-safe-schemas)).
 
 #### Async jobs
 
