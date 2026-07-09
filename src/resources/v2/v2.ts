@@ -5,7 +5,8 @@ import { V2Resource, throwIfSyncTimeout } from './_base';
 import { Files } from './files';
 import { ExtractJobs, V2ExtractParams, buildExtractBody } from './extract';
 import { ParseJobs, V2ParseParams, buildParseForm } from './parse';
-import { V2ExtractResult, V2ParseResponse } from './types';
+import { WorkflowJobs, V2WorkflowParams, buildWorkflowBody } from './workflow';
+import { V2ExtractResult, V2ParseResponse, V2WorkflowResult } from './types';
 
 /**
  * Container for the additive V2 (ADE gateway) surface: `client.v2.*`. All
@@ -16,6 +17,7 @@ export class V2 extends V2Resource {
   files: Files = new Files(this._client);
   parseJobs: ParseJobs = new ParseJobs(this._client);
   extractJobs: ExtractJobs = new ExtractJobs(this._client);
+  workflowJobs: WorkflowJobs = new WorkflowJobs(this._client);
 
   /**
    * Parse a document synchronously (`POST /v2/parse`). Resolves with a
@@ -65,6 +67,33 @@ export class V2 extends V2Resource {
       if (saveTo) {
         const filename = _getInputFilename(null, rest.markdown_url ?? null);
         _saveResponse(saveTo, filename, 'extract', result);
+      }
+      return result;
+    } catch (err) {
+      throwIfSyncTimeout(err);
+      throw err;
+    }
+  }
+
+  /**
+   * Run a workflow synchronously (`POST /v2/workflow`). Phase 1 supports a single
+   * `parse-extract` step. Reference documents by uploading via
+   * `client.v2.files.upload` and passing the returned ref as
+   * `inputs.<name>.document_ref`, or use `document_url`. Rejects with
+   * `V2SyncTimeoutError` on a 504; use `workflowJobs` for long-running documents.
+   */
+  async workflow(
+    body: V2WorkflowParams & { saveTo?: string },
+    options?: RequestOptions,
+  ): Promise<V2WorkflowResult> {
+    const { saveTo, ...rest } = body;
+    try {
+      const result = await this._client.post<V2WorkflowResult>(this.v2Url('/v2/workflow'), {
+        body: buildWorkflowBody(rest),
+        ...options,
+      });
+      if (saveTo) {
+        _saveResponse(saveTo, _getInputFilename(null, null), 'workflow', result);
       }
       return result;
     } catch (err) {

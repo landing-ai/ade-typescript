@@ -53,6 +53,7 @@ Types:
 - <code><a href="./src/resources/v2/types.ts">JobStatus</a></code>
 - <code><a href="./src/resources/v2/types.ts">V2ParseResponse</a></code>
 - <code><a href="./src/resources/v2/types.ts">V2ExtractResult</a></code>
+- <code><a href="./src/resources/v2/types.ts">V2WorkflowResult</a></code>
 - <code><a href="./src/resources/v2/types.ts">V2FileUploadResponse</a></code>
 
 Methods:
@@ -68,3 +69,8 @@ Methods:
 - <code title="get /v2/extract/jobs">client.v2.extractJobs.<a href="./src/resources/v2/extract.ts">list</a>({ ...params }) -> JobList</code>
 - <code>client.v2.extractJobs.<a href="./src/resources/v2/extract.ts">wait</a>(jobID, { ...options }) -> Job</code>
 - <code title="post /v1/files">client.v2.files.<a href="./src/resources/v2/files.ts">upload</a>({ file }) -> string</code>
+- <code title="post /v2/workflow">client.v2.<a href="./src/resources/v2/v2.ts">workflow</a>({ ...params }) -> V2WorkflowResult</code>
+- <code title="post /v2/workflow/jobs">client.v2.workflowJobs.<a href="./src/resources/v2/workflow.ts">create</a>({ ...params }) -> Job</code>
+- <code title="get /v2/workflow/jobs/{job_id}">client.v2.workflowJobs.<a href="./src/resources/v2/workflow.ts">get</a>(jobID) -> Job</code>
+- <code title="get /v2/workflow/jobs">client.v2.workflowJobs.<a href="./src/resources/v2/workflow.ts">list</a>({ ...params }) -> JobList</code>
+- <code>client.v2.workflowJobs.<a href="./src/resources/v2/workflow.ts">wait</a>(jobID, { ...options }) -> Job</code>

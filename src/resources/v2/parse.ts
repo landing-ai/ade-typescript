@@ -27,7 +27,10 @@ export interface V2ParseParams {
   /** Additional parsing options. Sent to the server as a JSON-encoded form field. */
   options?: Record<string, unknown> | string | null;
 
-  /** Password for encrypted document files. */
+  /**
+   * Encrypted PDFs are not currently supported: providing a password returns a
+   * 422. Decrypt the file before uploading.
+   */
   password?: string | null;
 }
 
@@ -38,8 +41,11 @@ export interface V2ParseJobCreateParams extends V2ParseParams {
    */
   output_save_url?: string | null;
 
-  /** Processing priority for the job. */
-  priority?: 'standard' | 'priority' | null;
+  /**
+   * Async service tier. `priority` runs in the fast lane at the sync billing
+   * rate; absent → `standard`.
+   */
+  service_tier?: 'standard' | 'priority' | null;
 }
 
 export interface V2JobListParams {

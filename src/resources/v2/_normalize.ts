@@ -1,10 +1,18 @@
-// Normalize the divergent parse/extract job envelopes into one `Job` shape.
+// Normalize the divergent parse/extract/workflow job envelopes into one `Job`.
 //
-// The two upstream envelopes differ in timestamp encoding (epoch seconds vs ISO
+// The upstream envelopes differ in timestamp encoding (epoch seconds vs ISO
 // strings), terminal payload field (`data`/`output_url` vs `result`), and
 // failure representation (`failure_reason` string vs `error {code, message}`).
 
-import { Job, JobError, JobStatus, V2ExtractResult, V2ParseResponse, isTerminalStatus } from './types';
+import {
+  Job,
+  JobError,
+  JobStatus,
+  V2ExtractResult,
+  V2ParseResponse,
+  V2WorkflowResult,
+  isTerminalStatus,
+} from './types';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -47,6 +55,40 @@ function toStatus(value: unknown): JobStatus {
   return 'pending';
 }
 
+/** Extract job error: an `error {code, message}` object, or a `failure_reason` string (list envelope). */
+function isoError(raw: Record<string, unknown>): JobError | null {
+  const err = raw['error'];
+  if (isRecord(err)) {
+    return {
+      code: typeof err['code'] === 'string' ? (err['code'] as string) : null,
+      message: typeof err['message'] === 'string' ? (err['message'] as string) : null,
+    };
+  }
+  if (raw['failure_reason']) {
+    return { code: null, message: String(raw['failure_reason']) };
+  }
+  return null;
+}
+
+/**
+ * Shared skeleton for the ISO-timestamp envelopes (extract, workflow), which
+ * agree on everything except the concrete `result` payload type.
+ */
+function baseIsoJob(raw: Record<string, unknown>): Job {
+  const status = toStatus(raw['status']);
+  return {
+    jobId: String(raw['job_id']),
+    status,
+    createdAt: toDate(raw['created_at']),
+    completedAt: toDate(raw['completed_at']),
+    progress: toProgress(raw['progress']),
+    result: null,
+    error: isoError(raw),
+    isTerminal: isTerminalStatus(status),
+    raw,
+  };
+}
+
 export function normalizeParseJob(raw: Record<string, unknown>): Job {
   const status = toStatus(raw['status']);
   const data = raw['data'];
@@ -76,31 +118,15 @@ export function normalizeParseJob(raw: Record<string, unknown>): Job {
 }
 
 export function normalizeExtractJob(raw: Record<string, unknown>): Job {
-  const status = toStatus(raw['status']);
+  const job = baseIsoJob(raw);
   const payload = raw['result'];
-  const result = isRecord(payload) ? (payload as unknown as V2ExtractResult) : null;
+  job.result = isRecord(payload) ? (payload as unknown as V2ExtractResult) : null;
+  return job;
+}
 
-  let error: JobError | null = null;
-  const err = raw['error'];
-  if (isRecord(err)) {
-    error = {
-      code: typeof err['code'] === 'string' ? (err['code'] as string) : null,
-      message: typeof err['message'] === 'string' ? (err['message'] as string) : null,
-    };
-  } else if (raw['failure_reason']) {
-    // The extract *list* envelope uses failure_reason instead of error{}.
-    error = { code: null, message: String(raw['failure_reason']) };
-  }
-
-  return {
-    jobId: String(raw['job_id']),
-    status,
-    createdAt: toDate(raw['created_at']),
-    completedAt: toDate(raw['completed_at']),
-    progress: toProgress(raw['progress']),
-    result,
-    error,
-    isTerminal: isTerminalStatus(status),
-    raw,
-  };
+export function normalizeWorkflowJob(raw: Record<string, unknown>): Job {
+  const job = baseIsoJob(raw);
+  const payload = raw['result'];
+  job.result = isRecord(payload) ? (payload as unknown as V2WorkflowResult) : null;
+  return job;
 }

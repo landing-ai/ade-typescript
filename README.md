@@ -10,11 +10,9 @@
 
 [![NPM version](<https://img.shields.io/npm/v/landingai-ade.svg?label=npm%20(stable)>)](https://npmjs.org/package/landingai-ade) ![npm bundle size](https://img.shields.io/bundlephobia/minzip/landingai-ade)
 
-
 **[Playground](https://va.landing.ai) · [Discord](https://discord.com/invite/RVcW3j9RgR) · [Blog](https://landing.ai/blog) · [Docs](https://docs.landing.ai)**
 
 </div>
-
 
 This library provides convenient access to the LandingAI ADE REST API from server-side TypeScript or JavaScript.
 
@@ -49,7 +47,11 @@ const client = new LandingAIADE({
   environment: 'eu', // defaults to 'production'
 });
 
-const response = await client.parse({ document: fs.createReadStream('path/to/file'), model: 'dpt-2-latest', saveTo: './output_folder' });
+const response = await client.parse({
+  document: fs.createReadStream('path/to/file'),
+  model: 'dpt-2-latest',
+  saveTo: './output_folder',
+});
 // optional: saves as {input_file}_parse_output.json in the specified folder
 
 console.log(response.chunks);
@@ -102,14 +104,14 @@ const schema = {
   properties: {
     name: {
       type: 'string',
-      description: "Person's name"
+      description: "Person's name",
     },
     age: {
       type: 'number',
-      description: "Person's age"
-    }
+      description: "Person's age",
+    },
   },
-  required: ['name', 'age']
+  required: ['name', 'age'],
 };
 
 const client = new LandingAIADE({
@@ -118,14 +120,14 @@ const client = new LandingAIADE({
 
 const response = await client.extract({
   schema: JSON.stringify(schema),
-  markdown: fs.createReadStream('path/to/file.md')
+  markdown: fs.createReadStream('path/to/file.md'),
 });
 ```
 
 For advanced type-safe schemas with full TypeScript inference, see [Using Zod for Type-Safe Schemas](#using-zod-for-type-safe-schemas).
 
-
 ### Split
+
 Split parsed documents into separate sections based on classification rules and identifiers.
 
 ```js
@@ -204,7 +206,7 @@ const extracted = await client.v2.extract({
 ```ts
 const job = await client.v2.parseJobs.create({
   document: fs.createReadStream('large.pdf'),
-  priority: 'priority',
+  service_tier: 'priority',
 });
 const done = await client.v2.parseJobs.wait(job.jobId, { timeout: 600000, raiseOnFailure: true });
 console.log(done.status, done.result);
@@ -223,6 +225,27 @@ const result = await client.v2.extract({ schema: { type: 'object' }, markdown_re
 ```
 
 `client.v2.parse` and `client.v2.extract` also accept `saveTo`, with the same auto-naming behavior as the V1 methods above.
+
+#### Workflows (`parse-extract`)
+
+`client.v2.workflow` runs a prebuilt pipeline (Phase 1: `parse-extract`) in one call — parse a document, then extract against a schema. Reference documents by `document_url`, or upload with `files.upload` and pass the returned ref as `document_ref`:
+
+<!-- prettier-ignore -->
+```ts
+const result = await client.v2.workflow({
+  inputs: { report: { document_url: 'https://example.com/report.pdf' } },
+  steps: [
+    {
+      name: 'parse-extract',
+      document: '$inputs.report',
+      schema: { type: 'object', properties: { revenue: { type: 'string' } } },
+    },
+  ],
+});
+console.log(result.output['parse-extract']);
+
+// Async: client.v2.workflowJobs.{create,get,list,wait} mirror the jobs shape above.
+```
 
 ### Request & Response types
 
@@ -291,12 +314,14 @@ const InvoiceSchema = z.object({
     name: z.string(),
     address: z.string().optional(),
   }),
-  items: z.array(z.object({
-    description: z.string(),
-    quantity: z.number().int().positive(),
-    unitPrice: z.number().positive(),
-    total: z.number().positive(),
-  })),
+  items: z.array(
+    z.object({
+      description: z.string(),
+      quantity: z.number().int().positive(),
+      unitPrice: z.number().positive(),
+      total: z.number().positive(),
+    }),
+  ),
   totalAmount: z.number().describe('Total amount due'),
 });
 
@@ -319,7 +344,7 @@ const result = await client.extract({
 // 5. The extraction is now typed as Invoice
 const invoice: Invoice = result.extraction as Invoice;
 console.log(invoice.invoiceNumber); // TypeScript knows this is a string
-console.log(invoice.totalAmount);   // TypeScript knows this is a number
+console.log(invoice.totalAmount); // TypeScript knows this is a number
 ```
 
 Note: Zod is optional. You can also pass JSON Schema strings directly to the `extract` endpoint if you prefer.

@@ -44,8 +44,11 @@ export interface V2ExtractParams {
 }
 
 export interface V2ExtractJobCreateParams extends V2ExtractParams {
-  /** Processing priority for the job. */
-  priority?: 'standard' | 'priority' | null;
+  /**
+   * Async service tier. `priority` runs in the fast lane at the sync billing
+   * rate; absent → `standard`.
+   */
+  service_tier?: 'standard' | 'priority' | null;
 }
 
 export function buildExtractBody(params: V2ExtractJobCreateParams): Record<string, unknown> {
@@ -56,7 +59,7 @@ export function buildExtractBody(params: V2ExtractJobCreateParams): Record<strin
     ['markdown_url', params.markdown_url],
     ['model', params.model],
     ['idempotency_key', params.idempotency_key],
-    ['priority', params.priority],
+    ['service_tier', params.service_tier],
   ];
   for (const [key, value] of entries) {
     if (value !== undefined && value !== null) {

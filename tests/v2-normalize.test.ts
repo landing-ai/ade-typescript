@@ -1,4 +1,8 @@
-import { normalizeExtractJob, normalizeParseJob } from 'landingai-ade/resources/v2/_normalize';
+import {
+  normalizeExtractJob,
+  normalizeParseJob,
+  normalizeWorkflowJob,
+} from 'landingai-ade/resources/v2/_normalize';
 
 describe('normalizeParseJob', () => {
   test('epoch timestamps + inline data', () => {
@@ -88,5 +92,33 @@ describe('normalizeExtractJob', () => {
   test('list envelope failure_reason maps to error.message', () => {
     const job = normalizeExtractJob({ job_id: 'e3', status: 'failed', failure_reason: 'nope' });
     expect(job.error?.message).toBe('nope');
+  });
+});
+
+describe('normalizeWorkflowJob', () => {
+  test('ISO timestamps + workflow result (output + metadata)', () => {
+    const job = normalizeWorkflowJob({
+      job_id: 'w1',
+      status: 'completed',
+      created_at: '2026-01-02T03:04:05Z',
+      completed_at: '2026-01-02T03:04:20Z',
+      result: {
+        output: { 'parse-extract': { extract: { extraction: { revenue: '1M' } } } },
+        metadata: { job_id: 'w1', duration_ms: 100 },
+      },
+    });
+    expect(job.status).toBe('completed');
+    expect(job.isTerminal).toBe(true);
+    expect(job.completedAt).not.toBeNull();
+    expect((job.result as any)?.output['parse-extract'].extract.extraction.revenue).toBe('1M');
+  });
+
+  test('error object maps to code + message', () => {
+    const job = normalizeWorkflowJob({
+      job_id: 'w2',
+      status: 'failed',
+      error: { code: 'boom', message: 'x' },
+    });
+    expect(job.error?.code).toBe('boom');
   });
 });

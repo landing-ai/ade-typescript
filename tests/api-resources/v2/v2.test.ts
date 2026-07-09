@@ -95,4 +95,52 @@ describe('client.v2 routing', () => {
     expect(list.hasMore).toBe(true);
     expect(list.orgId).toBe('o');
   });
+
+  test('extractJobs.create sends service_tier in the JSON body', async () => {
+    let sentBody: unknown;
+    const fetch: Fetch = async (_input, init) => {
+      sentBody = init?.body;
+      return jsonResponse({ job_id: 'ej-2' }, 202);
+    };
+    const client = new LandingAIADE({ apikey: 'k', environment: 'staging', maxRetries: 0, fetch });
+    const job = await client.v2.extractJobs.create({
+      schema: { type: 'object' },
+      markdown: 'hi',
+      service_tier: 'priority',
+    });
+    expect(job.jobId).toBe('ej-2');
+    expect(JSON.parse(String(sentBody))).toMatchObject({ service_tier: 'priority' });
+  });
+
+  test('workflow (sync) routes to the V2 host and returns output + metadata', async () => {
+    const { client, calls } = stubClient(() =>
+      jsonResponse({
+        output: { 'parse-extract': { extract: { extraction: { revenue: '1M' } } } },
+        metadata: { job_id: 'w', duration_ms: 5 },
+      }),
+    );
+    const res = await client.v2.workflow({
+      inputs: { report: { document_url: 'https://example.com/r.pdf' } },
+      steps: [{ name: 'parse-extract', document: '$inputs.report', schema: { type: 'object' } }],
+    });
+    expect(res.metadata.job_id).toBe('w');
+    expect(calls.some((u) => u === 'https://api.ade.staging.landing.ai/v2/workflow')).toBe(true);
+  });
+
+  test('workflowJobs.create sends service_tier and normalizes the job', async () => {
+    let sentBody: unknown;
+    const fetch: Fetch = async (_input, init) => {
+      sentBody = init?.body;
+      return jsonResponse({ job_id: 'wj-1' }, 202);
+    };
+    const client = new LandingAIADE({ apikey: 'k', environment: 'staging', maxRetries: 0, fetch });
+    const job = await client.v2.workflowJobs.create({
+      inputs: { report: { document_ref: 'ref-1' } },
+      steps: [{ name: 'parse-extract', document: '$inputs.report', schema: { type: 'object' } }],
+      service_tier: 'priority',
+    });
+    expect(job.jobId).toBe('wj-1');
+    expect(job.status).toBe('pending');
+    expect(JSON.parse(String(sentBody))).toMatchObject({ service_tier: 'priority' });
+  });
 });

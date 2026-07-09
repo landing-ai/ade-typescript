@@ -47,6 +47,8 @@ import type {
   JobError,
   JobList,
   JobStatus,
+  PrebuiltWorkflowStep,
+  V2Billing,
   V2ExtractJobCreateParams,
   V2ExtractMetadata,
   V2ExtractParams,
@@ -58,7 +60,13 @@ import type {
   V2ParseMetadata,
   V2ParseParams,
   V2ParseResponse,
+  V2WorkflowJobCreateParams,
+  V2WorkflowMetadata,
+  V2WorkflowParams,
+  V2WorkflowResult,
   WaitOptions,
+  WorkflowDocumentInput,
+  WorkflowStepOptions,
 } from './resources/v2';
 import { type Fetch } from './internal/builtin-types';
 import { HeadersLike, NullableHeaders, buildHeaders } from './internal/headers';
@@ -1119,6 +1127,14 @@ export declare namespace LandingAIADE {
     type V2ExtractParams as V2ExtractParams,
     type V2ExtractJobCreateParams as V2ExtractJobCreateParams,
     type V2JobListParams as V2JobListParams,
+    type V2Billing as V2Billing,
+    type V2WorkflowResult as V2WorkflowResult,
+    type V2WorkflowMetadata as V2WorkflowMetadata,
+    type V2WorkflowParams as V2WorkflowParams,
+    type V2WorkflowJobCreateParams as V2WorkflowJobCreateParams,
+    type WorkflowDocumentInput as WorkflowDocumentInput,
+    type PrebuiltWorkflowStep as PrebuiltWorkflowStep,
+    type WorkflowStepOptions as WorkflowStepOptions,
     type FileUploadParams as FileUploadParams,
     type WaitOptions as WaitOptions,
   };
