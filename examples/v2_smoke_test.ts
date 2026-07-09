@@ -54,9 +54,16 @@ const REVENUE_SCHEMA = {
   },
 };
 
-/** Load `.env.local` then `.env` from the cwd into process.env (without overriding existing vars). */
+/**
+ * Load `.env` then `.env.local` into process.env. Precedence (highest first):
+ * an existing shell env var > `.env.local` > `.env`; within a file the LAST
+ * assignment of a key wins (standard dotenv behavior). So if `.env.local` lists
+ * the same key twice (e.g. a dev line then a staging line), the last one wins.
+ */
 function loadDotEnv(): void {
-  for (const file of ['.env.local', '.env']) {
+  const shellKeys = new Set(Object.keys(process.env));
+  const fromFiles: Record<string, string> = {};
+  for (const file of ['.env', '.env.local']) {
     let text: string;
     try {
       text = fs.readFileSync(file, 'utf8');
@@ -73,8 +80,11 @@ function loadDotEnv(): void {
       if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
         value = value.slice(1, -1);
       }
-      if (key && process.env[key] === undefined) process.env[key] = value;
+      if (key) fromFiles[key] = value; // last assignment wins (within and across files)
     }
+  }
+  for (const [key, value] of Object.entries(fromFiles)) {
+    if (!shellKeys.has(key)) process.env[key] = value; // a real shell env var still wins
   }
 }
 
