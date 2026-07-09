@@ -10,11 +10,9 @@
 
 [![NPM version](<https://img.shields.io/npm/v/landingai-ade.svg?label=npm%20(stable)>)](https://npmjs.org/package/landingai-ade) ![npm bundle size](https://img.shields.io/bundlephobia/minzip/landingai-ade)
 
-
 **[Playground](https://va.landing.ai) · [Discord](https://discord.com/invite/RVcW3j9RgR) · [Blog](https://landing.ai/blog) · [Docs](https://docs.landing.ai)**
 
 </div>
-
 
 This library provides convenient access to the LandingAI ADE REST API from server-side TypeScript or JavaScript.
 
@@ -49,7 +47,11 @@ const client = new LandingAIADE({
   environment: 'eu', // defaults to 'production'
 });
 
-const response = await client.parse({ document: fs.createReadStream('path/to/file'), model: 'dpt-2-latest', saveTo: './output_folder' });
+const response = await client.parse({
+  document: fs.createReadStream('path/to/file'),
+  model: 'dpt-2-latest',
+  saveTo: './output_folder',
+});
 // optional: saves as {input_file}_parse_output.json in the specified folder
 
 console.log(response.chunks);
@@ -102,14 +104,14 @@ const schema = {
   properties: {
     name: {
       type: 'string',
-      description: "Person's name"
+      description: "Person's name",
     },
     age: {
       type: 'number',
-      description: "Person's age"
-    }
+      description: "Person's age",
+    },
   },
-  required: ['name', 'age']
+  required: ['name', 'age'],
 };
 
 const client = new LandingAIADE({
@@ -118,14 +120,14 @@ const client = new LandingAIADE({
 
 const response = await client.extract({
   schema: JSON.stringify(schema),
-  markdown: fs.createReadStream('path/to/file.md')
+  markdown: fs.createReadStream('path/to/file.md'),
 });
 ```
 
 For advanced type-safe schemas with full TypeScript inference, see [Using Zod for Type-Safe Schemas](#using-zod-for-type-safe-schemas).
 
-
 ### Split
+
 Split parsed documents into separate sections based on classification rules and identifiers.
 
 ```js
@@ -169,6 +171,100 @@ for (const split of splitResponse.splits) {
   console.log(`Pages: ${split.pages}`);
 }
 ```
+
+### V2 API (`client.v2`)
+
+`client.v2` is a new, **additive** sub-client for LandingAI's next-generation ADE gateway. It does not change anything about the V1 usage above — `client.parse`, `client.extract`, `client.parseJobs`, etc. keep working exactly as documented. Use `client.v2.*` for the newer parse/extract surface.
+
+The V2 gateway lives on its own host (`api.ade.[env].landing.ai`), separate from the V1 host (`api.va.[env].landing.ai`). Select the environment the same way as V1, via the `environment` argument or the `LANDINGAI_ADE_ENVIRONMENT` env var:
+
+```ts
+import LandingAIADE from 'landingai-ade';
+
+const client = new LandingAIADE({
+  apikey: process.env['VISION_AGENT_API_KEY'],
+  // one of "production" (default), "eu", "staging", "dev"
+  // can also be set via the LANDINGAI_ADE_ENVIRONMENT env var instead of passing it here
+  environment: 'staging',
+});
+```
+
+#### V2 Parse
+
+Parse a document synchronously. Returns a `V2ParseResponse` (on a partial success the HTTP status is 206 and `metadata.failed_pages` lists the unparsed pages). A synchronous 504 surfaces as `V2SyncTimeoutError` — use `parseJobs` (below) for long-running documents.
+
+```ts
+import fs from 'fs';
+
+const response = await client.v2.parse({
+  document: fs.createReadStream('path/to/file.pdf'),
+});
+console.log(response.markdown);
+```
+
+#### V2 Extract
+
+Extract structured data from Markdown using a JSON schema. Provide exactly one of `markdown`, `markdown_ref` (from `client.v2.files.upload`), or `markdown_url`.
+
+```ts
+const response = await client.v2.extract({
+  schema: { type: 'object', properties: { title: { type: 'string' } } },
+  markdown: 'some markdown',
+});
+```
+
+`schema` accepts a JSON-Schema object or a JSON-encoded string. For type-safe schemas, define them with Zod and pass `z.toJSONSchema(MySchema)` (see [Using Zod for Type-Safe Schemas](#using-zod-for-type-safe-schemas)).
+
+#### Async jobs
+
+`parseJobs` / `extractJobs` create jobs and return one unified `Job` shape regardless of the divergent upstream envelopes (the full envelope stays on `Job.raw`). `wait()` polls with backoff until the job is terminal:
+
+<!-- prettier-ignore -->
+```ts
+const job = await client.v2.parseJobs.create({
+  document: fs.createReadStream('large.pdf'),
+  service_tier: 'priority',
+});
+const done = await client.v2.parseJobs.wait(job.job_id, { timeout: 600000, raiseOnFailure: true });
+console.log(done.status, done.result);
+
+// client.v2.extractJobs.{create,get,list,wait} mirror the same shape for extract jobs.
+```
+
+#### File staging
+
+`client.v2.files.upload` stages bytes on the ADE data plane and returns a `file_ref` you can pass as `markdown_ref` to extract:
+
+<!-- prettier-ignore -->
+```ts
+const fileRef = await client.v2.files.upload({ file: fs.createReadStream('doc.md') });
+const result = await client.v2.extract({ schema: { type: 'object' }, markdown_ref: fileRef });
+```
+
+`client.v2.parse` and `client.v2.extract` also accept `saveTo`, with the same auto-naming behavior as the V1 methods above.
+
+#### Workflows (`parse-extract`)
+
+`client.v2.workflow` runs a prebuilt pipeline (Phase 1: `parse-extract`) in one call — parse a document, then extract against a schema. Reference documents by `document_url`, or upload with `files.upload` and pass the returned ref as `document_ref`:
+
+<!-- prettier-ignore -->
+```ts
+const result = await client.v2.workflow({
+  inputs: { report: { document_url: 'https://example.com/report.pdf' } },
+  steps: [
+    {
+      name: 'parse-extract',
+      document: '$inputs.report',
+      schema: { type: 'object', properties: { revenue: { type: 'string' } } },
+    },
+  ],
+});
+console.log(result.output['parse-extract']);
+
+// Async: client.v2.workflowJobs.{create,get,list,wait} mirror the jobs shape above.
+```
+
+To send a local file instead of a URL, pass it as `inputs.<name>.document` (the SDK stages it as a multipart part), or upload it first with `files.upload` and pass the returned ref as `document_ref`.
 
 ### Request & Response types
 
@@ -237,12 +333,14 @@ const InvoiceSchema = z.object({
     name: z.string(),
     address: z.string().optional(),
   }),
-  items: z.array(z.object({
-    description: z.string(),
-    quantity: z.number().int().positive(),
-    unitPrice: z.number().positive(),
-    total: z.number().positive(),
-  })),
+  items: z.array(
+    z.object({
+      description: z.string(),
+      quantity: z.number().int().positive(),
+      unitPrice: z.number().positive(),
+      total: z.number().positive(),
+    }),
+  ),
   totalAmount: z.number().describe('Total amount due'),
 });
 
@@ -265,7 +363,7 @@ const result = await client.extract({
 // 5. The extraction is now typed as Invoice
 const invoice: Invoice = result.extraction as Invoice;
 console.log(invoice.invoiceNumber); // TypeScript knows this is a string
-console.log(invoice.totalAmount);   // TypeScript knows this is a number
+console.log(invoice.totalAmount); // TypeScript knows this is a number
 ```
 
 Note: Zod is optional. You can also pass JSON Schema strings directly to the `extract` endpoint if you prefer.

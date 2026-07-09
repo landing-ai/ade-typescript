@@ -12,3 +12,8 @@ dist-deno
 dist-bundle
 *.mcpb
 oidc
+
+# local env / secrets — never commit API keys
+.env
+.env.local
+.env.*.local
