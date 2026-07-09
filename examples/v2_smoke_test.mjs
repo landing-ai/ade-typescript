@@ -5,10 +5,14 @@
  * response shapes against a real gateway. It is a manual/QA tool — NOT part of
  * the automated test suite (which uses mocked transports).
  *
+ * Plain ESM JavaScript so it is copy-out-and-run: after installing the SDK
+ * (`npm install github:landing-ai/ade-typescript#<branch-or-main>`), drop this
+ * file into your project and run it with `node` — no TypeScript toolchain needed.
+ *
  * This is a *live* test that can hit real endpoints (and consume credits), so —
- * unlike the client itself, which defaults to `production` — this script
- * defaults to `staging` when neither `--environment` nor
- * `LANDINGAI_ADE_ENVIRONMENT` is set. V2 lives on `api.ade.<env>.landing.ai`.
+ * unlike the client itself, which defaults to `production` — this script defaults
+ * to `staging` when neither `--environment` nor `LANDINGAI_ADE_ENVIRONMENT` is set.
+ * V2 lives on `api.ade.<env>.landing.ai`.
  *
  * Setup
  * -----
@@ -19,29 +23,20 @@
  *
  * Run
  * ---
- *   yarn tsn examples/v2_smoke_test.ts                         # extract + files (no document needed)
- *   yarn tsn examples/v2_smoke_test.ts --document ./sample.pdf # + parse & workflow (sync & job)
- *   yarn tsn examples/v2_smoke_test.ts --document-url https://.../sample.pdf
- *   yarn tsn examples/v2_smoke_test.ts --only extract,extract_jobs   # run a subset
- *   yarn tsn examples/v2_smoke_test.ts --environment dev
+ *   node v2_smoke_test.mjs                          # extract + files (no document needed)
+ *   node v2_smoke_test.mjs --document ./sample.pdf  # + parse & workflow (sync & job)
+ *   node v2_smoke_test.mjs --document-url https://.../sample.pdf
+ *   node v2_smoke_test.mjs --only extract,extract_jobs
+ *   node v2_smoke_test.mjs --environment dev
  *
  * Exit code is non-zero if any selected check failed, so it is CI-friendly too.
  */
 
-import * as fs from 'fs';
+import fs from 'node:fs';
 
-import LandingAIADE, { toFile, type ClientOptions } from 'landingai-ade';
+import LandingAIADE, { toFile } from 'landingai-ade';
 
-const ALL_CHECKS = [
-  'files',
-  'extract',
-  'extract_jobs',
-  'parse',
-  'parse_jobs',
-  'workflow',
-  'workflow_jobs',
-] as const;
-type Check = (typeof ALL_CHECKS)[number];
+const ALL_CHECKS = ['files', 'extract', 'extract_jobs', 'parse', 'parse_jobs', 'workflow', 'workflow_jobs'];
 
 /** A tiny self-contained markdown doc + schema so extract/files run without any file. */
 const SAMPLE_MARKDOWN = '# Acme Inc. — Q1 Report\n\nTotal revenue for the quarter was **$1,250,000**.\n';
@@ -60,11 +55,11 @@ const REVENUE_SCHEMA = {
  * assignment of a key wins (standard dotenv behavior). So if `.env.local` lists
  * the same key twice (e.g. a dev line then a staging line), the last one wins.
  */
-function loadDotEnv(): void {
+function loadDotEnv() {
   const shellKeys = new Set(Object.keys(process.env));
-  const fromFiles: Record<string, string> = {};
+  const fromFiles = {};
   for (const file of ['.env', '.env.local']) {
-    let text: string;
+    let text;
     try {
       text = fs.readFileSync(file, 'utf8');
     } catch {
@@ -88,21 +83,11 @@ function loadDotEnv(): void {
   }
 }
 
-interface Args {
-  environment?: string;
-  document?: string;
-  documentUrl?: string;
-  only?: string;
-  parseModel?: string;
-  extractModel?: string;
-  timeout: number;
-}
-
-function parseArgs(argv: Array<string>): Args {
-  const args: Args = { timeout: 600_000 };
+function parseArgs(argv) {
+  const args = { timeout: 600_000 };
   for (let i = 0; i < argv.length; i++) {
     const flag = argv[i];
-    const next = (): string => {
+    const next = () => {
       const value = argv[++i];
       if (value === undefined) throw new Error(`Missing value for ${flag}`);
       return value;
@@ -137,25 +122,25 @@ function parseArgs(argv: Array<string>): Args {
 }
 
 /** Default this *live* smoke test to `staging`; return undefined to let the client read the env var. */
-function resolveEnvironment(args: Args): string | undefined {
+function resolveEnvironment(args) {
   if (args.environment) return args.environment;
   if (process.env['LANDINGAI_ADE_ENVIRONMENT']) return undefined;
   return 'staging';
 }
 
-function selectedChecks(only: string | undefined): Array<Check> {
+function selectedChecks(only) {
   if (!only) return [...ALL_CHECKS];
   const chosen = only
     .split(',')
     .map((c) => c.trim())
     .filter(Boolean);
-  const bad = chosen.filter((c) => !ALL_CHECKS.includes(c as Check));
+  const bad = chosen.filter((c) => !ALL_CHECKS.includes(c));
   if (bad.length) throw new Error(`Unknown check(s): ${bad.join(', ')}. Valid: ${ALL_CHECKS.join(', ')}`);
-  return chosen as Array<Check>;
+  return chosen;
 }
 
-function short(value: unknown, limit = 200): string {
-  let text: string;
+function short(value, limit = 200) {
+  let text;
   try {
     // JSON.stringify(undefined) is `undefined` (not a string), so fall back.
     text = typeof value === 'string' ? value : JSON.stringify(value) ?? String(value);
@@ -172,13 +157,13 @@ function short(value: unknown, limit = 200): string {
  * single shared source would be drained by the first check and leave every check
  * after it uploading an empty body.
  */
-function documentSource(args: Args): { document: fs.ReadStream } | { document_url: string } | null {
+function documentSource(args) {
   if (args.document) return { document: fs.createReadStream(args.document) };
   if (args.documentUrl) return { document_url: args.documentUrl };
   return null;
 }
 
-async function main(): Promise<number> {
+async function main() {
   loadDotEnv();
   const args = parseArgs(process.argv.slice(2));
   const checks = selectedChecks(args.only);
@@ -189,14 +174,14 @@ async function main(): Promise<number> {
   }
 
   const environment = resolveEnvironment(args);
-  const clientOptions: ClientOptions = {};
-  if (environment) clientOptions.environment = environment as ClientOptions['environment'];
+  const clientOptions = {};
+  if (environment) clientOptions.environment = environment;
   const client = new LandingAIADE(clientOptions);
   console.log(`V1 base: ${client.baseURL}  |  V2 base: ${client.v2BaseURL}\n`);
 
-  const results: Record<string, 'PASS' | 'FAIL' | 'SKIP'> = {};
+  const results = {};
 
-  const record = async (name: string, fn: () => Promise<unknown>): Promise<void> => {
+  const record = async (name, fn) => {
     console.log(`── ${name} `.padEnd(60, '─'));
     try {
       const out = await fn();
@@ -204,19 +189,18 @@ async function main(): Promise<number> {
       console.log(`   PASS  ${short(out)}\n`);
     } catch (err) {
       results[name] = 'FAIL';
-      const e = err as Error;
-      console.log(`   FAIL  ${e?.constructor?.name ?? 'Error'}: ${e?.message ?? String(err)}`);
+      console.log(`   FAIL  ${err?.constructor?.name ?? 'Error'}: ${err?.message ?? String(err)}`);
       console.error(err);
       console.log();
     }
   };
 
-  const skip = (name: string, why: string): void => {
+  const skip = (name, why) => {
     console.log(`── ${name} `.padEnd(60, '─') + `\n   SKIP  (${why})\n`);
     results[name] = 'SKIP';
   };
 
-  let fileRef: string | undefined;
+  let fileRef;
 
   if (checks.includes('files')) {
     await record('files.upload', async () => {
@@ -249,11 +233,7 @@ async function main(): Promise<number> {
   // Each document check pulls its OWN fresh source: `documentSource` hands back a
   // one-shot `fs.ReadStream` for `--document`, so a shared source would be drained by
   // the first check and leave the rest uploading an empty body.
-  const workflowStep = {
-    name: 'parse-extract' as const,
-    document: '$inputs.report',
-    schema: REVENUE_SCHEMA,
-  };
+  const workflowStep = { name: 'parse-extract', document: '$inputs.report', schema: REVENUE_SCHEMA };
 
   if (checks.includes('parse')) {
     const src = documentSource(args);
