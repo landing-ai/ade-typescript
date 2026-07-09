@@ -26,14 +26,14 @@ describe('V2 environment / base URL resolution', () => {
   test('default production pair', () => {
     const client = new LandingAIADE({ apikey: APIKEY });
     expect(client.baseURL).toBe('https://api.va.landing.ai');
-    expect(client.v2BaseURL).toBe('https://api.ade.landing.ai');
+    expect(client.v2BaseURL).toBe('https://aide.landing.ai');
   });
 
   test.each([
-    ['production', 'https://api.va.landing.ai', 'https://api.ade.landing.ai'],
-    ['eu', 'https://api.va.eu-west-1.landing.ai', 'https://api.ade.eu-west-1.landing.ai'],
-    ['staging', 'https://api.va.staging.landing.ai', 'https://api.ade.staging.landing.ai'],
-    ['dev', 'https://api.va.dev.landing.ai', 'https://api.ade.dev.landing.ai'],
+    ['production', 'https://api.va.landing.ai', 'https://aide.landing.ai'],
+    ['eu', 'https://api.va.eu-west-1.landing.ai', 'https://aide.eu-west-1.landing.ai'],
+    ['staging', 'https://api.va.staging.landing.ai', 'https://aide.staging.landing.ai'],
+    ['dev', 'https://api.va.dev.landing.ai', 'https://aide.dev.landing.ai'],
   ] as const)('environment=%s pairs the V1 and V2 hosts', (environment, v1, v2) => {
     const client = new LandingAIADE({ apikey: APIKEY, environment });
     expect(client.baseURL).toBe(v1);
@@ -44,7 +44,7 @@ describe('V2 environment / base URL resolution', () => {
     process.env['LANDINGAI_ADE_ENVIRONMENT'] = 'staging';
     const client = new LandingAIADE({ apikey: APIKEY });
     expect(client.baseURL).toBe('https://api.va.staging.landing.ai');
-    expect(client.v2BaseURL).toBe('https://api.ade.staging.landing.ai');
+    expect(client.v2BaseURL).toBe('https://aide.staging.landing.ai');
   });
 
   test('explicit v2BaseURL wins', () => {

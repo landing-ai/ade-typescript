@@ -41,7 +41,7 @@ Methods:
 
 # V2
 
-The `client.v2` sub-client targets LandingAI's next-generation ADE gateway on its own host (`api.ade.[env].landing.ai`), separate from the V1 host (`api.va.[env].landing.ai`). It is **additive** — `client.v2.*` is a separate surface from the top-level `client.*` (V1) methods above, and using it does not change any V1 behavior.
+The `client.v2` sub-client targets LandingAI's next-generation ADE gateway on its own host (`aide.[env].landing.ai`), separate from the V1 host (`api.va.[env].landing.ai`). It is **additive** — `client.v2.*` is a separate surface from the top-level `client.*` (V1) methods above, and using it does not change any V1 behavior.
 
 `client.v2.parseJobs` and `client.v2.extractJobs` both return a single, unified <a href="./src/resources/v2/types.ts">`Job`</a> shape even though the underlying parse/extract job envelopes differ upstream — `Job.raw` retains the full original envelope as an escape hatch.
 

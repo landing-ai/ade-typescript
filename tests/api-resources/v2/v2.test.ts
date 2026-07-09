@@ -25,7 +25,7 @@ describe('client.v2 routing', () => {
     const { client, calls } = stubClient(() => jsonResponse({ file_ref: 'ref-1' }));
     const ref = await client.v2.files.upload({ file: await toFile(Buffer.from('hi'), 'a.md') });
     expect(ref).toBe('ref-1');
-    expect(calls.some((u) => u === 'https://api.ade.staging.landing.ai/v1/files')).toBe(true);
+    expect(calls.some((u) => u === 'https://aide.staging.landing.ai/v1/files')).toBe(true);
   });
 
   test('parse routes to the V2 host and returns a 206 partial result', async () => {
@@ -34,7 +34,7 @@ describe('client.v2 routing', () => {
     );
     const res = await client.v2.parse({ document: await toFile(Buffer.from('%PDF'), 'a.pdf') });
     expect(res.metadata?.failed_pages).toEqual([2]);
-    expect(calls.some((u) => u === 'https://api.ade.staging.landing.ai/v2/parse')).toBe(true);
+    expect(calls.some((u) => u === 'https://aide.staging.landing.ai/v2/parse')).toBe(true);
   });
 
   test('extract sends a JSON body to the V2 host', async () => {
@@ -48,7 +48,7 @@ describe('client.v2 routing', () => {
     );
     const res = await client.v2.extract({ schema: { type: 'object' }, markdown: 'hi' });
     expect(res.metadata.version).toBe('v');
-    expect(calls.some((u) => u === 'https://api.ade.staging.landing.ai/v2/extract')).toBe(true);
+    expect(calls.some((u) => u === 'https://aide.staging.landing.ai/v2/extract')).toBe(true);
   });
 
   test('a 504 on a sync call surfaces as V2SyncTimeoutError', async () => {
@@ -63,7 +63,7 @@ describe('client.v2 routing', () => {
     const job = await client.v2.parseJobs.create({ document: await toFile(Buffer.from('x'), 'a.pdf') });
     expect(job.jobId).toBe('pj-1');
     expect(job.status).toBe('pending');
-    expect(calls.some((u) => u === 'https://api.ade.staging.landing.ai/v2/parse/jobs')).toBe(true);
+    expect(calls.some((u) => u === 'https://aide.staging.landing.ai/v2/parse/jobs')).toBe(true);
   });
 
   test('extractJobs.get normalizes a completed job', async () => {
@@ -83,7 +83,7 @@ describe('client.v2 routing', () => {
     const job = await client.v2.extractJobs.get('ej-1');
     expect(job.status).toBe('completed');
     expect(job.isTerminal).toBe(true);
-    expect(calls.some((u) => u === 'https://api.ade.staging.landing.ai/v2/extract/jobs/ej-1')).toBe(true);
+    expect(calls.some((u) => u === 'https://aide.staging.landing.ai/v2/extract/jobs/ej-1')).toBe(true);
   });
 
   test('parseJobs.list builds a JobList with the pagination envelope', async () => {
@@ -124,7 +124,7 @@ describe('client.v2 routing', () => {
       steps: [{ name: 'parse-extract', document: '$inputs.report', schema: { type: 'object' } }],
     });
     expect(res.metadata.job_id).toBe('w');
-    expect(calls.some((u) => u === 'https://api.ade.staging.landing.ai/v2/workflow')).toBe(true);
+    expect(calls.some((u) => u === 'https://aide.staging.landing.ai/v2/workflow')).toBe(true);
   });
 
   test('workflowJobs.create sends service_tier and normalizes the job', async () => {
@@ -142,5 +142,25 @@ describe('client.v2 routing', () => {
     expect(job.jobId).toBe('wj-1');
     expect(job.status).toBe('pending');
     expect(JSON.parse(String(sentBody))).toMatchObject({ service_tier: 'priority' });
+  });
+
+  test('workflow with a file input sends multipart with the file part', async () => {
+    let sentBody: unknown;
+    const fetch: Fetch = async (input, init) => {
+      if (!String(input).startsWith('data:')) sentBody = init?.body;
+      return jsonResponse({ output: {}, metadata: { job_id: 'w2', duration_ms: 1 } });
+    };
+    const client = new LandingAIADE({ apikey: 'k', environment: 'staging', maxRetries: 0, fetch });
+    await client.v2.workflow({
+      inputs: { report: { document: await toFile(Buffer.from('%PDF'), 'r.pdf') } },
+      steps: [{ name: 'parse-extract', document: '$inputs.report', schema: { type: 'object' } }],
+    });
+    expect(sentBody).toBeInstanceOf(FormData);
+    const form = sentBody as FormData;
+    const part = form.get('document_report');
+    expect(part).not.toBeNull();
+    expect(typeof part).not.toBe('string'); // a binary File part, not a string field
+    expect(JSON.parse(String(form.get('inputs')))).toEqual({ report: { document: 'document_report' } });
+    expect(typeof form.get('steps')).toBe('string');
   });
 });

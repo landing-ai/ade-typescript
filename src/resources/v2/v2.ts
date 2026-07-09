@@ -5,7 +5,7 @@ import { V2Resource, throwIfSyncTimeout } from './_base';
 import { Files } from './files';
 import { ExtractJobs, V2ExtractParams, buildExtractBody } from './extract';
 import { ParseJobs, V2ParseParams, buildParseForm } from './parse';
-import { WorkflowJobs, V2WorkflowParams, buildWorkflowBody } from './workflow';
+import { WorkflowJobs, V2WorkflowParams, prepareWorkflowRequest } from './workflow';
 import { V2ExtractResult, V2ParseResponse, V2WorkflowResult } from './types';
 
 /**
@@ -88,10 +88,13 @@ export class V2 extends V2Resource {
   ): Promise<V2WorkflowResult> {
     const { saveTo, ...rest } = body;
     try {
-      const result = await this._client.post<V2WorkflowResult>(this.v2Url('/v2/workflow'), {
-        body: buildWorkflowBody(rest),
-        ...options,
-      });
+      const { multipart, body: reqBody } = prepareWorkflowRequest(rest);
+      const result = await this._client.post<V2WorkflowResult>(
+        this.v2Url('/v2/workflow'),
+        multipart ?
+          multipartFormRequestOptions({ body: reqBody, ...options }, this._client)
+        : { body: reqBody, ...options },
+      );
       if (saveTo) {
         _saveResponse(saveTo, _getInputFilename(null, null), 'workflow', result);
       }

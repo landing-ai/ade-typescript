@@ -1,5 +1,7 @@
 import { LandingAIADEError } from '../../core/error';
+import { type Uploadable } from '../../core/uploads';
 import { RequestOptions } from '../../internal/request-options';
+import { multipartFormRequestOptions } from '../../internal/uploads';
 import { path } from '../../internal/utils/path';
 import {
   V2Resource,
@@ -14,12 +16,12 @@ import { V2JobListParams } from './parse';
 import { Job, JobList } from './types';
 
 /**
- * One declared document input. Provide exactly one of `document` (a multipart
- * form-part name — advanced), `document_ref` (from `client.v2.files.upload`),
- * or `document_url`.
+ * One declared document input. Provide exactly one of `document` (a file — the
+ * SDK stages it as a multipart part and references it by name), `document_ref`
+ * (from `client.v2.files.upload`), or `document_url`.
  */
 export interface WorkflowDocumentInput {
-  document?: string | null;
+  document?: Uploadable | null;
 
   document_ref?: string | null;
 
@@ -67,18 +69,53 @@ export interface V2WorkflowJobCreateParams extends V2WorkflowParams {
   service_tier?: 'standard' | 'priority' | null;
 }
 
-export function buildWorkflowBody(params: V2WorkflowJobCreateParams): Record<string, unknown> {
-  const body: Record<string, unknown> = { inputs: params.inputs, steps: params.steps };
-  if (params.output !== undefined && params.output !== null) {
-    body['output'] = params.output;
+export interface PreparedWorkflowRequest {
+  multipart: boolean;
+  body: Record<string, unknown>;
+}
+
+/**
+ * Build the request body for a workflow call. If any input carries a file
+ * (`document`), returns a multipart form — `inputs`/`steps`/`output` as
+ * JSON-encoded fields plus one binary part per file, with each file's input
+ * rewritten to reference its part name. Otherwise a plain JSON body.
+ */
+export function prepareWorkflowRequest(params: V2WorkflowJobCreateParams): PreparedWorkflowRequest {
+  const files: Array<[string, Uploadable]> = [];
+  const resolvedInputs: Record<string, unknown> = {};
+
+  for (const [key, input] of Object.entries(params.inputs)) {
+    if (input.document != null) {
+      // A file: stage it as a named multipart part and reference it by name.
+      const partName = `document_${key}`;
+      files.push([partName, input.document]);
+      resolvedInputs[key] = { document: partName };
+    } else {
+      const resolved: Record<string, unknown> = {};
+      if (input.document_ref != null) resolved['document_ref'] = input.document_ref;
+      if (input.document_url != null) resolved['document_url'] = input.document_url;
+      resolvedInputs[key] = resolved;
+    }
   }
-  if (params.idempotency_key !== undefined && params.idempotency_key !== null) {
-    body['idempotency_key'] = params.idempotency_key;
+
+  if (files.length === 0) {
+    const body: Record<string, unknown> = { inputs: resolvedInputs, steps: params.steps };
+    if (params.output != null) body['output'] = params.output;
+    if (params.idempotency_key != null) body['idempotency_key'] = params.idempotency_key;
+    if (params.service_tier != null) body['service_tier'] = params.service_tier;
+    return { multipart: false, body };
   }
-  if (params.service_tier !== undefined && params.service_tier !== null) {
-    body['service_tier'] = params.service_tier;
-  }
-  return body;
+
+  // Multipart: JSON-encode the structured fields, append files as parts.
+  const form: Record<string, unknown> = {
+    inputs: JSON.stringify(resolvedInputs),
+    steps: JSON.stringify(params.steps),
+  };
+  if (params.output != null) form['output'] = JSON.stringify(params.output);
+  if (params.idempotency_key != null) form['idempotency_key'] = params.idempotency_key;
+  if (params.service_tier != null) form['service_tier'] = params.service_tier;
+  for (const [name, file] of files) form[name] = file;
+  return { multipart: true, body: form };
 }
 
 export class WorkflowJobs extends V2Resource {
@@ -88,10 +125,13 @@ export class WorkflowJobs extends V2Resource {
    * or block until terminal with `.wait(jobID)`.
    */
   async create(body: V2WorkflowJobCreateParams, options?: RequestOptions): Promise<Job> {
-    const raw = await this._client.post<Record<string, unknown>>(this.v2Url('/v2/workflow/jobs'), {
-      body: buildWorkflowBody(body),
-      ...options,
-    });
+    const { multipart, body: reqBody } = prepareWorkflowRequest(body);
+    const raw = await this._client.post<Record<string, unknown>>(
+      this.v2Url('/v2/workflow/jobs'),
+      multipart ?
+        multipartFormRequestOptions({ body: reqBody, ...options }, this._client)
+      : { body: reqBody, ...options },
+    );
     return normalizeWorkflowJob(raw);
   }
 

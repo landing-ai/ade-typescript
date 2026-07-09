@@ -91,14 +91,15 @@ const environments = {
 type Environment = keyof typeof environments;
 
 /**
- * The V2 (ADE gateway) surface lives on its own host, paired 1:1 with the V1
- * host by environment and selected via the same `environment` option / env var.
+ * The V2 (AIDE gateway) surface lives on its own host (`aide.[env].landing.ai`),
+ * paired 1:1 with the V1 host by environment and selected via the same
+ * `environment` option / env var. (`api.ade.*` is a separate VTRA host, not V2.)
  */
 const v2Environments = {
-  production: 'https://api.ade.landing.ai',
-  eu: 'https://api.ade.eu-west-1.landing.ai',
-  staging: 'https://api.ade.staging.landing.ai',
-  dev: 'https://api.ade.dev.landing.ai',
+  production: 'https://aide.landing.ai',
+  eu: 'https://aide.eu-west-1.landing.ai',
+  staging: 'https://aide.staging.landing.ai',
+  dev: 'https://aide.dev.landing.ai',
 };
 
 function stripTrailingSlash(url: string): string {
@@ -208,10 +209,10 @@ export interface ClientOptions {
    * Specifies the environment to use for the API.
    *
    * Selects both the V1 host and the paired V2 (ADE gateway) host:
-   * - `production`: `https://api.va.landing.ai` / `https://api.ade.landing.ai`
-   * - `eu`: `https://api.va.eu-west-1.landing.ai` / `https://api.ade.eu-west-1.landing.ai`
-   * - `staging`: `https://api.va.staging.landing.ai` / `https://api.ade.staging.landing.ai`
-   * - `dev`: `https://api.va.dev.landing.ai` / `https://api.ade.dev.landing.ai`
+   * - `production`: `https://api.va.landing.ai` / `https://aide.landing.ai`
+   * - `eu`: `https://api.va.eu-west-1.landing.ai` / `https://aide.eu-west-1.landing.ai`
+   * - `staging`: `https://api.va.staging.landing.ai` / `https://aide.staging.landing.ai`
+   * - `dev`: `https://api.va.dev.landing.ai` / `https://aide.dev.landing.ai`
    *
    * Defaults to process.env['LANDINGAI_ADE_ENVIRONMENT'], then `production`.
    */

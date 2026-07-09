@@ -176,7 +176,7 @@ for (const split of splitResponse.splits) {
 
 `client.v2` is a new, **additive** sub-client for LandingAI's next-generation ADE gateway. It does not change anything about the V1 usage above — `client.parse`, `client.extract`, `client.parseJobs`, etc. keep working exactly as documented. Use `client.v2.*` for the newer parse/extract surface.
 
-The V2 gateway lives on its own host (`api.ade.[env].landing.ai`), separate from the V1 host (`api.va.[env].landing.ai`). Select the environment the same way as V1 — via the `environment` option or the `LANDINGAI_ADE_ENVIRONMENT` env var:
+The V2 gateway lives on its own host (`aide.[env].landing.ai`), separate from the V1 host (`api.va.[env].landing.ai`). Select the environment the same way as V1 — via the `environment` option or the `LANDINGAI_ADE_ENVIRONMENT` env var:
 
 <!-- prettier-ignore -->
 ```ts
@@ -246,6 +246,8 @@ console.log(result.output['parse-extract']);
 
 // Async: client.v2.workflowJobs.{create,get,list,wait} mirror the jobs shape above.
 ```
+
+To send a local file instead of a URL, pass it as `inputs.<name>.document` (the SDK stages it as a multipart part), or upload it first with `files.upload` and pass the returned ref as `document_ref`.
 
 ### Request & Response types
 
