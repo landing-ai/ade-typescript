@@ -165,7 +165,13 @@ function short(value: unknown, limit = 200): string {
   return text.length <= limit ? text : text.slice(0, limit) + '…';
 }
 
-/** A document source for parse/workflow, or null when the caller passed neither. */
+/**
+ * A *fresh* document source for one parse/workflow check, or null when the caller
+ * passed neither `--document` nor `--document-url`. The `--document` case returns a
+ * one-shot `fs.ReadStream` (readable only once), so call this once per check — a
+ * single shared source would be drained by the first check and leave every check
+ * after it uploading an empty body.
+ */
 function documentSource(args: Args): { document: fs.ReadStream } | { document_url: string } | null {
   if (args.document) return { document: fs.createReadStream(args.document) };
   if (args.documentUrl) return { document_url: args.documentUrl };
@@ -240,52 +246,55 @@ async function main(): Promise<number> {
     });
   }
 
-  const doc = documentSource(args);
-
-  if (checks.includes('parse')) {
-    if (!doc) skip('v2.parse (sync)', 'no --document / --document-url');
-    else {
-      await record('v2.parse (sync)', async () => {
-        const res = await client.v2.parse({ ...doc, ...(args.parseModel ? { model: args.parseModel } : {}) });
-        return short(res.markdown);
-      });
-    }
-  }
-
-  if (checks.includes('parse_jobs')) {
-    if (!doc) skip('v2.parseJobs (create+wait)', 'no --document / --document-url');
-    else {
-      await record('v2.parseJobs (create+wait)', async () => {
-        const job = await client.v2.parseJobs.create({ ...doc });
-        const done = await client.v2.parseJobs.wait(job.job_id, { timeout: args.timeout });
-        return `job=${done.job_id} status=${done.status}`;
-      });
-    }
-  }
-
-  // Workflow (parse-extract) needs a document input, referenced from `steps`.
-  const workflowInputs = doc ? { report: doc } : null;
+  // Each document check pulls its OWN fresh source: `documentSource` hands back a
+  // one-shot `fs.ReadStream` for `--document`, so a shared source would be drained by
+  // the first check and leave the rest uploading an empty body.
   const workflowStep = {
     name: 'parse-extract' as const,
     document: '$inputs.report',
     schema: REVENUE_SCHEMA,
   };
 
+  if (checks.includes('parse')) {
+    const src = documentSource(args);
+    if (!src) skip('v2.parse (sync)', 'no --document / --document-url');
+    else {
+      await record('v2.parse (sync)', async () => {
+        const res = await client.v2.parse({ ...src, ...(args.parseModel ? { model: args.parseModel } : {}) });
+        return short(res.markdown);
+      });
+    }
+  }
+
+  if (checks.includes('parse_jobs')) {
+    const src = documentSource(args);
+    if (!src) skip('v2.parseJobs (create+wait)', 'no --document / --document-url');
+    else {
+      await record('v2.parseJobs (create+wait)', async () => {
+        const job = await client.v2.parseJobs.create({ ...src });
+        const done = await client.v2.parseJobs.wait(job.job_id, { timeout: args.timeout });
+        return `job=${done.job_id} status=${done.status}`;
+      });
+    }
+  }
+
   if (checks.includes('workflow')) {
-    if (!workflowInputs) skip('v2.workflow (sync)', 'no --document / --document-url');
+    const src = documentSource(args);
+    if (!src) skip('v2.workflow (sync)', 'no --document / --document-url');
     else {
       await record('v2.workflow (sync)', async () => {
-        const res = await client.v2.workflow({ inputs: workflowInputs, steps: [workflowStep] });
+        const res = await client.v2.workflow({ inputs: { report: src }, steps: [workflowStep] });
         return `output keys=${short(Object.keys(res.output))}`;
       });
     }
   }
 
   if (checks.includes('workflow_jobs')) {
-    if (!workflowInputs) skip('v2.workflowJobs (create+wait)', 'no --document / --document-url');
+    const src = documentSource(args);
+    if (!src) skip('v2.workflowJobs (create+wait)', 'no --document / --document-url');
     else {
       await record('v2.workflowJobs (create+wait)', async () => {
-        const job = await client.v2.workflowJobs.create({ inputs: workflowInputs, steps: [workflowStep] });
+        const job = await client.v2.workflowJobs.create({ inputs: { report: src }, steps: [workflowStep] });
         const done = await client.v2.workflowJobs.wait(job.job_id, { timeout: args.timeout });
         return `job=${done.job_id} status=${done.status}`;
       });
