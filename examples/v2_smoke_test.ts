@@ -147,7 +147,8 @@ function selectedChecks(only: string | undefined): Array<Check> {
 function short(value: unknown, limit = 200): string {
   let text: string;
   try {
-    text = typeof value === 'string' ? value : JSON.stringify(value);
+    // JSON.stringify(undefined) is `undefined` (not a string), so fall back.
+    text = typeof value === 'string' ? value : JSON.stringify(value) ?? String(value);
   } catch {
     text = String(value);
   }
