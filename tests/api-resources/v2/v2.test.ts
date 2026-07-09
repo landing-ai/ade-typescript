@@ -58,6 +58,21 @@ describe('client.v2 routing', () => {
     );
   });
 
+  test('a sync 504 is surfaced immediately without retrying, even at the default maxRetries', async () => {
+    let calls = 0;
+    const fetch: Fetch = async (input) => {
+      if (!String(input).startsWith('data:')) calls++;
+      return new Response('', { status: 504 });
+    };
+    // No maxRetries override here — the sync method must disable retries itself
+    // (default is 2, which would otherwise mean 3 doomed attempts).
+    const client = new LandingAIADE({ apikey: 'k', environment: 'staging', fetch });
+    await expect(client.v2.extract({ schema: { type: 'object' }, markdown: 'x' })).rejects.toBeInstanceOf(
+      V2SyncTimeoutError,
+    );
+    expect(calls).toBe(1);
+  });
+
   test('parseJobs.create normalizes the create envelope', async () => {
     const { client, calls } = stubClient(() => jsonResponse({ job_id: 'pj-1' }, 202));
     const job = await client.v2.parseJobs.create({ document: await toFile(Buffer.from('x'), 'a.pdf') });

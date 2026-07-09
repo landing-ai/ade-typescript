@@ -61,4 +61,19 @@ describe('pollUntilTerminal', () => {
     );
     expect(job.status).toBe('failed');
   });
+
+  test('raiseOnFailure throws on a failed job even with no error payload', async () => {
+    await expect(
+      pollUntilTerminal(async () => makeJob('failed', null), { raiseOnFailure: true }, fakeClock()),
+    ).rejects.toBeInstanceOf(JobFailedError);
+  });
+
+  test('raiseOnFailure does NOT throw on a completed job carrying a residual error object', async () => {
+    const job = await pollUntilTerminal(
+      async () => makeJob('completed', { code: null, message: null }),
+      { raiseOnFailure: true },
+      fakeClock(),
+    );
+    expect(job.status).toBe('completed');
+  });
 });

@@ -111,12 +111,15 @@ function knownEnvironment(value: string | undefined): Environment | undefined {
 }
 
 /**
- * Resolve the V2 (ADE) base URL, no trailing slash. Precedence:
- * explicit `v2BaseURL` > `LANDINGAI_ADE_V2_BASE_URL` env > environment map >
- * (if only a V1 `baseURL` was set) follow it > production default.
+ * Resolve the V2 (ADE) base URL, no trailing slash. Explicit constructor args
+ * beat ambient env vars. Precedence:
+ * explicit `v2BaseURL` > explicit `environment` > `LANDINGAI_ADE_V2_BASE_URL` env >
+ * `LANDINGAI_ADE_ENVIRONMENT` env (only when no explicit `baseURL`) >
+ * (if a V1 `baseURL` was set) follow it > production default.
  */
 function resolveV2BaseURL(opts: {
-  environment: Environment | undefined;
+  explicitEnvironment: Environment | undefined;
+  envVarEnvironment: Environment | undefined;
   v2BaseURL: string | null | undefined;
   v1BaseURL: string;
   v1BaseWasExplicit: boolean;
@@ -124,12 +127,19 @@ function resolveV2BaseURL(opts: {
   if (opts.v2BaseURL) {
     return stripTrailingSlash(opts.v2BaseURL);
   }
+  // An explicit `environment` argument beats the ambient env-var override.
+  if (opts.explicitEnvironment) {
+    return v2Environments[opts.explicitEnvironment];
+  }
   const envOverride = readEnv('LANDINGAI_ADE_V2_BASE_URL');
   if (envOverride) {
     return stripTrailingSlash(envOverride);
   }
-  if (opts.environment) {
-    return v2Environments[opts.environment];
+  // An env-var-selected environment applies only when no explicit `baseURL`
+  // governs the client — an explicit `baseURL` must govern BOTH hosts, so V2
+  // follows it rather than escaping to the env-var environment's gateway.
+  if (opts.envVarEnvironment && !opts.v1BaseWasExplicit) {
+    return v2Environments[opts.envVarEnvironment];
   }
   if (opts.v1BaseWasExplicit) {
     return stripTrailingSlash(opts.v1BaseURL);
@@ -361,7 +371,8 @@ export class LandingAIADE {
 
     this.baseURL = options.baseURL || environments[options.environment || 'production'];
     this.v2BaseURL = resolveV2BaseURL({
-      environment: opts.environment ?? envVarEnvironment,
+      explicitEnvironment: opts.environment,
+      envVarEnvironment,
       v2BaseURL: opts.v2BaseURL,
       v1BaseURL: this.baseURL,
       v1BaseWasExplicit: Boolean(baseURL),

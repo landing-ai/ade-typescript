@@ -64,6 +64,20 @@ describe('V2 environment / base URL resolution', () => {
     expect(client.v2BaseURL).toBe('http://127.0.0.1:4010');
   });
 
+  test('explicit baseURL governs V2 even when LANDINGAI_ADE_ENVIRONMENT is set (no host split)', () => {
+    process.env['LANDINGAI_ADE_ENVIRONMENT'] = 'staging';
+    const client = new LandingAIADE({ apikey: APIKEY, baseURL: 'http://127.0.0.1:4010' });
+    expect(client.baseURL).toBe('http://127.0.0.1:4010');
+    // Must follow the explicit baseURL, NOT escape to aide.staging.landing.ai.
+    expect(client.v2BaseURL).toBe('http://127.0.0.1:4010');
+  });
+
+  test('explicit environment beats the LANDINGAI_ADE_V2_BASE_URL env var', () => {
+    process.env['LANDINGAI_ADE_V2_BASE_URL'] = 'https://aide.staging.landing.ai';
+    const client = new LandingAIADE({ apikey: APIKEY, environment: 'production' });
+    expect(client.v2BaseURL).toBe('https://aide.landing.ai');
+  });
+
   test('v2 sub-client exists', () => {
     const client = new LandingAIADE({ apikey: APIKEY });
     expect(client.v2).toBeDefined();

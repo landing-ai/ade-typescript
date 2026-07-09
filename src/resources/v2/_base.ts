@@ -67,7 +67,7 @@ export interface WaitOptions {
   /** Fixed poll interval in milliseconds. Omit to use exponential backoff. */
   pollInterval?: number;
 
-  /** Throw `JobFailedError` if the job ends failed/cancelled with an error attached. */
+  /** Throw `JobFailedError` if the job ends in a terminal `failed`/`cancelled` state. */
   raiseOnFailure?: boolean;
 }
 
@@ -95,7 +95,7 @@ function nextDelay(current: number, pollInterval: number | undefined): number {
 /**
  * Poll `getJob` with backoff until the job reaches a terminal state. Throws
  * `JobWaitTimeoutError` on timeout and (when `raiseOnFailure`) `JobFailedError`
- * if the job ended failed/cancelled with an error attached.
+ * if the job ended in a terminal `failed`/`cancelled` state.
  */
 export async function pollUntilTerminal(
   getJob: () => Promise<Job>,
@@ -110,9 +110,14 @@ export async function pollUntilTerminal(
   for (;;) {
     const job = await getJob();
     if (job.is_terminal) {
-      if (raiseOnFailure && job.error !== null) {
+      // Key off terminal status, not the presence of an error payload: a failed
+      // job may arrive with no error attached (must still throw), and a completed
+      // job may carry a residual/empty error object (must not throw).
+      if (raiseOnFailure && (job.status === 'failed' || job.status === 'cancelled')) {
         throw new JobFailedError(
-          `Job ${job.job_id} ended ${job.status}: ${job.error.message || job.error.code || 'unknown error'}`,
+          `Job ${job.job_id} ended ${job.status}: ${
+            job.error?.message || job.error?.code || 'unknown error'
+          }`,
         );
       }
       return job;
