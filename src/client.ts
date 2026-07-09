@@ -40,6 +40,26 @@ import {
   ParseJobListResponse,
   ParseJobs,
 } from './resources/parse-jobs';
+import { V2 } from './resources/v2';
+import type {
+  FileUploadParams,
+  Job,
+  JobError,
+  JobList,
+  JobStatus,
+  V2ExtractJobCreateParams,
+  V2ExtractMetadata,
+  V2ExtractParams,
+  V2ExtractResult,
+  V2FileUploadResponse,
+  V2JobListParams,
+  V2ParseBilling,
+  V2ParseJobCreateParams,
+  V2ParseMetadata,
+  V2ParseParams,
+  V2ParseResponse,
+  WaitOptions,
+} from './resources/v2';
 import { type Fetch } from './internal/builtin-types';
 import { HeadersLike, NullableHeaders, buildHeaders } from './internal/headers';
 import { FinalRequestOptions, RequestOptions } from './internal/request-options';
@@ -57,8 +77,56 @@ import { isEmptyObj } from './internal/utils/values';
 const environments = {
   production: 'https://api.va.landing.ai',
   eu: 'https://api.va.eu-west-1.landing.ai',
+  staging: 'https://api.va.staging.landing.ai',
+  dev: 'https://api.va.dev.landing.ai',
 };
 type Environment = keyof typeof environments;
+
+/**
+ * The V2 (ADE gateway) surface lives on its own host, paired 1:1 with the V1
+ * host by environment and selected via the same `environment` option / env var.
+ */
+const v2Environments = {
+  production: 'https://api.ade.landing.ai',
+  eu: 'https://api.ade.eu-west-1.landing.ai',
+  staging: 'https://api.ade.staging.landing.ai',
+  dev: 'https://api.ade.dev.landing.ai',
+};
+
+function stripTrailingSlash(url: string): string {
+  return url.replace(/\/+$/, '');
+}
+
+function knownEnvironment(value: string | undefined): Environment | undefined {
+  return value && value in environments ? (value as Environment) : undefined;
+}
+
+/**
+ * Resolve the V2 (ADE) base URL, no trailing slash. Precedence:
+ * explicit `v2BaseURL` > `LANDINGAI_ADE_V2_BASE_URL` env > environment map >
+ * (if only a V1 `baseURL` was set) follow it > production default.
+ */
+function resolveV2BaseURL(opts: {
+  environment: Environment | undefined;
+  v2BaseURL: string | null | undefined;
+  v1BaseURL: string;
+  v1BaseWasExplicit: boolean;
+}): string {
+  if (opts.v2BaseURL) {
+    return stripTrailingSlash(opts.v2BaseURL);
+  }
+  const envOverride = readEnv('LANDINGAI_ADE_V2_BASE_URL');
+  if (envOverride) {
+    return stripTrailingSlash(envOverride);
+  }
+  if (opts.environment) {
+    return v2Environments[opts.environment];
+  }
+  if (opts.v1BaseWasExplicit) {
+    return stripTrailingSlash(opts.v1BaseURL);
+  }
+  return v2Environments.production;
+}
 
 /**
  * Extract base filename (without extension) from file or URL input.
@@ -131,9 +199,13 @@ export interface ClientOptions {
   /**
    * Specifies the environment to use for the API.
    *
-   * Each environment maps to a different base URL:
-   * - `production` corresponds to `https://api.va.landing.ai`
-   * - `eu` corresponds to `https://api.va.eu-west-1.landing.ai`
+   * Selects both the V1 host and the paired V2 (ADE gateway) host:
+   * - `production`: `https://api.va.landing.ai` / `https://api.ade.landing.ai`
+   * - `eu`: `https://api.va.eu-west-1.landing.ai` / `https://api.ade.eu-west-1.landing.ai`
+   * - `staging`: `https://api.va.staging.landing.ai` / `https://api.ade.staging.landing.ai`
+   * - `dev`: `https://api.va.dev.landing.ai` / `https://api.ade.dev.landing.ai`
+   *
+   * Defaults to process.env['LANDINGAI_ADE_ENVIRONMENT'], then `production`.
    */
   environment?: Environment | undefined;
 
@@ -143,6 +215,15 @@ export interface ClientOptions {
    * Defaults to process.env['LANDINGAI_ADE_BASE_URL'].
    */
   baseURL?: string | null | undefined;
+
+  /**
+   * Override the base URL for the V2 (ADE gateway) surface (`client.v2.*`).
+   *
+   * Defaults to process.env['LANDINGAI_ADE_V2_BASE_URL'], then the host paired
+   * with `environment`. If only `baseURL` is set (e.g. a mock server), V2 routes
+   * there too.
+   */
+  v2BaseURL?: string | null | undefined;
 
   /**
    * The maximum amount of time (in milliseconds) that the client should wait for a response
@@ -213,6 +294,8 @@ export class LandingAIADE {
   apikey: string;
 
   baseURL: string;
+  /** Resolved base URL for the V2 (ADE gateway) surface (`client.v2.*`). */
+  v2BaseURL: string;
   maxRetries: number;
   timeout: number;
   logger: Logger;
@@ -248,11 +331,17 @@ export class LandingAIADE {
       );
     }
 
+    // `environment` selects both the V1 and V2 hosts. Explicit option wins;
+    // otherwise the LANDINGAI_ADE_ENVIRONMENT env var (unless an explicit
+    // baseURL is set), then `production`.
+    const envVarEnvironment = knownEnvironment(readEnv('LANDINGAI_ADE_ENVIRONMENT'));
+    const environment = opts.environment ?? (baseURL ? undefined : envVarEnvironment) ?? 'production';
+
     const options: ClientOptions = {
       apikey,
       ...opts,
       baseURL,
-      environment: opts.environment ?? 'production',
+      environment,
     };
 
     if (baseURL && opts.environment) {
@@ -262,6 +351,12 @@ export class LandingAIADE {
     }
 
     this.baseURL = options.baseURL || environments[options.environment || 'production'];
+    this.v2BaseURL = resolveV2BaseURL({
+      environment: opts.environment ?? envVarEnvironment,
+      v2BaseURL: opts.v2BaseURL,
+      v1BaseURL: this.baseURL,
+      v1BaseWasExplicit: Boolean(baseURL),
+    });
     this.timeout = options.timeout ?? LandingAIADE.DEFAULT_TIMEOUT /* 8 minutes */;
     this.logger = options.logger ?? console;
     const defaultLogLevel = 'warn';
@@ -967,13 +1062,18 @@ export class LandingAIADE {
   static InternalServerError = Errors.InternalServerError;
   static PermissionDeniedError = Errors.PermissionDeniedError;
   static UnprocessableEntityError = Errors.UnprocessableEntityError;
+  static V2SyncTimeoutError = Errors.V2SyncTimeoutError;
+  static JobWaitTimeoutError = Errors.JobWaitTimeoutError;
+  static JobFailedError = Errors.JobFailedError;
 
   static toFile = Uploads.toFile;
 
   parseJobs: API.ParseJobs = new API.ParseJobs(this);
+  v2: V2 = new V2(this);
 }
 
 LandingAIADE.ParseJobs = ParseJobs;
+LandingAIADE.V2 = V2;
 
 export declare namespace LandingAIADE {
   export type RequestOptions = Opts.RequestOptions;
@@ -1000,6 +1100,27 @@ export declare namespace LandingAIADE {
     type ParseJobGetResponse as ParseJobGetResponse,
     type ParseJobCreateParams as ParseJobCreateParams,
     type ParseJobListParams as ParseJobListParams,
+  };
+
+  export {
+    V2 as V2,
+    type Job as Job,
+    type JobError as JobError,
+    type JobList as JobList,
+    type JobStatus as JobStatus,
+    type V2ParseResponse as V2ParseResponse,
+    type V2ParseMetadata as V2ParseMetadata,
+    type V2ParseBilling as V2ParseBilling,
+    type V2ExtractResult as V2ExtractResult,
+    type V2ExtractMetadata as V2ExtractMetadata,
+    type V2FileUploadResponse as V2FileUploadResponse,
+    type V2ParseParams as V2ParseParams,
+    type V2ParseJobCreateParams as V2ParseJobCreateParams,
+    type V2ExtractParams as V2ExtractParams,
+    type V2ExtractJobCreateParams as V2ExtractJobCreateParams,
+    type V2JobListParams as V2JobListParams,
+    type FileUploadParams as FileUploadParams,
+    type WaitOptions as WaitOptions,
   };
 
   export type ParseGroundingBox = API.ParseGroundingBox;

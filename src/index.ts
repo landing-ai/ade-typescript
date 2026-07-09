@@ -17,4 +17,8 @@ export {
   InternalServerError,
   PermissionDeniedError,
   UnprocessableEntityError,
+  V2SyncTimeoutError,
+  JobWaitTimeoutError,
+  JobFailedError,
 } from './core/error';
+export { coerceSchema, type ExtractSchema } from './lib/schema';

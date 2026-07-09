@@ -126,3 +126,17 @@ export class UnprocessableEntityError extends APIError<422, Headers> {}
 export class RateLimitError extends APIError<429, Headers> {}
 
 export class InternalServerError extends APIError<number, Headers> {}
+
+/**
+ * A synchronous `client.v2.parse` / `client.v2.extract` call exceeded the server
+ * wait window (HTTP 504). The server cancels the work on timeout; use the async
+ * jobs route (`client.v2.parseJobs.create(...)` / `client.v2.extractJobs.create(...)`,
+ * then `.wait(...)`) for long-running documents.
+ */
+export class V2SyncTimeoutError extends LandingAIADEError {}
+
+/** `wait()` gave up before the job reached a terminal state. */
+export class JobWaitTimeoutError extends LandingAIADEError {}
+
+/** A job reached a terminal `failed`/`cancelled` state (when `raiseOnFailure` is set). */
+export class JobFailedError extends LandingAIADEError {}

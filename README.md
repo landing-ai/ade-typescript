@@ -170,6 +170,60 @@ for (const split of splitResponse.splits) {
 }
 ```
 
+### V2 API (`client.v2`)
+
+`client.v2` is a new, **additive** sub-client for LandingAI's next-generation ADE gateway. It does not change anything about the V1 usage above — `client.parse`, `client.extract`, `client.parseJobs`, etc. keep working exactly as documented. Use `client.v2.*` for the newer parse/extract surface.
+
+The V2 gateway lives on its own host (`api.ade.[env].landing.ai`), separate from the V1 host (`api.va.[env].landing.ai`). Select the environment the same way as V1 — via the `environment` option or the `LANDINGAI_ADE_ENVIRONMENT` env var:
+
+<!-- prettier-ignore -->
+```ts
+import fs from 'fs';
+import LandingAIADE from 'landingai-ade';
+
+const client = new LandingAIADE({
+  apikey: process.env['VISION_AGENT_API_KEY'],
+  environment: 'staging', // 'production' | 'eu' | 'staging' | 'dev'
+});
+
+// Synchronous parse / extract
+const parsed = await client.v2.parse({ document: fs.createReadStream('doc.pdf') });
+const extracted = await client.v2.extract({
+  schema: { type: 'object', properties: { title: { type: 'string' } } },
+  markdown: parsed.markdown ?? '',
+});
+```
+
+`schema` accepts a JSON-Schema object or a JSON-encoded string. A synchronous 504 surfaces as `V2SyncTimeoutError` — use the async jobs route below for long-running documents.
+
+#### Async jobs
+
+`parseJobs` / `extractJobs` create jobs and return one unified `Job` shape regardless of the divergent upstream envelopes (the full envelope stays on `Job.raw`). `wait()` polls with backoff until the job is terminal:
+
+<!-- prettier-ignore -->
+```ts
+const job = await client.v2.parseJobs.create({
+  document: fs.createReadStream('large.pdf'),
+  priority: 'priority',
+});
+const done = await client.v2.parseJobs.wait(job.jobId, { timeout: 600000, raiseOnFailure: true });
+console.log(done.status, done.result);
+
+// client.v2.extractJobs.{create,get,list,wait} mirror the same shape for extract jobs.
+```
+
+#### File staging
+
+`client.v2.files.upload` stages bytes on the ADE data plane and returns a `file_ref` you can pass as `markdown_ref` to extract:
+
+<!-- prettier-ignore -->
+```ts
+const fileRef = await client.v2.files.upload({ file: fs.createReadStream('doc.md') });
+const result = await client.v2.extract({ schema: { type: 'object' }, markdown_ref: fileRef });
+```
+
+`client.v2.parse` and `client.v2.extract` also accept `saveTo`, with the same auto-naming behavior as the V1 methods above.
+
 ### Request & Response types
 
 This library includes TypeScript definitions for all request params and response fields. You may import and use them like so:

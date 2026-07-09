@@ -21,3 +21,23 @@ export {
   type SectionParams,
   type SplitParams,
 } from './top-level';
+export {
+  V2,
+  type FileUploadParams,
+  type Job,
+  type JobError,
+  type JobList,
+  type JobStatus,
+  type WaitOptions,
+  type V2ExtractJobCreateParams,
+  type V2ExtractMetadata,
+  type V2ExtractParams,
+  type V2ExtractResult,
+  type V2FileUploadResponse,
+  type V2JobListParams,
+  type V2ParseBilling,
+  type V2ParseJobCreateParams,
+  type V2ParseMetadata,
+  type V2ParseParams,
+  type V2ParseResponse,
+} from './v2';
