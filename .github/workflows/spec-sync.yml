@@ -1,7 +1,7 @@
 name: Spec Sync
 on:
   schedule:
-    - cron: '0 * * * *'   # hourly; cron covers correctness, dispatch cuts latency
+    - cron: '0 * * * *' # hourly; cron covers correctness, dispatch cuts latency
   workflow_dispatch: {}
 
 # Serialize runs so a cron tick and a manual dispatch can't race on the sync branch.
@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: read            # all writes go through SPEC_SYNC_TOKEN, never GITHUB_TOKEN
+  contents: read # all writes go through SPEC_SYNC_TOKEN, never GITHUB_TOKEN
 
 jobs:
   # V1 loop. Tracks the staging V1 ADE spec (staging drives sync; production gates release). On
@@ -25,10 +25,10 @@ jobs:
     # and would just produce noisy failing runs.
     if: github.repository == 'landing-ai/ade-typescript'
     runs-on: ubuntu-latest
-    timeout-minutes: 60   # headroom for the AI wiring step (up to --max-turns 250) plus install/build
+    timeout-minutes: 60 # headroom for the AI wiring step (up to --max-turns 250) plus install/build
     env:
-      V1_SPEC_URL: https://api.va.staging.landing.ai/v1/ade/openapi.json  # staging drives the loop
-      SYNC_BRANCH: spec-sync/v1   # fixed branch: reruns update one PR in place, never a pile of them
+      V1_SPEC_URL: https://api.va.staging.landing.ai/v1/ade/openapi.json # staging drives the loop
+      SYNC_BRANCH: spec-sync/v1 # fixed branch: reruns update one PR in place, never a pile of them
     steps:
       - uses: actions/checkout@v6
         with:
@@ -36,7 +36,7 @@ jobs:
           # repo. It must NOT be the default GITHUB_TOKEN: pushes/PRs authored by GITHUB_TOKEN do
           # not trigger the gate workflows (anti-recursion), so the gates would never run on the PR.
           token: ${{ secrets.SPEC_SYNC_TOKEN }}
-          fetch-depth: 0     # tags needed for the surface-lock baseline
+          fetch-depth: 0 # tags needed for the surface-lock baseline
 
       - name: Set up Node
         uses: actions/setup-node@v6

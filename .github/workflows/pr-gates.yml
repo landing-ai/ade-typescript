@@ -41,7 +41,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          fetch-depth: 0     # tags for the release-tag baseline
+          fetch-depth: 0 # tags for the release-tag baseline
       - name: Set up Node
         uses: actions/setup-node@v6
         with:
