@@ -145,6 +145,11 @@ never talks to `aide`. The `/v2/workflow*` routes **are** shipped (`client.v2.wo
 still opens a mechanical spec-sync PR as a signal), but the AI-wiring step **excludes** them — a
 maintainer reconciles workflow spec drift by hand rather than having it auto-drafted.
 
+**Protected environment:** the `contract-tests` gate runs AI-drafted test code with
+`LANDINGAI_ADE_STAGING_APIKEY` in env. Configure a **`spec-sync-staging`** Environment (repo Settings
+→ Environments) with a **required reviewer** so a maintainer approves before the staging key is
+exposed to spec-sync-generated code; the job references it via `environment:` and is inert until set.
+
 `scripts/spec-sync/release-gate.sh` (staging-in/production-out release check) is committed but not yet
 wired into `release.yml` — deferred.
 
