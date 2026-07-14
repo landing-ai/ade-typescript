@@ -237,7 +237,7 @@ import LandingAIADE from 'landingai-ade';
 const client = new LandingAIADE({ environment: 'eu' }); // 'production' (default) or 'eu'
 ```
 
-API keys are per-environment: an EU key works only with `environment: 'eu'`. To point the client at a mock server or proxy, pass `baseURL` (and `v2BaseURL` if v2 traffic needs a separate target) or set the `LANDINGAI_ADE_BASE_URL` environment variable.
+API keys are per-environment: an EU key works only with `environment: 'eu'`.
 
 ## v1 API
 
