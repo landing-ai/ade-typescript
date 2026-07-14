@@ -66,5 +66,9 @@ fi
 npm install -g npm@11.6.2
 
 # Publish with the appropriate tag
+# yarn run injects npm_config_registry=https://registry.yarnpkg.com into child
+# processes; npm auth and OIDC Trusted Publishing are scoped to
+# registry.npmjs.org, so publishing dies with ENEEDAUTH unless we pin it back.
+export npm_config_registry='https://registry.npmjs.org'
 # --provenance triggers OIDC authentication with npm Trusted Publishing
 npm publish --tag "$TAG" --provenance --access public
