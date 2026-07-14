@@ -140,8 +140,10 @@ gates would never run on the sync PR.
 The pipeline also tracks the **V2** spec (`client.v2`) via a second `spec-sync-v2` job mirroring the
 V1 one. **Two-host rule (do not conflate):** the V2 **spec** is fetched from `aide.[env]/openapi.json`
 (the AIDE gateway), but the SDK and its contract tests call the V2 **API** at `api.ade.[env]`; the SDK
-never talks to `aide`. The `/v2/workflow*` routes are intentionally **excluded** from V2 AI-wiring —
-they are present in the tracked spec (so they aren't flagged as drift) but not shipped.
+never talks to `aide`. The `/v2/workflow*` routes **are** shipped (`client.v2.workflow` /
+`workflowJobs`) but **hand-maintained**: they stay in the tracked spec (so a workflow spec change
+still opens a mechanical spec-sync PR as a signal), but the AI-wiring step **excludes** them — a
+maintainer reconciles workflow spec drift by hand rather than having it auto-drafted.
 
 `scripts/spec-sync/release-gate.sh` (staging-in/production-out release check) is committed but not yet
 wired into `release.yml` — deferred.
