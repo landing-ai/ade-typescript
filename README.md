@@ -10,21 +10,17 @@
 
 [![NPM version](<https://img.shields.io/npm/v/landingai-ade.svg?label=npm%20(stable)>)](https://npmjs.org/package/landingai-ade) ![npm bundle size](https://img.shields.io/bundlephobia/minzip/landingai-ade)
 
-**[Playground](https://va.landing.ai) · [Discord](https://discord.com/invite/RVcW3j9RgR) · [Blog](https://landing.ai/blog) · [Docs](https://docs.landing.ai)**
+**[Docs](https://docs.landing.ai) · [Playground](https://ade.landing.ai) · [LandingAI](https://landing.ai)**
 
 </div>
 
-This library provides convenient access to the LandingAI ADE REST API from server-side TypeScript or JavaScript.
+The official TypeScript library for the [LandingAI Agentic Document Extraction (ADE) API](https://ade.landing.ai). Parse PDFs and images into structured, grounded Markdown, then extract typed fields with a JSON Schema or a Zod schema.
 
-The REST API documentation can be found on [docs.landing.ai](https://docs.landing.ai/). The full API of this library can be found in [api.md](api.md).
-
-## MCP Server
-
-Use the LandingAI ADE MCP Server to enable AI assistants to interact with this API, allowing them to explore endpoints, make test requests, and use documentation to help integrate this SDK into your application.
-
-[![Add to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en-US/install-mcp?name=landingai-ade-mcp&config=eyJjb21tYW5kIjoibnB4IiwiYXJncyI6WyIteSIsImxhbmRpbmdhaS1hZGUtbWNwIl0sImVudiI6eyJWSVNJT05fQUdFTlRfQVBJX0tFWSI6Ik15IEFwaWtleSJ9fQ)
-
-> Note: You may need to set environment variables in your MCP client.
+- Fully typed request params and response types
+- Zero runtime dependencies, with support for Node.js, Deno, Bun, browsers, and edge runtimes
+- Async jobs with a built-in `wait()` helper for large documents
+- Automatic retries with exponential backoff
+- Optional `saveTo` parameter to write responses to disk
 
 ## Installation
 
@@ -32,362 +28,282 @@ Use the LandingAI ADE MCP Server to enable AI assistants to interact with this A
 npm install landingai-ade
 ```
 
-## Usage
+## Set Your API Key
 
-The full API of this library can be found in [api.md](api.md).
+[Generate an API key](https://ade.landing.ai/settings/api-key), then export it as an environment variable. The client reads it automatically.
 
-### Parse
-
-```js
-import LandingAIADE from 'landingai-ade';
-import fs from 'fs';
-
-const client = new LandingAIADE({
-  apikey: process.env['VISION_AGENT_API_KEY'], // This is the default and can be omitted
-  environment: 'eu', // defaults to 'production'
-});
-
-const response = await client.parse({
-  document: fs.createReadStream('path/to/file'),
-  model: 'dpt-2-latest',
-  saveTo: './output_folder',
-});
-// optional: saves as {input_file}_parse_output.json in the specified folder
-
-console.log(response.chunks);
+```sh
+export VISION_AGENT_API_KEY=<your-api-key>
 ```
 
-### Parse Jobs
+You can also pass the key directly with `new LandingAIADE({ apikey: ... })`. To keep keys out of source control, use a tool like [dotenv](https://www.npmjs.com/package/dotenv).
 
-For processing large documents asynchronously:
+## Quickstart
 
-```js
-import LandingAIADE from 'landingai-ade';
+Parse a document, then extract structured data from it:
+
+```ts
 import fs from 'fs';
+import { z } from 'zod';
+import LandingAIADE from 'landingai-ade';
 
-const client = new LandingAIADE({
-  apikey: process.env['VISION_AGENT_API_KEY'],
+const Invoice = z.object({
+  invoice_number: z.string().describe('The invoice number'),
+  total: z.string().describe('Invoice grand total'),
 });
 
-// Create an async parse job
-const job = await client.parseJobs.create({
-  document: fs.createReadStream('path/to/large_file.pdf'),
-});
-console.log(`Job created with ID: ${job.job_id}`);
+const client = new LandingAIADE(); // reads VISION_AGENT_API_KEY
 
-// Get job status
-const jobStatus = await client.parseJobs.get(job.job_id);
-console.log(`Status: ${jobStatus.status}`);
+// 1. Parse: convert the document to structured Markdown
+const parsed = await client.v2.parse({ document: fs.createReadStream('invoice.pdf') });
+console.log(parsed.markdown);
 
-// List all jobs (with optional filtering)
-const response = await client.parseJobs.list({
-  status: 'completed',
-  page: 0,
-  pageSize: 10,
+// 2. Extract: pull typed fields out of the Markdown
+const result = await client.v2.extract({
+  schema: z.toJSONSchema(Invoice),
+  markdown: parsed.markdown!,
 });
-for (const job of response.jobs) {
-  console.log(`Job ${job.job_id}: ${job.status}`);
-}
+console.log(result.extraction);
 ```
 
-### Extract
+Zod is optional: `schema` also accepts a plain JSON Schema object or a JSON string. See [Extract](#extract).
 
-Extract structured data from markdown using a JSON schema:
+Use `client.v2` for new projects. It is the current API, powered by the DPT-3 model family. The earlier v1 methods (`client.parse`, `client.extract`, `client.split`, and others) remain fully supported; see [v1 API](#v1-api).
 
-```js
-import LandingAIADE from 'landingai-ade';
+The full method reference for both APIs is in [api.md](api.md); usage guides are at [docs.landing.ai](https://docs.landing.ai).
+
+## Parse
+
+Use `client.v2.parse` to convert a document into Markdown plus a structure tree and grounding (pixel-coordinate bounding boxes for every element). Provide exactly one of `document` (a local file) or `document_url`.
+
+```ts
 import fs from 'fs';
-
-// Define your JSON schema
-const schema = {
-  type: 'object',
-  properties: {
-    name: {
-      type: 'string',
-      description: "Person's name",
-    },
-    age: {
-      type: 'number',
-      description: "Person's age",
-    },
-  },
-  required: ['name', 'age'],
-};
-
-const client = new LandingAIADE({
-  apikey: process.env['VISION_AGENT_API_KEY'],
-});
-
-const response = await client.extract({
-  schema: JSON.stringify(schema),
-  markdown: fs.createReadStream('path/to/file.md'),
-});
-```
-
-For advanced type-safe schemas with full TypeScript inference, see [Using Zod for Type-Safe Schemas](#using-zod-for-type-safe-schemas).
-
-### Split
-
-Split parsed documents into separate sections based on classification rules and identifiers.
-
-```js
 import LandingAIADE from 'landingai-ade';
-import fs from 'fs';
 
 const client = new LandingAIADE();
 
-// Parse the document
-const parseResponse = await client.parse({
-  document: fs.createReadStream('/path/to/document.pdf'),
+// Parse a local file
+const parsed = await client.v2.parse({
+  document: fs.createReadStream('path/to/file.pdf'),
+  model: 'dpt-3-pro-latest', // optional; defaults to the latest DPT-3 Pro model
+  saveTo: './output', // optional; saves as {input_file}_parse_output.json
+});
+
+console.log(parsed.markdown); // full document as Markdown
+console.log(parsed.metadata?.page_count); // pages processed
+
+// Or parse a file at a URL
+const fromUrl = await client.v2.parse({ document_url: 'https://example.com/file.pdf' });
+```
+
+The response is a `V2ParseResponse`:
+
+| Field | Description |
+| --- | --- |
+| `markdown` | The full document as one Markdown string, in reading order. |
+| `structure` | A typed tree (`document` → pages → elements) with element types and character spans into `markdown`. |
+| `grounding` | A tree mirroring `structure` that adds pixel-coordinate bounding boxes for each element. |
+| `metadata` | Processing details: `page_count`, `failed_pages`, `duration_ms`, and `billing` (credits used). |
+
+If some pages cannot be parsed, the request still succeeds (HTTP 206) and `metadata.failed_pages` lists the pages that failed. If a synchronous parse times out, the client throws `V2SyncTimeoutError`; use [jobs](#process-large-documents-asynchronously-jobs) instead.
+
+The `document` parameter accepts an `fs.ReadStream`, a web `File`, a `fetch` `Response`, or the `toFile` helper; see [File Uploads](#file-uploads).
+
+## Extract
+
+Use `client.v2.extract` to pull structured fields out of Markdown (typically from a parse response) using a schema. The `schema` parameter accepts a JSON Schema object or a JSON string. Provide exactly one Markdown source: `markdown` or `markdown_url`.
+
+```ts
+import fs from 'fs';
+import LandingAIADE from 'landingai-ade';
+
+const client = new LandingAIADE();
+const parsed = await client.v2.parse({ document: fs.createReadStream('path/to/file.pdf') });
+
+const result = await client.v2.extract({
+  schema: {
+    type: 'object',
+    properties: {
+      name: { type: 'string', description: "Person's full name" },
+      age: { type: 'number', description: "Person's age" },
+    },
+  },
+  markdown: parsed.markdown!, // or markdown_url: 'https://example.com/doc.md'
+  saveTo: './output', // optional
+});
+
+console.log(result.extraction); // { name: '...', age: ... }
+console.log(result.extraction_metadata); // per-field source spans in the Markdown
+```
+
+The response is a `V2ExtractResult`:
+
+| Field | Description |
+| --- | --- |
+| `extraction` | The extracted values, matching your schema. |
+| `extraction_metadata` | Mirrors `extraction`; each field carries the character spans in the Markdown that the value came from. |
+| `markdown` | The Markdown the extraction ran against, echoed back. |
+| `metadata` | Processing details, including credits used. |
+
+By default, unsupported schema fields are skipped and extraction continues. Pass `strict: true` to reject such schemas with an error (HTTP 422) instead.
+
+### Type-Safe Schemas with Zod
+
+Define the schema with [Zod](https://zod.dev) (v4 or later) to get full TypeScript inference for the extracted data:
+
+```ts
+import fs from 'fs';
+import { z } from 'zod';
+import LandingAIADE from 'landingai-ade';
+
+const PersonSchema = z.object({
+  name: z.string().describe("Person's full name"),
+  age: z.number().describe("Person's age"),
+});
+
+type Person = z.infer<typeof PersonSchema>;
+
+const client = new LandingAIADE();
+const parsed = await client.v2.parse({ document: fs.createReadStream('path/to/file.pdf') });
+
+const result = await client.v2.extract({
+  schema: z.toJSONSchema(PersonSchema),
+  markdown: parsed.markdown!,
+});
+
+const person = result.extraction as Person;
+console.log(person.name); // TypeScript knows this is a string
+console.log(person.age); // TypeScript knows this is a number
+```
+
+## Process Large Documents Asynchronously (Jobs)
+
+For documents that take longer than a synchronous request allows, create a job and wait for it. `client.v2.parseJobs` and `client.v2.extractJobs` share the same shape: `create`, `get`, `list`, and `wait`.
+
+```ts
+import fs from 'fs';
+import LandingAIADE, { JobFailedError, JobWaitTimeoutError } from 'landingai-ade';
+
+const client = new LandingAIADE();
+
+const job = await client.v2.parseJobs.create({
+  document: fs.createReadStream('path/to/large_file.pdf'),
+  service_tier: 'standard', // 'standard' (default, lower cost) or 'priority' (faster)
+});
+console.log(job.job_id, job.status);
+
+// Block until the job finishes (polls with backoff)
+try {
+  const done = await client.v2.parseJobs.wait(job.job_id, {
+    timeout: 600_000, // milliseconds; default is 10 minutes
+    raiseOnFailure: true,
+  });
+  const result = done.result as LandingAIADE.V2ParseResponse | null;
+  console.log(result?.markdown?.slice(0, 200)); // a cancelled job can be terminal with no result
+} catch (err) {
+  if (err instanceof JobWaitTimeoutError) {
+    console.log('Job did not finish in time; it is still running server-side.');
+  } else if (err instanceof JobFailedError) {
+    console.log(`Job failed: ${err.message}`);
+  } else {
+    throw err;
+  }
+}
+```
+
+The `create`, `get`, and `wait` methods return a normalized `Job` with `job_id`, `status` (`pending`, `processing`, `completed`, `failed`, or `cancelled`), `progress`, `result`, `error`, `is_terminal`, and `raw` (the unmodified API envelope, for any field not surfaced on the typed shape). The `list` method returns a `JobList` with a `jobs` array and pagination metadata: `has_more` on both endpoints, plus `page` and `page_size` on extract job lists only.
+
+```ts
+// Poll manually instead of blocking
+const current = await client.v2.parseJobs.get(job.job_id);
+
+// List jobs, with optional filtering
+const jobs = await client.v2.parseJobs.list({ status: 'completed', page: 0, page_size: 10 });
+for (const j of jobs.jobs) {
+  console.log(j.job_id, j.status);
+}
+console.log(jobs.has_more);
+```
+
+Extract jobs work the same way. The `create` method takes the same schema and Markdown arguments as `client.v2.extract`, plus `service_tier`; it does not accept `saveTo`.
+
+## Environments
+
+The `environment` option selects the region. Set it in code or with the `LANDINGAI_ADE_ENVIRONMENT` environment variable.
+
+```ts
+import LandingAIADE from 'landingai-ade';
+
+const client = new LandingAIADE({ environment: 'eu' }); // 'production' (default) or 'eu'
+```
+
+API keys are per-environment: an EU key works only with `environment: 'eu'`. To point the client at a mock server or proxy, pass `baseURL` (and `v2BaseURL` if v2 traffic needs a separate target) or set the `LANDINGAI_ADE_BASE_URL` environment variable.
+
+## v1 API
+
+The v1 methods sit directly on the client.
+
+| Method | What it does |
+| --- | --- |
+| `client.parse(...)` | Parse a document with the DPT-2 model family. Also supports spreadsheets and other Office formats. |
+| `client.extract(...)` | Extract fields from Markdown. The `schema` parameter takes a JSON string. |
+| `client.split(...)` | Split a multi-document file into sub-documents by classification. |
+| `client.classify(...)` | Classify each page of a document. |
+| `client.section(...)` | Generate a hierarchical table of contents. |
+| `client.extractBuildSchema(...)` | Generate an extraction schema from sample documents. |
+| `client.parseJobs` | Async parse jobs (`create`, `get`, `list`). |
+
+```ts
+import fs from 'fs';
+import LandingAIADE from 'landingai-ade';
+
+const client = new LandingAIADE();
+
+// Split a combined file into sub-documents
+const parsed = await client.parse({
+  document: fs.createReadStream('statements.pdf'),
   model: 'dpt-2-latest',
 });
 
-// Define Split Rules
 const splitClass = [
-  {
-    name: 'Bank Statement',
-    description:
-      'Document from a bank that summarizes all account activity over a period of time.',
-  },
-  {
-    name: 'Pay Stub',
-    description:
-      "Document that details an employee's earnings, deductions, and net pay for a specific pay period.",
-    identifier: 'Pay Stub Date',
-  },
+  { name: 'Bank Statement', description: 'Summarizes account activity over a period.' },
+  { name: 'Pay Stub', description: "Details an employee's earnings for a pay period." },
 ];
 
-// Split using the Markdown string from parse response
-const splitResponse = await client.split({
+const split = await client.split({
   split_class: JSON.stringify(splitClass) as any,
-  markdown: parseResponse.markdown, // Pass Markdown string directly
+  markdown: parsed.markdown,
   model: 'split-latest',
 });
 
-// Access the splits
-for (const split of splitResponse.splits) {
-  console.log(`Classification: ${split.classification}`);
-  console.log(`Identifier: ${split.identifier}`);
-  console.log(`Pages: ${split.pages}`);
+for (const s of split.splits) {
+  console.log(s.classification, s.pages);
 }
 ```
 
-### V2 API (`client.v2`)
+## Handling Errors
 
-`client.v2` is a new, **additive** sub-client for LandingAI's next-generation ADE gateway. It does not change anything about the V1 usage above — `client.parse`, `client.extract`, `client.parseJobs`, etc. keep working exactly as documented. Use `client.v2.*` for the newer parse/extract surface.
-
-The V2 gateway lives on its own host (`api.ade.[env].landing.ai`), separate from the V1 host (`api.va.[env].landing.ai`). Select the environment the same way as V1, via the `environment` argument or the `LANDINGAI_ADE_ENVIRONMENT` env var:
+When the library is unable to connect to the API, or if the API returns a non-success status code (4xx or 5xx), a subclass of `APIError` is thrown. The v2 helper errors are separate: `V2SyncTimeoutError`, `JobWaitTimeoutError`, and `JobFailedError` do not extend `APIError`, so catch them explicitly.
 
 ```ts
-import LandingAIADE from 'landingai-ade';
-
-const client = new LandingAIADE({
-  apikey: process.env['VISION_AGENT_API_KEY'],
-  // one of "production" (default), "eu", "staging", "dev"
-  // can also be set via the LANDINGAI_ADE_ENVIRONMENT env var instead of passing it here
-  environment: 'staging',
-});
-```
-
-#### V2 Parse
-
-Parse a document synchronously. Returns a `V2ParseResponse` (on a partial success the HTTP status is 206 and `metadata.failed_pages` lists the unparsed pages). A synchronous 504 surfaces as `V2SyncTimeoutError` — use `parseJobs` (below) for long-running documents.
-
-```ts
-import fs from 'fs';
-
-const response = await client.v2.parse({
-  document: fs.createReadStream('path/to/file.pdf'),
-});
-console.log(response.markdown);
-```
-
-#### V2 Extract
-
-Extract structured data from Markdown using a JSON schema. Provide exactly one of `markdown`, `markdown_ref` (from `client.v2.files.upload`), or `markdown_url`.
-
-```ts
-const response = await client.v2.extract({
-  schema: { type: 'object', properties: { title: { type: 'string' } } },
-  markdown: 'some markdown',
-});
-```
-
-`schema` accepts a JSON-Schema object or a JSON-encoded string. For type-safe schemas, define them with Zod and pass `z.toJSONSchema(MySchema)` (see [Using Zod for Type-Safe Schemas](#using-zod-for-type-safe-schemas)).
-
-#### Async jobs
-
-`parseJobs` / `extractJobs` create jobs and return one unified `Job` shape regardless of the divergent upstream envelopes (the full envelope stays on `Job.raw`). `wait()` polls with backoff until the job is terminal:
-
-<!-- prettier-ignore -->
-```ts
-const job = await client.v2.parseJobs.create({
-  document: fs.createReadStream('large.pdf'),
-  service_tier: 'priority',
-});
-const done = await client.v2.parseJobs.wait(job.job_id, { timeout: 600000, raiseOnFailure: true });
-console.log(done.status, done.result);
-
-// client.v2.extractJobs.{create,get,list,wait} mirror the same shape for extract jobs.
-```
-
-#### File staging
-
-`client.v2.files.upload` stages bytes on the ADE data plane and returns a `file_ref` you can pass as `markdown_ref` to extract:
-
-<!-- prettier-ignore -->
-```ts
-const fileRef = await client.v2.files.upload({ file: fs.createReadStream('doc.md') });
-const result = await client.v2.extract({ schema: { type: 'object' }, markdown_ref: fileRef });
-```
-
-`client.v2.parse` and `client.v2.extract` also accept `saveTo`, with the same auto-naming behavior as the V1 methods above.
-
-#### Workflows (`parse-extract`)
-
-`client.v2.workflow` runs a prebuilt pipeline (Phase 1: `parse-extract`) in one call — parse a document, then extract against a schema. Reference documents by `document_url`, or upload with `files.upload` and pass the returned ref as `document_ref`:
-
-<!-- prettier-ignore -->
-```ts
-const result = await client.v2.workflow({
-  inputs: { report: { document_url: 'https://example.com/report.pdf' } },
-  steps: [
-    {
-      name: 'parse-extract',
-      document: '$inputs.report',
-      schema: { type: 'object', properties: { revenue: { type: 'string' } } },
-    },
-  ],
-});
-console.log(result.output['parse-extract']);
-
-// Async: client.v2.workflowJobs.{create,get,list,wait} mirror the jobs shape above.
-```
-
-To send a local file instead of a URL, pass it as `inputs.<name>.document` (the SDK stages it as a multipart part), or upload it first with `files.upload` and pass the returned ref as `document_ref`.
-
-### Request & Response types
-
-This library includes TypeScript definitions for all request params and response fields. You may import and use them like so:
-
-<!-- prettier-ignore -->
-```ts
-import LandingAIADE from 'landingai-ade';
-
-const client = new LandingAIADE({
-  apikey: process.env['VISION_AGENT_API_KEY'], // This is the default and can be omitted
-  environment: 'eu', // defaults to 'production'
-});
-
-const response: LandingAIADE.ParseResponse = await client.parse();
-```
-
-Documentation for each method, request param, and response field are available in docstrings and will appear on hover in most modern editors.
-
-## File uploads
-
-Request parameters that correspond to file uploads can be passed in many different forms:
-
-- `File` (or an object with the same structure)
-- a `fetch` `Response` (or an object with the same structure)
-- an `fs.ReadStream`
-- the return value of our `toFile` helper
-
-```ts
-import fs from 'fs';
-import LandingAIADE, { toFile } from 'landingai-ade';
+import LandingAIADE, { V2SyncTimeoutError } from 'landingai-ade';
 
 const client = new LandingAIADE();
 
-// If you have access to Node `fs` we recommend using `fs.createReadStream()`:
-await client.parse({ document: fs.createReadStream('/path/to/file') });
-
-// Or if you have the web `File` API you can pass a `File` instance:
-await client.parse({ document: new File(['my bytes'], 'file') });
-
-// You can also pass a `fetch` `Response`:
-await client.parse({ document: await fetch('https://somesite/file') });
-
-// Finally, if none of the above are convenient, you can use our `toFile` helper:
-await client.parse({ document: await toFile(Buffer.from('my bytes'), 'file') });
-await client.parse({ document: await toFile(new Uint8Array([0, 1, 2]), 'file') });
-```
-
-## Using Zod for Type-Safe Schemas
-
-You can use [Zod](https://zod.dev) to define type-safe schemas for the `extract` endpoint. This provides full TypeScript type inference and validation for your extracted data.
-
-### Basic Pattern
-
-The key is to convert your Zod schema to JSON Schema format:
-
-```ts
-import LandingAIADE, { toFile } from 'landingai-ade';
-import { z } from 'zod';
-
-// 1. Define your schema using Zod
-const InvoiceSchema = z.object({
-  invoiceNumber: z.string().describe('Invoice number or ID'),
-  invoiceDate: z.string().describe('Date the invoice was issued'),
-  vendor: z.object({
-    name: z.string(),
-    address: z.string().optional(),
-  }),
-  items: z.array(
-    z.object({
-      description: z.string(),
-      quantity: z.number().int().positive(),
-      unitPrice: z.number().positive(),
-      total: z.number().positive(),
-    }),
-  ),
-  totalAmount: z.number().describe('Total amount due'),
-});
-
-// 2. Get TypeScript type from the schema
-type Invoice = z.infer<typeof InvoiceSchema>;
-
-const client = new LandingAIADE({
-  apikey: process.env['VISION_AGENT_API_KEY'],
-});
-
-// 3. Convert Zod schema to JSON Schema string for the API
-const jsonSchemaString = JSON.stringify(z.toJSONSchema(InvoiceSchema));
-
-// 4. Use it with the extract endpoint
-const result = await client.extract({
-  schema: jsonSchemaString,
-  markdown: await toFile(Buffer.from(markdownContent), 'document.md'),
-});
-
-// 5. The extraction is now typed as Invoice
-const invoice: Invoice = result.extraction as Invoice;
-console.log(invoice.invoiceNumber); // TypeScript knows this is a string
-console.log(invoice.totalAmount); // TypeScript knows this is a number
-```
-
-Note: Zod is optional. You can also pass JSON Schema strings directly to the `extract` endpoint if you prefer.
-
-## Handling errors
-
-When the library is unable to connect to the API,
-or if the API returns a non-success status code (i.e., 4xx or 5xx response),
-a subclass of `APIError` will be thrown:
-
-<!-- prettier-ignore -->
-```ts
-const response = await client.parse().catch(async (err) => {
-  if (err instanceof LandingAIADE.APIError) {
+try {
+  await client.v2.parse({ document_url: 'https://example.com/file.pdf' });
+} catch (err) {
+  if (err instanceof V2SyncTimeoutError) {
+    console.log('The synchronous request timed out; use parseJobs for this document.');
+  } else if (err instanceof LandingAIADE.APIError) {
     console.log(err.status); // 400
-    console.log(err.name); // BadRequestError
+    console.log(err.constructor.name); // BadRequestError
     console.log(err.headers); // {server: 'nginx', ...}
   } else {
     throw err;
   }
-});
+}
 ```
-
-Error codes are as follows:
 
 | Status Code | Error Type                 |
 | ----------- | -------------------------- |
@@ -402,131 +318,99 @@ Error codes are as follows:
 
 ### Retries
 
-Certain errors will be automatically retried 2 times by default, with a short exponential backoff.
-Connection errors (for example, due to a network connectivity problem), 408 Request Timeout, 409 Conflict,
-429 Rate Limit, and >=500 Internal errors will all be retried by default.
+Connection errors, 408, 409, 429, and 5xx responses are retried twice by default with a short exponential backoff. Configure with `maxRetries`:
 
-You can use the `maxRetries` option to configure or disable this:
-
-<!-- prettier-ignore -->
-```js
+```ts
 // Configure the default for all requests:
-const client = new LandingAIADE({
-  maxRetries: 0, // default is 2
-});
+const client = new LandingAIADE({ maxRetries: 0 }); // default is 2
 
 // Or, configure per-request:
-await client.parse({
-  maxRetries: 5,
-});
+await client.v2.parse({ document_url: 'https://example.com/file.pdf' }, { maxRetries: 5 });
 ```
+
+The synchronous v2 methods (`parse` and `extract`) cap retries at 1 by default, because the server cancels the work on a timeout and retrying a doomed request wastes time; the per-request `maxRetries` option overrides this.
 
 ### Timeouts
 
-Requests time out after 8 minutes by default. You can configure this with a `timeout` option:
+Requests time out after 8 minutes by default. Configure with `timeout` (in milliseconds):
 
-<!-- prettier-ignore -->
 ```ts
 // Configure the default for all requests:
-const client = new LandingAIADE({
-  timeout: 20 * 1000, // 20 seconds (default is 8 minutes)
-});
+const client = new LandingAIADE({ timeout: 20 * 1000 }); // 20 seconds
 
 // Override per-request:
-await client.parse({
-  timeout: 5 * 1000,
-});
+await client.v2.parse({ document_url: 'https://example.com/file.pdf' }, { timeout: 5 * 1000 });
 ```
 
-On timeout, an `APIConnectionTimeoutError` is thrown.
-
-Note that requests which time out will be [retried twice by default](#retries).
+On a client-side timeout, an `APIConnectionTimeoutError` is thrown, and the request is retried by default. The v2 synchronous endpoints also have a server-side wait window: exceeding it returns HTTP 504 and throws `V2SyncTimeoutError` instead; switch to [jobs](#process-large-documents-asynchronously-jobs) for those documents.
 
 ## Advanced Usage
 
-### Accessing raw Response data (e.g., headers)
+### Accessing Raw Response Data (e.g. Headers)
 
-The "raw" `Response` returned by `fetch()` can be accessed through the `.asResponse()` method on the `APIPromise` type that all methods return.
-This method returns as soon as the headers for a successful response are received and does not consume the response body, so you are free to write custom parsing or streaming logic.
+The v1 methods return an `APIPromise` with two helpers (these cover the v1 methods only, not `client.v2.*`):
 
-You can also use the `.withResponse()` method to get the raw `Response` along with the parsed data.
-Unlike `.asResponse()` this method consumes the body, returning once it is parsed.
+- `.asResponse()` resolves with the raw `fetch` `Response` as soon as the headers arrive, without consuming the body.
+- `.withResponse()` resolves with both the parsed data and the raw `Response`.
 
-<!-- prettier-ignore -->
 ```ts
+import fs from 'fs';
+import LandingAIADE from 'landingai-ade';
+
 const client = new LandingAIADE();
 
-const response = await client.parse().asResponse();
+const response = await client.parse({ document: fs.createReadStream('file.pdf') }).asResponse();
 console.log(response.headers.get('X-My-Header'));
-console.log(response.statusText); // access the underlying Response object
+console.log(response.statusText);
 
-const { data: response, response: raw } = await client.parse().withResponse();
+const { data, response: raw } = await client
+  .parse({ document: fs.createReadStream('file.pdf') })
+  .withResponse();
 console.log(raw.headers.get('X-My-Header'));
-console.log(response.chunks);
+console.log(data.chunks);
+```
+
+### File Uploads
+
+Request parameters that correspond to file uploads (such as `document`, `markdown`, and `file`) can be passed in several forms:
+
+- a `File` (or an object with the same structure)
+- a `fetch` `Response` (or an object with the same structure)
+- an `fs.ReadStream`
+- the return value of the `toFile` helper
+
+```ts
+import fs from 'fs';
+import LandingAIADE, { toFile } from 'landingai-ade';
+
+const client = new LandingAIADE();
+
+// If you have access to Node `fs` we recommend using `fs.createReadStream()`:
+await client.v2.parse({ document: fs.createReadStream('/path/to/file.pdf') });
+
+// Or if you have the web `File` API you can pass a `File` instance:
+await client.v2.parse({ document: new File(['my bytes'], 'file.pdf') });
+
+// You can also pass a `fetch` `Response`:
+await client.v2.parse({ document: await fetch('https://somesite/file.pdf') });
+
+// Finally, if none of the above are convenient, you can use our `toFile` helper:
+await client.v2.parse({ document: await toFile(Buffer.from('my bytes'), 'file.pdf') });
 ```
 
 ### Logging
 
-> [!IMPORTANT]
-> All log messages are intended for debugging only. The format and content of log messages
-> may change between releases.
+Set the `LANDINGAI_ADE_LOG` environment variable (or the `logLevel` client option, which takes precedence) to control logging. Levels, from most to least verbose: `debug`, `info`, `warn` (default), `error`, and `off`. At `debug`, all HTTP requests and responses are logged, including headers and bodies.
 
-#### Log levels
-
-The log level can be configured in two ways:
-
-1. Via the `LANDINGAI_ADE_LOG` environment variable
-2. Using the `logLevel` client option (overrides the environment variable if set)
-
-```ts
-import LandingAIADE from 'landingai-ade';
-
-const client = new LandingAIADE({
-  logLevel: 'debug', // Show all log messages
-});
+```sh
+export LANDINGAI_ADE_LOG=debug
 ```
 
-Available log levels, from most to least verbose:
+By default, the library logs to `globalThis.console`. Pass a custom logger with the `logger` client option; most logging libraries are supported, including [pino](https://www.npmjs.com/package/pino), [winston](https://www.npmjs.com/package/winston), and [consola](https://www.npmjs.com/package/consola).
 
-- `'debug'` - Show debug messages, info, warnings, and errors
-- `'info'` - Show info messages, warnings, and errors
-- `'warn'` - Show warnings and errors (default)
-- `'error'` - Show only errors
-- `'off'` - Disable all logging
+### Making Custom or Undocumented Requests
 
-At the `'debug'` level, all HTTP requests and responses are logged, including headers and bodies.
-Some authentication-related headers are redacted, but sensitive data in request and response bodies
-may still be visible.
-
-#### Custom logger
-
-By default, this library logs to `globalThis.console`. You can also provide a custom logger.
-Most logging libraries are supported, including [pino](https://www.npmjs.com/package/pino), [winston](https://www.npmjs.com/package/winston), [bunyan](https://www.npmjs.com/package/bunyan), [consola](https://www.npmjs.com/package/consola), [signale](https://www.npmjs.com/package/signale), and [@std/log](https://jsr.io/@std/log). If your logger doesn't work, please open an issue.
-
-When providing a custom logger, the `logLevel` option still controls which messages are emitted, messages
-below the configured level will not be sent to your logger.
-
-```ts
-import LandingAIADE from 'landingai-ade';
-import pino from 'pino';
-
-const logger = pino();
-
-const client = new LandingAIADE({
-  logger: logger.child({ name: 'LandingAIADE' }),
-  logLevel: 'debug', // Send all messages to pino, allowing it to filter
-});
-```
-
-### Making custom/undocumented requests
-
-This library is typed for convenient access to the documented API. If you need to access undocumented
-endpoints, params, or response properties, the library can still be used.
-
-#### Undocumented endpoints
-
-To make requests to undocumented endpoints, you can use `client.get`, `client.post`, and other HTTP verbs.
-Options on the client, such as retries, will be respected when making these requests.
+Use `client.get`, `client.post`, and the other HTTP verb methods to call undocumented endpoints; client options such as retries still apply. To send undocumented parameters on a documented method, use `// @ts-expect-error` (the library does not validate params at runtime, so extra values are sent as-is), or set them explicitly with the `query`, `body`, and `headers` request options. Undocumented response properties can be read by casting the response object.
 
 ```ts
 await client.post('/some/path', {
@@ -535,45 +419,9 @@ await client.post('/some/path', {
 });
 ```
 
-#### Undocumented request params
+### Customizing the Fetch Client
 
-To make requests using undocumented parameters, you may use `// @ts-expect-error` on the undocumented
-parameter. This library doesn't validate at runtime that the request matches the type, so any extra values you
-send will be sent as-is.
-
-```ts
-client.parse({
-  // ...
-  // @ts-expect-error baz is not yet public
-  baz: 'undocumented option',
-});
-```
-
-For requests with the `GET` verb, any extra params will be in the query, all other requests will send the
-extra param in the body.
-
-If you want to explicitly send an extra argument, you can do so with the `query`, `body`, and `headers` request
-options.
-
-#### Undocumented response properties
-
-To access undocumented response properties, you may access the response object with `// @ts-expect-error` on
-the response object, or cast the response object to the requisite type. Like the request params, we do not
-validate or strip extra properties from the response from the API.
-
-### Customizing the fetch client
-
-By default, this library expects a global `fetch` function is defined.
-
-If you want to use a different `fetch` function, you can either polyfill the global:
-
-```ts
-import fetch from 'my-fetch';
-
-globalThis.fetch = fetch;
-```
-
-Or pass it to the client:
+By default, the library expects a global `fetch` function. To use a different implementation, pass it to the client:
 
 ```ts
 import LandingAIADE from 'landingai-ade';
@@ -582,67 +430,38 @@ import fetch from 'my-fetch';
 const client = new LandingAIADE({ fetch });
 ```
 
-### Fetch options
-
-If you want to set custom `fetch` options without overriding the `fetch` function, you can provide a `fetchOptions` object when instantiating the client or making a request. (Request-specific options override client options.)
+To set custom `RequestInit` options (per-client or per-request), use `fetchOptions`. This is also how you configure a proxy for your runtime:
 
 ```ts
-import LandingAIADE from 'landingai-ade';
-
-const client = new LandingAIADE({
-  fetchOptions: {
-    // `RequestInit` options
-  },
-});
-```
-
-#### Configuring proxies
-
-To modify proxy behavior, you can provide custom `fetchOptions` that add runtime-specific proxy
-options to requests:
-
-<img src="https://raw.githubusercontent.com/stainless-api/sdk-assets/refs/heads/main/node.svg" align="top" width="18" height="21"> **Node** <sup>[[docs](https://github.com/nodejs/undici/blob/main/docs/docs/api/ProxyAgent.md#example---proxyagent-with-fetch)]</sup>
-
-```ts
-import LandingAIADE from 'landingai-ade';
+// Node.js (undici)
 import * as undici from 'undici';
 
 const proxyAgent = new undici.ProxyAgent('http://localhost:8888');
-const client = new LandingAIADE({
-  fetchOptions: {
-    dispatcher: proxyAgent,
-  },
-});
+const client = new LandingAIADE({ fetchOptions: { dispatcher: proxyAgent } });
 ```
 
-<img src="https://raw.githubusercontent.com/stainless-api/sdk-assets/refs/heads/main/bun.svg" align="top" width="18" height="21"> **Bun** <sup>[[docs](https://bun.sh/guides/http/proxy)]</sup>
+```ts
+// Bun
+const client = new LandingAIADE({ fetchOptions: { proxy: 'http://localhost:8888' } });
+```
+
+```ts
+// Deno
+const httpClient = Deno.createHttpClient({ proxy: { url: 'http://localhost:8888' } });
+const client = new LandingAIADE({ fetchOptions: { client: httpClient } });
+```
+
+### Importing Types
+
+All request and response types are exported, both as named exports and on the `LandingAIADE` namespace:
 
 ```ts
 import LandingAIADE from 'landingai-ade';
 
-const client = new LandingAIADE({
-  fetchOptions: {
-    proxy: 'http://localhost:8888',
-  },
-});
+const parsed: LandingAIADE.V2ParseResponse = await client.v2.parse({ document_url: '...' });
 ```
 
-<img src="https://raw.githubusercontent.com/stainless-api/sdk-assets/refs/heads/main/deno.svg" align="top" width="18" height="21"> **Deno** <sup>[[docs](https://docs.deno.com/api/deno/~/Deno.createHttpClient)]</sup>
-
-```ts
-import LandingAIADE from 'npm:landingai-ade';
-
-const httpClient = Deno.createHttpClient({ proxy: { url: 'http://localhost:8888' } });
-const client = new LandingAIADE({
-  fetchOptions: {
-    client: httpClient,
-  },
-});
-```
-
-## Frequently Asked Questions
-
-## Semantic versioning
+## Versioning
 
 This package generally follows [SemVer](https://semver.org/spec/v2.0.0.html) conventions, though certain backwards-incompatible changes may be released as minor versions:
 
@@ -652,22 +471,20 @@ This package generally follows [SemVer](https://semver.org/spec/v2.0.0.html) con
 
 We take backwards-compatibility seriously and work hard to ensure you can rely on a smooth upgrade experience.
 
-We are keen for your feedback; please open an [issue](https://www.github.com/landing-ai/ade-typescript/issues) with questions, bugs, or suggestions.
-
 ## Requirements
 
 TypeScript >= 4.9 is supported.
 
 The following runtimes are supported:
 
-- Web browsers (Up-to-date Chrome, Firefox, Safari, Edge, and more)
-- Node.js 20 LTS or later ([non-EOL](https://endoflife.date/nodejs)) versions.
-- Deno v1.28.0 or higher.
-- Bun 1.0 or later.
-- Cloudflare Workers.
-- Vercel Edge Runtime.
-- Jest 28 or greater with the `"node"` environment (`"jsdom"` is not supported at this time).
-- Nitro v2.6 or greater.
+- Web browsers (up-to-date Chrome, Firefox, Safari, Edge, and more)
+- Node.js 20 LTS or later ([non-EOL](https://endoflife.date/nodejs)) versions
+- Deno v1.28.0 or higher
+- Bun 1.0 or later
+- Cloudflare Workers
+- Vercel Edge Runtime
+- Jest 28 or greater with the `"node"` environment (`"jsdom"` is not supported at this time)
+- Nitro v2.6 or greater
 
 Note that React Native is not supported at this time.
 
@@ -675,4 +492,4 @@ If you are interested in other runtime environments, please open or upvote an is
 
 ## Contributing
 
-See [the contributing documentation](./CONTRIBUTING.md).
+See [the contributing documentation](./CONTRIBUTING.md). We welcome [issues](https://www.github.com/landing-ai/ade-typescript/issues) with questions, bugs, or suggestions.
