@@ -46,8 +46,9 @@ echo "surface-lock: checking $report against $baseline_tag"
 # Keep only declaration lines: drop `import` lines (scripts/spec-sync/strip-api-report.cjs already
 # removes the path-volatile fetch-typing imports, but strip here too so the gate is robust even if
 # the report was generated without that step), TSDoc/comment lines (incl. api-extractor's `// @public`
-# markers), and blank lines — so cosmetic churn never reads as an API change.
-normalize() { grep -vE '^import ' | grep -vE '^[[:space:]]*(//|/\*|\*|\*/)' | grep -vE '^[[:space:]]*$'; }
+# markers), and blank lines — so cosmetic churn never reads as an API change. A single awk pass (not a
+# grep chain): awk always exits 0, so an all-filtered stream can't surface a non-zero under pipefail.
+normalize() { awk '!/^import / && !/^[[:space:]]*(\/\/|\/\*|\*)/ && !/^[[:space:]]*$/'; }
 
 # Plain `sort` (NOT sort -u): `comm` then respects multiplicity, so removing one of two identical
 # member lines (e.g. a `value: string;` that also occurs in another interface) is still caught.
