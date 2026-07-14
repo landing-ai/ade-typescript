@@ -179,3 +179,168 @@ jobs:
             git commit -m "feat(spec-sync): wire SDK to spec diff (AI)"
             git push origin HEAD:"$SYNC_BRANCH"
           fi
+
+  # V2 loop. Same machinery as the V1 job above, pointed at the V2 spec on the AIDE gateway and a
+  # separate sync branch, with a V2-tailored wiring prompt. Kept a distinct job (not a matrix) so the
+  # proven V1 loop stays untouched and the two prompts can diverge freely.
+  #
+  # HOSTS (do not conflate): the V2 *spec* is published at aide.[env]/openapi.json; the V2 *API* (what
+  # the SDK and contract tests call) is api.ade.[env]. We fetch drift from aide; the SDK never talks to
+  # aide (its app routes are staff-SSO-gated). Routing is handled by the client's v2BaseURL.
+  spec-sync-v2:
+    if: github.repository == 'landing-ai/ade-typescript'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60 # headroom for the AI wiring step (up to --max-turns 250) plus install/build
+    env:
+      V2_SPEC_URL: https://aide.staging.landing.ai/openapi.json # staging drives the loop
+      SYNC_BRANCH: spec-sync/v2 # separate branch so V1 and V2 sync PRs never collide
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # SPEC_SYNC_TOKEN (fine-grained PAT), NOT GITHUB_TOKEN: pushes/PRs authored by GITHUB_TOKEN
+          # do not trigger the gate workflows (anti-recursion).
+          token: ${{ secrets.SPEC_SYNC_TOKEN }}
+          fetch-depth: 0 # tags needed for the surface-lock baseline
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - name: Bootstrap
+        run: ./scripts/bootstrap
+
+      - name: Detect drift
+        id: drift
+        run: |
+          set +e
+          ./scripts/spec-sync/check-drift.sh "$V2_SPEC_URL" specs/v2-aide.json
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+
+      - name: No drift
+        if: steps.drift.outputs.code == '0'
+        run: echo "specs in sync; nothing to do."
+
+      - name: Fail on fetch error
+        if: steps.drift.outputs.code != '0' && steps.drift.outputs.code != '10'
+        run: |
+          echo "spec fetch/normalize failed (exit ${{ steps.drift.outputs.code }})"
+          exit 1
+
+      - name: Check for an open sync PR
+        id: existing
+        if: steps.drift.outputs.code == '10'
+        env:
+          GH_TOKEN: ${{ secrets.SPEC_SYNC_TOKEN }}
+        run: |
+          # Fail CLOSED (see the V1 job): a transient gh failure must abort the job, not silently
+          # become open=false and force-push over an existing human-reviewed PR's branch.
+          count="$(gh pr list --state open --head "$SYNC_BRANCH" --json number --jq 'length')"
+          if [ "$count" -gt 0 ]; then
+            echo "open=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "open=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Sync PR already open — skip
+        if: steps.drift.outputs.code == '10' && steps.existing.outputs.open == 'true'
+        run: echo "A spec-sync PR is already open; skipping until it is merged or closed."
+
+      # ---- Phase 1: mechanical (deterministic) ----
+      - name: Mechanical commit + push
+        if: steps.drift.outputs.code == '10' && steps.existing.outputs.open != 'true'
+        run: |
+          git config user.name "spec-sync[bot]"
+          git config user.email "spec-sync@users.noreply.github.com"
+          git checkout -B "$SYNC_BRANCH"
+          ./scripts/spec-sync/gen-models.sh specs/v2-aide.json specs/_generated/v2-aide.d.ts
+          git add specs/v2-aide.json specs/_generated/v2-aide.d.ts
+          git commit -m "chore(spec-sync): update V2 spec snapshot + regenerated reference types"
+          git push --force origin "$SYNC_BRANCH"
+
+      - name: Open sync PR
+        if: steps.drift.outputs.code == '10' && steps.existing.outputs.open != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.SPEC_SYNC_TOKEN }}
+        run: |
+          gh pr create --base main --head "$SYNC_BRANCH" \
+            --title "spec-sync: track V2 spec drift" \
+            --body $'Automated V2 spec-sync PR (`client.v2`).\n\n- **Commit 1 (mechanical):** normalized V2 spec snapshot + regenerated reference types.\n- **Commit 2 (AI, only if the spec diff needs SDK changes):** client.v2 resources/methods/tests/docs wired from the diff. Workflow-only drift is excluded and an AI no-op is skipped, so some drifts produce a **mechanical-only PR**.\n\nGates (surface-lock, V2 contract tests, lint/build/test) must pass. The V2 ergonomic layer (unified Job, dual-host, schema coercion) is not in the spec, so when present the AI commit is a **draft a human finishes**. **Human review required before merge.**'
+
+      # ---- Phase 2: AI wiring — edits ONLY (no shell/git-push; a later step commits). ----
+      - name: AI wiring (edits only)
+        if: steps.drift.outputs.code == '10' && steps.existing.outputs.open != 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.SPEC_SYNC_TOKEN }}
+          prompt: |
+            The previous commit updated specs/v2-aide.json and regenerated reference types in
+            specs/_generated/v2-aide.d.ts. Wire the client.v2 SDK to match the spec diff. This is the
+            V2 surface (client.v2.*), NOT V1 — do not touch V1 resources.
+
+            OUT OF SCOPE — do NOT implement: /v2/workflow, /v2/workflow/jobs, and
+            /v2/workflow/jobs/{job_id}. That surface is intentionally deferred; skip it entirely even
+            though it appears in the spec and reference types. If the spec diff touches only workflow,
+            make no changes.
+
+            First inspect the ENTIRE mechanical commit diff (`git diff HEAD~1..HEAD`) — the
+            operation/path hunks AND changed entries under `components.schemas`. A response-field
+            addition often changes ONLY a component schema (e.g. /v2/parse references ParseResponse)
+            and its generated type, not the operation hunk, so for every changed schema trace its
+            `$ref` consumers to the non-workflow operations that use it. Cover: (a) newly added /v2
+            routes; (b) field or schema changes on existing operations, INCLUDING component-only
+            changes; (c) changes to /v1/files, which backs client.v2.files (src/resources/v2/files.ts).
+
+            Distinguish REQUEST fields — wire as a new optional property on the method's params
+            interface — from RESPONSE-model fields — add the field to the corresponding response type
+            under src/resources/v2/types.ts. For a genuinely new route, read
+            src/resources/v2/extract.ts and src/resources/v2/parse.ts and mirror their structure:
+
+            - Add a resource module under src/resources/v2/ with a sync method (multipart or JSON per
+              the spec; a 504 must route through the V2SyncTimeoutError mapping the neighbours use) and,
+              for an async route, a *Jobs resource with create / get / wait / list.
+            - Register it on the V2 container in src/resources/v2/v2.ts exactly as parse/extract are
+              wired, and export types through src/resources/v2/index.ts and src/index.ts as the
+              neighbours do.
+            - Normalize any async job into the unified Job (the Job type in src/resources/v2/types.ts)
+              by adding a normalizer in src/resources/v2/_normalize.ts, mirroring normalizeParseJob /
+              normalizeExtractJob (tolerant status; map the envelope's result / error / timestamps).
+            - If a method accepts a JSON Schema, coerce it via coerceSchema from lib/schema.
+            - Build request URLs via the V2 base-URL routing the neighbours use (never hardcode a
+              host — the SDK calls api.ade.[env], never aide; routing is automatic via v2BaseURL).
+
+            Add a live check to tests/contract/v2-smoke.test.ts and unit tests under
+            tests/api-resources/v2/. Update api.md and the README examples.
+
+            You may only edit product code: src/, tests/, api.md, and README.md. Do NOT edit scripts/,
+            .github/, specs/, etc/, or any dotfile or config.
+
+            Additive-changes rule: BACKWARD-COMPATIBLE ADDITIONS ONLY. You MAY add a new optional
+            property to a params interface. You must NOT remove or rename a public symbol or property,
+            change a type, or make an existing property required; surface-lock will fail the PR on any
+            of those. `git diff` (read-only, to inspect the change) is fine; do NOT stage, commit,
+            push, or run any other git command — a later workflow step commits and pushes your edits.
+          claude_args: |
+            --max-turns 250
+            --allowedTools "Edit,Write,Read,Glob,Grep,Bash(git diff:*)"
+
+      - name: Restrict AI edits to product code, then format + refresh the API report
+        if: steps.drift.outputs.code == '10' && steps.existing.outputs.open != 'true'
+        run: |
+          git checkout -- . ':(exclude)src' ':(exclude)tests' ':(exclude)api.md' ':(exclude)README.md'
+          git clean -fd -e /src -e /tests
+          ./scripts/format
+          ./scripts/build
+          yarn api-extractor
+
+      - name: Commit + push AI wiring
+        if: steps.drift.outputs.code == '10' && steps.existing.outputs.open != 'true'
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            echo "AI step produced no changes."
+          else
+            git commit -m "feat(spec-sync): wire client.v2 to spec diff (AI)"
+            git push origin HEAD:"$SYNC_BRANCH"
+          fi

@@ -137,9 +137,14 @@ Spec-sync PRs are AI-drafted and **require human review** before merge.
 and PRs authored by `GITHUB_TOKEN` do not trigger the gate workflows (GitHub anti-recursion), so the
 gates would never run on the sync PR.
 
-`scripts/spec-sync/release-gate.sh` (staging-in/production-out release check) is committed but not
-yet wired into `release.yml` — deferred. Tracking the **V2** spec (`client.v2`) is a follow-up that
-adds a second job mirroring this one, pointed at the AIDE gateway spec.
+The pipeline also tracks the **V2** spec (`client.v2`) via a second `spec-sync-v2` job mirroring the
+V1 one. **Two-host rule (do not conflate):** the V2 **spec** is fetched from `aide.[env]/openapi.json`
+(the AIDE gateway), but the SDK and its contract tests call the V2 **API** at `api.ade.[env]`; the SDK
+never talks to `aide`. The `/v2/workflow*` routes are intentionally **excluded** from V2 AI-wiring —
+they are present in the tracked spec (so they aren't flagged as drift) but not shipped.
+
+`scripts/spec-sync/release-gate.sh` (staging-in/production-out release check) is committed but not yet
+wired into `release.yml` — deferred.
 
 ## Publishing and releases
 
