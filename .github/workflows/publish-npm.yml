@@ -36,7 +36,10 @@ jobs:
       - name: Publish to NPM
         run: |
           if [ -n "$INPUT_PATH" ]; then
-            PATHS_RELEASED="[\"$INPUT_PATH\"]"
+            # The inner quotes must survive into the payload as literal \" —
+            # paths_released is a JSON string containing JSON, like the else
+            # branch. Unescaped quotes make the payload unparseable.
+            PATHS_RELEASED="[\\\"$INPUT_PATH\\\"]"
           else
             PATHS_RELEASED='[\".\", \"packages/mcp-server\"]'
           fi
