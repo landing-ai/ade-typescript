@@ -137,6 +137,11 @@ Spec-sync PRs are AI-drafted and **require human review** before merge.
 and PRs authored by `GITHUB_TOKEN` do not trigger the gate workflows (GitHub anti-recursion), so the
 gates would never run on the sync PR.
 
+**Protected environment:** the `contract-tests` gate runs AI-drafted test code with
+`LANDINGAI_ADE_STAGING_APIKEY` in env. Configure a **`spec-sync-staging`** Environment (repo Settings
+→ Environments) with a **required reviewer** so a maintainer approves before the staging key is
+exposed to spec-sync-generated code; the job references it via `environment:` and is inert until set.
+
 `scripts/spec-sync/release-gate.sh` (staging-in/production-out release check) is committed but not
 yet wired into `release.yml` — deferred. Tracking the **V2** spec (`client.v2`) is a follow-up that
 adds a second job mirroring this one, pointed at the AIDE gateway spec.

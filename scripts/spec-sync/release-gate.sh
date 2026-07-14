@@ -18,7 +18,7 @@ trap 'rm -f "$prod"' EXIT
 # method (e.g. a newly added POST) must still block the release.
 missing="$(jq -r --slurpfile p "$prod" '
   ($p[0].paths) as $prod
-  | .paths
+  | (.paths // {})
   | to_entries[]
   | .key as $path
   | (.value | keys[]) as $method

@@ -24,7 +24,11 @@ set -uo pipefail
 
 report="etc/landingai-ade.api.md"
 
-baseline_tag="$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)"
+# Highest RELEASED tag by semver — NOT `git describe --abbrev=0`, which returns the nearest tag
+# reachable from HEAD (an older tag if the branch was cut before the latest release, weakening or
+# skipping the check). Exclude pre-release tags (a `v1.2.3-rc1` contains a '-') so an RC can't
+# become the baseline the released surface is checked against.
+baseline_tag="$(git tag --list 'v*' --sort=-version:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n1)"
 if [ -z "$baseline_tag" ]; then
   echo "surface-lock: no release tag found; skipping (nothing released yet)."
   exit 0
@@ -50,10 +54,19 @@ echo "surface-lock: checking $report against $baseline_tag"
 # grep chain): awk always exits 0, so an all-filtered stream can't surface a non-zero under pipefail.
 normalize() { awk '!/^import / && !/^[[:space:]]*(\/\/|\/\*|\*)/ && !/^[[:space:]]*$/'; }
 
+# Read the baseline report explicitly (cat-file -e above only proved the blob exists). Fail LOUD on
+# a read failure / empty baseline rather than letting an empty left operand make `comm` report "no
+# removals" and pass a broken PR silently.
+baseline_report="$(git show "$baseline_tag:$report")"
+if [ -z "$baseline_report" ]; then
+  echo "surface-lock: baseline report at $baseline_tag is unexpectedly empty; refusing to pass." >&2
+  exit 1
+fi
+
 # Plain `sort` (NOT sort -u): `comm` then respects multiplicity, so removing one of two identical
 # member lines (e.g. a `value: string;` that also occurs in another interface) is still caught.
 removed="$(comm -23 \
-  <(git show "$baseline_tag:$report" | normalize | sort) \
+  <(printf '%s\n' "$baseline_report" | normalize | sort) \
   <(normalize < "$report" | sort))"
 
 if [ -n "$removed" ]; then
