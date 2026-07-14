@@ -24,9 +24,6 @@ export interface V2ExtractParams {
   /** Markdown content to extract data from. */
   markdown?: string | null;
 
-  /** A reference (e.g. from a prior parse or `files.upload`) to markdown content. */
-  markdown_ref?: string | null;
-
   /** URL to the markdown file to extract data from. */
   markdown_url?: string | null;
 
@@ -38,9 +35,6 @@ export interface V2ExtractParams {
    * prune unsupported fields and continue. Sent as `options.strict`.
    */
   strict?: boolean | null;
-
-  /** An idempotency key for the request. */
-  idempotency_key?: string | null;
 }
 
 export interface V2ExtractJobCreateParams extends V2ExtractParams {
@@ -55,10 +49,8 @@ export function buildExtractBody(params: V2ExtractJobCreateParams): Record<strin
   const body: Record<string, unknown> = { schema: coerceSchema(params.schema) };
   const entries: Array<[string, unknown]> = [
     ['markdown', params.markdown],
-    ['markdown_ref', params.markdown_ref],
     ['markdown_url', params.markdown_url],
     ['model', params.model],
-    ['idempotency_key', params.idempotency_key],
     ['service_tier', params.service_tier],
   ];
   for (const [key, value] of entries) {
