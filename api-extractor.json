@@ -1,0 +1,43 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+
+  // Surface-lock config: emit ONLY the public API report (etc/landingai-ade.api.md). The report
+  // is the input to .github/workflows/pr-gates.yml (api-report freshness + additive-only
+  // surface-lock). We do NOT ship a rollup .d.ts or a doc model. Scope is the root `landingai-ade`
+  // package only — packages/mcp-server/ has its own surface and is out of scope here.
+  "projectFolder": ".",
+
+  // The rolled-up declaration entry the build already emits via tsc-multi (./scripts/build).
+  "mainEntryPointFilePath": "<projectFolder>/dist/index.d.ts",
+
+  "compiler": {
+    "tsconfigFilePath": "<projectFolder>/tsconfig.json"
+  },
+
+  "apiReport": {
+    "enabled": true,
+    "reportFolder": "<projectFolder>/etc/",
+    "reportFileName": "landingai-ade.api.md"
+  },
+
+  "docModel": { "enabled": false },
+  "dtsRollup": { "enabled": false },
+  "tsdocMetadata": { "enabled": false },
+
+  "messages": {
+    "compilerMessageReporting": {
+      "default": { "logLevel": "warning" }
+    },
+    "extractorMessageReporting": {
+      // This SDK does not annotate exports with @public/@beta release tags, and re-exports some
+      // referenced-but-not-directly-exported types. Silence those so the report stays a clean
+      // signature listing (surface-lock diffs declarations, not warnings).
+      "default": { "logLevel": "warning" },
+      "ae-missing-release-tag": { "logLevel": "none" },
+      "ae-forgotten-export": { "logLevel": "none" }
+    },
+    "tsdocMessageReporting": {
+      "default": { "logLevel": "none" }
+    }
+  }
+}

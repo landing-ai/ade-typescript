@@ -1,0 +1,76 @@
+name: PR Gates
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  api-report:
+    # The committed public API report (etc/landingai-ade.api.md) is the surface-lock baseline that
+    # every release tag carries. This job keeps it accurate on main: it regenerates the report and
+    # fails if a PR changed the public surface without running `yarn api-extractor`.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - name: Bootstrap
+        run: ./scripts/bootstrap
+      - name: Build
+        run: ./scripts/build
+      - name: Check the committed API report is up to date
+        run: |
+          yarn api-extractor
+          if ! git diff --quiet -- etc/landingai-ade.api.md; then
+            echo "::error::The public API changed but etc/landingai-ade.api.md was not updated." >&2
+            echo "Run 'yarn api-extractor' and commit the result." >&2
+            git --no-pager diff -- etc/landingai-ade.api.md >&2
+            exit 1
+          fi
+          echo "API report is up to date."
+
+  surface-lock:
+    # Additive-only lock on the RELEASED public API. Baseline = the report committed at the last
+    # release tag; new exports/fields pass, removals and signature changes fail. Escape hatch for an
+    # intentional major-release break: label the PR `breaking-change-approved` to skip this job.
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'breaking-change-approved') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0     # tags for the release-tag baseline
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - name: Bootstrap
+        run: ./scripts/bootstrap
+      - name: Build
+        run: ./scripts/build
+      - name: Regenerate the HEAD API report
+        run: yarn api-extractor
+      - name: Surface lock (no breaking change to released API)
+        run: ./scripts/spec-sync/surface-lock.sh
+
+  contract-tests:
+    # Only spec-sync PRs are gated on the live staging API. Gating *every* PR would let a staging
+    # outage or transient 5xx block all merges repo-wide. Keep this job OUT of the required-checks
+    # list for ordinary PRs (it is skipped there); require it only where it runs.
+    if: startsWith(github.head_ref, 'spec-sync/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - name: Bootstrap
+        run: ./scripts/bootstrap
+      - name: Contract tests vs staging
+        env:
+          LANDINGAI_ADE_STAGING_APIKEY: ${{ secrets.LANDINGAI_ADE_STAGING_APIKEY }}
+        run: yarn test:contract
