@@ -17,7 +17,9 @@ const config: JestConfigWithTsJest = {
     '<rootDir>/deno_tests/',
     '<rootDir>/packages/',
   ],
-  testPathIgnorePatterns: ['scripts'],
+  // tests/contract/** are LIVE (staging) tests run separately via `yarn test:contract`
+  // (jest.contract.config.ts); keep them out of the default mocked/offline suite.
+  testPathIgnorePatterns: ['scripts', '<rootDir>/tests/contract'],
 };
 
 export default config;

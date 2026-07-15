@@ -1,5 +1,23 @@
 # Changelog
 
+## 2.8.0 (2026-07-14)
+
+Full Changelog: [v2.7.0...v2.8.0](https://github.com/landing-ai/ade-typescript/compare/v2.7.0...v2.8.0)
+
+### Features
+
+* V2 parse & extract SDK support (client.v2) (#72) ([c3fe332](https://github.com/landing-ai/ade-typescript/commit/c3fe332a7f6c3178a4274bbdf36788bc27559bac))
+* smart saveTo with full path support (#62) ([07d331c](https://github.com/landing-ai/ade-typescript/commit/07d331c70405ff473c1a9103691a83700194abd9))
+
+### Chores
+
+* remove Stainless-generated file headers (#71) ([e7d094d](https://github.com/landing-ai/ade-typescript/commit/e7d094d4b3ba45de7e1e8edfe96b9334c0464c6e))
+* take over release automation and remove Stainless dependencies (#70) ([140047b](https://github.com/landing-ai/ade-typescript/commit/140047bd0b9c5357e43f91b754e91430be717e36))
+
+### Documentation
+
+* add theme-aware LandingAI logo to README ([ef41a1a](https://github.com/landing-ai/ade-typescript/commit/ef41a1a221ae143e520573d4e853147052a1d1c4))
+
 ## 2.7.0 (2026-04-22)
 
 Full Changelog: [v2.6.2...v2.7.0](https://github.com/landing-ai/ade-typescript/compare/v2.6.2...v2.7.0)

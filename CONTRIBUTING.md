@@ -93,6 +93,59 @@ To format and fix all lint issues automatically:
 $ yarn fix
 ```
 
+## Spec-sync pipeline
+
+The SDK tracks the live ADE OpenAPI spec automatically via `.github/workflows/spec-sync.yml`
+(hourly cron + manual `workflow_dispatch`). It is driven by the **staging** spec; the release path
+gates on the **production** spec ("staging in, production out").
+
+On each run it fetches and normalizes the live spec (`scripts/spec-sync/fetch-normalize.sh`) and
+diffs it against the committed snapshot `specs/v1-ade.json` (`scripts/spec-sync/check-drift.sh`). On
+drift it opens one PR on a fixed branch (`spec-sync/v1`) with two attributed commits:
+
+1. **Mechanical** — the updated `specs/v1-ade.json` snapshot plus regenerated _reference_ types in
+   `specs/_generated/v1-ade.d.ts` (`scripts/spec-sync/gen-models.sh`, `openapi-typescript`). These
+   reference types are an input for the AI step and for review — they are **not** shipped and do
+   **not** replace the hand-written types in `src/resources/**`.
+2. **AI** — `anthropics/claude-code-action` (automation mode, edits only, no shell) wires the
+   resources/methods/param & response interfaces/tests/docs from the spec diff, mirroring
+   `src/resources/parse-jobs.ts`.
+
+Every spec-sync PR (and any PR to `main`) must pass `.github/workflows/pr-gates.yml`:
+
+- **api-report** — regenerates the API report and fails if `etc/landingai-ade.api.md` is stale. If a
+  PR changes the public surface, regenerate and commit it:
+
+  ```sh
+  $ yarn api-extractor
+  ```
+
+- **surface-lock** (`scripts/spec-sync/surface-lock.sh`, [`@microsoft/api-extractor`]) — baseline is
+  the API report committed at the **last release tag**, so any change to _released_ public surface
+  fails mechanically; additive changes pass. Merged-but-unreleased surface stays mutable. An
+  intentional break can be approved with the `breaking-change-approved` PR label. (Dormant until the
+  first release after this pipeline landed carries a baseline report.)
+- **contract-tests** — `tests/contract` (`yarn test:contract`) run against staging when
+  `LANDINGAI_ADE_STAGING_APIKEY` is set; skipped otherwise, and only required on `spec-sync/*`
+  branches.
+
+Spec-sync PRs are AI-drafted and **require human review** before merge.
+
+**Secrets required (repo settings):** `SPEC_SYNC_TOKEN` (a fine-grained PAT scoped to this repo with
+`Contents: Read and write` and `Pull requests: Read and write`), `ANTHROPIC_API_KEY`, and
+`LANDINGAI_ADE_STAGING_APIKEY`. `SPEC_SYNC_TOKEN` must **not** be the default `GITHUB_TOKEN`: pushes
+and PRs authored by `GITHUB_TOKEN` do not trigger the gate workflows (GitHub anti-recursion), so the
+gates would never run on the sync PR.
+
+**Protected environment:** the `contract-tests` gate runs AI-drafted test code with
+`LANDINGAI_ADE_STAGING_APIKEY` in env. Configure a **`spec-sync-staging`** Environment (repo Settings
+→ Environments) with a **required reviewer** so a maintainer approves before the staging key is
+exposed to spec-sync-generated code; the job references it via `environment:` and is inert until set.
+
+`scripts/spec-sync/release-gate.sh` (staging-in/production-out release check) is committed but not
+yet wired into `release.yml` — deferred. Tracking the **V2** spec (`client.v2`) is a follow-up that
+adds a second job mirroring this one, pointed at the AIDE gateway spec.
+
 ## Publishing and releases
 
 Changes made to this repository via the automated release PR pipeline should publish to npm automatically. If

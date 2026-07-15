@@ -10,7 +10,9 @@ export default tseslint.config(
       parserOptions: { sourceType: 'module' },
     },
     files: ['**/*.ts', '**/*.mts', '**/*.cts', '**/*.js', '**/*.mjs', '**/*.cjs'],
-    ignores: ['dist/'],
+    // specs/ holds the jq-normalized spec snapshot + openapi-typescript reference types
+    // (generated, not shipped); linting them is meaningless and fights their generators.
+    ignores: ['dist/', 'specs/'],
     plugins: {
       '@typescript-eslint': tseslint.plugin,
       'unused-imports': unusedImports,
