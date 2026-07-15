@@ -26,7 +26,7 @@ describe('V2 contract (staging)', () => {
   );
 
   runIf(
-    'extract (sync) returns a structured extraction',
+    'extract (sync) returns a structured extraction with range_units metadata',
     async () => {
       const client = new LandingAIADE({ apikey: apiKey!, environment: 'staging' });
       const res = await client.v2.extract({
@@ -34,7 +34,27 @@ describe('V2 contract (staging)', () => {
         markdown: SAMPLE_MARKDOWN,
       });
       expect(res.extraction).toBeDefined();
+      // Wired by the V2 spec-sync: ranges are declared in code-point units, and
+      // `version` was renamed to `model_version` in the metadata.
+      expect(res.metadata.range_units).toBe('unicode_codepoints');
+      expect(typeof res.metadata.model_version).toBe('string');
     },
     60_000,
+  );
+
+  runIf(
+    'parseJobs.list returns a normalized JobList against the new envelope',
+    async () => {
+      const client = new LandingAIADE({ apikey: apiKey!, environment: 'staging' });
+      const list = await client.v2.parseJobs.list({ page: 0, page_size: 1 });
+      expect(Array.isArray(list.jobs)).toBe(true);
+      for (const job of list.jobs) {
+        expect(typeof job.job_id).toBe('string');
+        // The list envelope now emits ISO-8601 timestamps; the normalizer maps
+        // them to `Date` (or `null` when absent).
+        expect(job.created_at === null || job.created_at instanceof Date).toBe(true);
+      }
+    },
+    30_000,
   );
 });

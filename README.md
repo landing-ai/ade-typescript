@@ -74,7 +74,7 @@ The full method reference for both APIs is in [api.md](api.md); usage guides are
 
 ## Parse
 
-Use `client.v2.parse` to convert a document into Markdown plus a structure tree and grounding (pixel-coordinate bounding boxes for every element). Provide exactly one of `document` (a local file) or `document_url`.
+Use `client.v2.parse` to convert a document into Markdown plus a structure tree in which every node carries its spatial grounding inline (the page it appears on, its range into the Markdown, and a bounding box in normalized page coordinates). Provide exactly one of `document` (a local file) or `document_url`.
 
 ```ts
 import fs from 'fs';
@@ -98,12 +98,11 @@ const fromUrl = await client.v2.parse({ document_url: 'https://example.com/file.
 
 The response is a `V2ParseResponse`:
 
-| Field       | Description                                                                                          |
-| ----------- | ---------------------------------------------------------------------------------------------------- |
-| `markdown`  | The full document as one Markdown string, in reading order.                                          |
-| `structure` | A typed tree (`document` → pages → elements) with element types and character spans into `markdown`. |
-| `grounding` | A tree mirroring `structure` that adds pixel-coordinate bounding boxes for each element.             |
-| `metadata`  | Processing details: `page_count`, `failed_pages`, `duration_ms`, and `billing` (credits used).       |
+| Field       | Description                                                                                                                                                                                                                                                         |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `markdown`  | The full document as one Markdown string, in reading order.                                                                                                                                                                                                         |
+| `structure` | A typed tree (`document` → pages → elements). Each node carries a `grounding` object — its page, its `{ start, end }` range into `markdown`, and a bounding box in normalized (`0`–`1`) page coordinates; leaf elements also carry fine-grained `atomic_grounding`. |
+| `metadata`  | Processing details: `page_count`, `failed_pages`, `range_units` (offsets are Unicode code points), `duration_ms`, and `billing` (credits used).                                                                                                                     |
 
 If some pages cannot be parsed, the request still succeeds (HTTP 206) and `metadata.failed_pages` lists the pages that failed. If a synchronous parse times out, the client throws `V2SyncTimeoutError`; use [jobs](#process-large-documents-asynchronously-jobs) instead.
 
@@ -133,17 +132,17 @@ const result = await client.v2.extract({
 });
 
 console.log(result.extraction); // { name: '...', age: ... }
-console.log(result.extraction_metadata); // per-field source spans in the Markdown
+console.log(result.extraction_metadata); // per-field source ranges in the Markdown
 ```
 
 The response is a `V2ExtractResult`:
 
-| Field                 | Description                                                                                            |
-| --------------------- | ------------------------------------------------------------------------------------------------------ |
-| `extraction`          | The extracted values, matching your schema.                                                            |
-| `extraction_metadata` | Mirrors `extraction`; each field carries the character spans in the Markdown that the value came from. |
-| `markdown`            | The Markdown the extraction ran against, echoed back.                                                  |
-| `metadata`            | Processing details, including credits used.                                                            |
+| Field                 | Description                                                                                                                 |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `extraction`          | The extracted values, matching your schema.                                                                                 |
+| `extraction_metadata` | Mirrors `extraction`; each field carries the `{ value, ranges }` (code-point ranges into the Markdown the value came from). |
+| `markdown`            | The Markdown the extraction ran against, echoed back.                                                                       |
+| `metadata`            | Processing details, including credits used.                                                                                 |
 
 By default, unsupported schema fields are skipped and extraction continues. Pass `strict: true` to reject such schemas with an error (HTTP 422) instead.
 
@@ -211,7 +210,7 @@ try {
 }
 ```
 
-The `create`, `get`, and `wait` methods return a normalized `Job` with `job_id`, `status` (`pending`, `processing`, `completed`, `failed`, or `cancelled`), `progress`, `result`, `error`, `is_terminal`, and `raw` (the unmodified API envelope, for any field not surfaced on the typed shape). The `list` method returns a `JobList` with a `jobs` array and `has_more`. Parse job lists also populate `org_id`, and extract job lists also populate `page` and `page_size`; fields an endpoint doesn't populate are `null`.
+The `create`, `get`, and `wait` methods return a normalized `Job` with `job_id`, `status` (`pending`, `processing`, `completed`, `failed`, or `cancelled`), `progress`, `result`, `error`, `is_terminal`, and `raw` (the unmodified API envelope, for any field not surfaced on the typed shape). The `list` method returns a `JobList` with a `jobs` array and `has_more`, plus the `page`/`page_size` pagination fields; `org_id` is populated only by older parse envelopes. Fields an endpoint doesn't populate are `null`.
 
 ```ts
 // Poll manually instead of blocking

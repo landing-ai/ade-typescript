@@ -101,6 +101,126 @@ describe('client.v2 routing', () => {
     expect(calls.some((u) => u === 'https://api.ade.staging.landing.ai/v2/extract/jobs/ej-1')).toBe(true);
   });
 
+  test('parse (sync) surfaces inline grounding and the new metadata fields', async () => {
+    const box = { xmin: 0, ymin: 0, xmax: 1, ymax: 1 };
+    const grounding = { page: 1, range: { start: 0, end: 5 }, box };
+    const { client } = stubClient(() =>
+      jsonResponse({
+        markdown: '# doc',
+        structure: {
+          type: 'document',
+          markdown: '# doc',
+          children: [
+            {
+              type: 'page',
+              grounding,
+              markdown: '# doc',
+              children: [
+                {
+                  type: 'text',
+                  id: 'text-0',
+                  grounding,
+                  atomic_grounding: [grounding],
+                  markdown: '# doc',
+                },
+              ],
+            },
+          ],
+        },
+        metadata: {
+          output_markdown_chars: 5,
+          range_units: 'unicode_codepoints',
+          openapi_spec: 'https://example.com/spec.json',
+          failed_pages: [],
+        },
+      }),
+    );
+    const res = await client.v2.parse({ document: await toFile(Buffer.from('%PDF'), 'a.pdf') });
+    const page = res.structure?.children?.[0];
+    expect(page?.grounding?.page).toBe(1);
+    expect(page?.grounding?.box.xmax).toBe(1);
+    const el = page?.children?.[0];
+    expect(el?.grounding?.range).toEqual({ start: 0, end: 5 });
+    expect(el?.atomic_grounding?.[0]?.box.ymax).toBe(1);
+    expect(res.metadata?.output_markdown_chars).toBe(5);
+    expect(res.metadata?.range_units).toBe('unicode_codepoints');
+    expect(res.metadata?.openapi_spec).toBe('https://example.com/spec.json');
+  });
+
+  test('extract (sync) surfaces model_version, output_ref, and billing counts', async () => {
+    const { client } = stubClient(() =>
+      jsonResponse({
+        extraction: { a: 1 },
+        extraction_metadata: {},
+        markdown: '# doc',
+        output_ref: null,
+        metadata: {
+          job_id: 'j',
+          version: 'v',
+          model_version: 'dpt-3-pro-20260710',
+          duration_ms: 1,
+          range_units: 'unicode_codepoints',
+          openapi_spec: 'https://example.com/spec.json',
+          billing: { input_markdown_chars: 10, output_extraction_chars: 4 },
+        },
+      }),
+    );
+    const res = await client.v2.extract({ schema: { type: 'object' }, markdown: 'hi' });
+    expect(res.metadata.model_version).toBe('dpt-3-pro-20260710');
+    expect(res.output_ref).toBeNull();
+    expect(res.metadata.range_units).toBe('unicode_codepoints');
+    expect(res.metadata.billing?.input_markdown_chars).toBe(10);
+    expect(res.metadata.billing?.output_extraction_chars).toBe(4);
+  });
+
+  test('parse folds the password convenience param into options', async () => {
+    let sentBody: unknown;
+    const fetch: Fetch = async (input, init) => {
+      if (!String(input).startsWith('data:')) sentBody = init?.body;
+      return jsonResponse({ markdown: 'x', metadata: {} });
+    };
+    const client = new LandingAIADE({ apikey: 'k', environment: 'staging', maxRetries: 0, fetch });
+    await client.v2.parse({
+      document: await toFile(Buffer.from('%PDF'), 'a.pdf'),
+      options: { inline_markdown: true },
+      password: 'hunter2',
+    });
+    const form = sentBody as FormData;
+    expect(JSON.parse(String(form.get('options')))).toEqual({ inline_markdown: true, password: 'hunter2' });
+    expect(form.get('password')).toBeNull(); // no longer sent as a top-level field
+  });
+
+  test('parseJobs.get normalizes the new result/error/completed_at envelope', async () => {
+    const { client } = stubClient(() =>
+      jsonResponse({
+        job_id: 'pj-9',
+        status: 'completed',
+        created_at: '2026-01-02T03:04:05Z',
+        completed_at: '2026-01-02T03:05:06Z',
+        result: {
+          markdown: 'hi',
+          metadata: { output_markdown_chars: 2, range_units: 'unicode_codepoints' },
+        },
+      }),
+    );
+    const job = await client.v2.parseJobs.get('pj-9');
+    expect(job.status).toBe('completed');
+    expect(job.is_terminal).toBe(true);
+    expect(job.completed_at?.toISOString()).toBe('2026-01-02T03:05:06.000Z');
+    const result = job.result as LandingAIADE.V2ParseResponse;
+    expect(result.metadata?.output_markdown_chars).toBe(2);
+    expect(result.metadata?.range_units).toBe('unicode_codepoints');
+  });
+
+  test('parseJobs.get maps a failed job error object', async () => {
+    const { client } = stubClient(() =>
+      jsonResponse({ job_id: 'pj-f', status: 'failed', error: { code: 'bad', message: 'nope' } }),
+    );
+    const job = await client.v2.parseJobs.get('pj-f');
+    expect(job.status).toBe('failed');
+    expect(job.error).toEqual({ code: 'bad', message: 'nope' });
+  });
+
   test('parseJobs.list builds a JobList with the pagination envelope', async () => {
     const { client } = stubClient(() =>
       jsonResponse({ jobs: [{ job_id: 'a', status: 'pending' }], has_more: true, org_id: 'o' }),

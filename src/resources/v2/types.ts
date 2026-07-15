@@ -68,6 +68,12 @@ export interface V2Billing {
   service_tier?: 'standard' | 'priority' | null;
 
   total_credits?: number | null;
+
+  /** Characters in the input markdown as submitted — the input basis of the charge. Extract responses only. */
+  input_markdown_chars?: number | null;
+
+  /** Characters in the serialized extraction output — the output basis of the charge. Extract responses only. */
+  output_extraction_chars?: number | null;
 }
 
 // ---- Parse ----
@@ -89,12 +95,24 @@ export interface V2ParseMetadata {
 
   markdown_chars?: number | null;
 
-  /** 0-indexed pages that failed to parse. Populated on a 206 partial success. */
+  /** Number of Unicode code points in the returned `markdown` string. */
+  output_markdown_chars?: number | null;
+
+  /** 1-indexed pages that failed to parse. Empty when all pages succeed. */
   failed_pages?: Array<number> | null;
 
   duration_ms?: number | null;
 
   billing?: V2ParseBilling | null;
+
+  /**
+   * Units of every `range` offset in the response. Always `unicode_codepoints`
+   * (Unicode code points into `markdown`).
+   */
+  range_units?: 'unicode_codepoints';
+
+  /** URL of the OpenAPI spec covering this API, for inspection and client generation. */
+  openapi_spec?: string;
 }
 
 /** `[start, end)` Unicode code-point offsets into the top-level `markdown`. */
@@ -102,6 +120,42 @@ export type V2Span = [number, number];
 
 /** `[left, top, right, bottom]` bounding box on the source page, in pixels. */
 export type V2Box = [number, number, number, number];
+
+/** A `[start, end)` slice of the top-level `markdown` string, in `metadata.range_units`. */
+export interface V2Range {
+  start: number;
+
+  end: number;
+}
+
+/**
+ * Axis-aligned bounding box in normalized page coordinates: each value is a
+ * fraction of the page width (`xmin`/`xmax`) or height (`ymin`/`ymax`) in
+ * `[0, 1]`. (The legacy pixel-space box is the `V2Box` tuple above.)
+ */
+export interface V2GroundingBox {
+  xmin: number;
+
+  ymin: number;
+
+  xmax: number;
+
+  ymax: number;
+}
+
+/**
+ * Where a node lives: its 1-indexed `page`, its `range` slice of the top-level
+ * `markdown`, and its bounding `box` in normalized page coordinates. The same
+ * shape is used for page nodes, element nodes, and each `atomic_grounding`
+ * entry, so any grounding object is self-contained.
+ */
+export interface V2Grounding {
+  page: number;
+
+  range: V2Range;
+
+  box: V2GroundingBox;
+}
 
 export type V2ElementType =
   | 'text'
@@ -121,6 +175,21 @@ export interface V2ParseElement {
   id: string;
 
   span: V2Span;
+
+  /**
+   * The element's spatial data: the page it appears on, its `[start, end)`
+   * range in `markdown`, and its bounding box in normalized page coordinates.
+   */
+  grounding?: V2Grounding;
+
+  /**
+   * Fine-grained grounding segments (visual lines today). Present only on leaf
+   * elements; omitted entirely when `options.atomic_grounding` is `false`.
+   */
+  atomic_grounding?: Array<V2Grounding> | null;
+
+  /** This element's slice of `markdown`. Present only with `options.inline_markdown`. */
+  markdown?: string | null;
 
   /** Cells of a `table` element; present only when `type` is `table`. */
   children?: Array<V2ParseElement> | null;
@@ -152,6 +221,15 @@ export interface V2ParsePage {
   reason?: string | null;
 
   children?: Array<V2ParseElement>;
+
+  /**
+   * The page's spatial data: 1-indexed `page` number, `range` into `markdown`,
+   * and a full-page `box`.
+   */
+  grounding?: V2Grounding;
+
+  /** This page's slice of `markdown`. Present only with `options.inline_markdown`. */
+  markdown?: string | null;
 }
 
 /** The document's hierarchical `structure`: pages and their elements. */
@@ -159,6 +237,9 @@ export interface V2ParseStructure {
   type?: 'document';
 
   children?: Array<V2ParsePage>;
+
+  /** The full document markdown, mirroring the top-level `markdown`. Present only with `options.inline_markdown`. */
+  markdown?: string | null;
 }
 
 /** One fine-grained grounding segment (line-level or finer). */
@@ -217,6 +298,9 @@ export interface V2ExtractMetadata {
 
   version: string;
 
+  /** Resolved model version. Spec renamed `version` → `model_version`; both are surfaced. */
+  model_version?: string;
+
   duration_ms: number;
 
   doc_id?: string | null;
@@ -224,6 +308,15 @@ export interface V2ExtractMetadata {
   credit_usage?: number;
 
   billing?: V2Billing | null;
+
+  /**
+   * Units of every `range` offset in the response. Always `unicode_codepoints`
+   * (Unicode code points into `markdown`).
+   */
+  range_units?: 'unicode_codepoints';
+
+  /** URL of the OpenAPI spec covering this API, for inspection and client generation. */
+  openapi_spec?: string;
 }
 
 export interface V2ExtractResult {
@@ -234,6 +327,9 @@ export interface V2ExtractResult {
   markdown: string;
 
   metadata: V2ExtractMetadata;
+
+  /** Present when the output was delivered out-of-band (e.g. a ZDR save URL) instead of inline. */
+  output_ref?: string | null;
 }
 
 // ---- Workflow ----
