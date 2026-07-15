@@ -39,6 +39,20 @@ Methods:
 - <code title="get /v1/ade/parse/jobs">client.parseJobs.<a href="./src/resources/parse-jobs.ts">list</a>({ ...params }) -> ParseJobListResponse</code>
 - <code title="get /v1/ade/parse/jobs/{job_id}">client.parseJobs.<a href="./src/resources/parse-jobs.ts">get</a>(jobID) -> ParseJobGetResponse</code>
 
+# ExtractJobs
+
+Types:
+
+- <code><a href="./src/resources/extract-jobs.ts">ExtractJobCreateResponse</a></code>
+- <code><a href="./src/resources/extract-jobs.ts">ExtractJobListResponse</a></code>
+- <code><a href="./src/resources/extract-jobs.ts">ExtractJobGetResponse</a></code>
+
+Methods:
+
+- <code title="post /v1/ade/extract/jobs">client.extractJobs.<a href="./src/resources/extract-jobs.ts">create</a>({ ...params }) -> ExtractJobCreateResponse</code>
+- <code title="get /v1/ade/extract/jobs">client.extractJobs.<a href="./src/resources/extract-jobs.ts">list</a>({ ...params }) -> ExtractJobListResponse</code>
+- <code title="get /v1/ade/extract/jobs/{job_id}">client.extractJobs.<a href="./src/resources/extract-jobs.ts">get</a>(jobID) -> ExtractJobGetResponse</code>
+
 # V2
 
 The `client.v2` sub-client targets LandingAI's next-generation ADE gateway on its own host (`api.ade.[env].landing.ai`), separate from the V1 host (`api.va.[env].landing.ai`). It is **additive** — `client.v2.*` is a separate surface from the top-level `client.*` (V1) methods above, and using it does not change any V1 behavior.

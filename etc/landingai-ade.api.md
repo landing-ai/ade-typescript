@@ -153,6 +153,8 @@ class LandingAIADE {
     }, options?: RequestOptions): APIPromise<TopLevelAPI.ExtractResponse>;
     extractBuildSchema(body: TopLevelAPI.ExtractBuildSchemaParams, options?: RequestOptions): APIPromise<TopLevelAPI.ExtractBuildSchemaResponse>;
     // (undocumented)
+    extractJobs: API.ExtractJobs;
+    // (undocumented)
     fetchOptions: MergedRequestInit | undefined;
     //
     // (undocumented)
@@ -234,6 +236,7 @@ namespace LandingAIADE {
     type ParseGroundingBox = API.ParseGroundingBox;
     export { type ClassifyResponse as ClassifyResponse, type ExtractResponse as ExtractResponse, type ExtractBuildSchemaResponse as ExtractBuildSchemaResponse, type ParseResponse as ParseResponse, type SectionResponse as SectionResponse, type SplitResponse as SplitResponse, type ClassifyParams as ClassifyParams, type ExtractParams as ExtractParams, type ExtractBuildSchemaParams as ExtractBuildSchemaParams, type ParseParams as ParseParams, type SectionParams as SectionParams, type SplitParams as SplitParams, };
     export { ParseJobs as ParseJobs, type ParseJobCreateResponse as ParseJobCreateResponse, type ParseJobListResponse as ParseJobListResponse, type ParseJobGetResponse as ParseJobGetResponse, type ParseJobCreateParams as ParseJobCreateParams, type ParseJobListParams as ParseJobListParams, };
+    export { ExtractJobs as ExtractJobs, type ExtractJobCreateResponse as ExtractJobCreateResponse, type ExtractJobListResponse as ExtractJobListResponse, type ExtractJobGetResponse as ExtractJobGetResponse, type ExtractJobCreateParams as ExtractJobCreateParams, type ExtractJobListParams as ExtractJobListParams, };
     export { V2 as V2, type Job as Job, type JobError as JobError, type JobList as JobList, type JobStatus as JobStatus, type V2ParseResponse as V2ParseResponse, type V2ParseMetadata as V2ParseMetadata, type V2ParseBilling as V2ParseBilling, type V2ExtractResult as V2ExtractResult, type V2ExtractMetadata as V2ExtractMetadata, type V2FileUploadResponse as V2FileUploadResponse, type V2ParseParams as V2ParseParams, type V2ParseJobCreateParams as V2ParseJobCreateParams, type V2ExtractParams as V2ExtractParams, type V2ExtractJobCreateParams as V2ExtractJobCreateParams, type V2JobListParams as V2JobListParams, type V2Billing as V2Billing, type V2ParseStructure as V2ParseStructure, type V2ParsePage as V2ParsePage, type V2ParseElement as V2ParseElement, type V2GroundingDocument as V2GroundingDocument, type V2GroundingPage as V2GroundingPage, type V2GroundingElement as V2GroundingElement, type V2GroundingEntry as V2GroundingEntry, type V2ElementType as V2ElementType, type V2Span as V2Span, type V2Box as V2Box, type V2WorkflowResult as V2WorkflowResult, type V2WorkflowMetadata as V2WorkflowMetadata, type V2WorkflowParams as V2WorkflowParams, type V2WorkflowJobCreateParams as V2WorkflowJobCreateParams, type WorkflowDocumentInput as WorkflowDocumentInput, type PrebuiltWorkflowStep as PrebuiltWorkflowStep, type WorkflowStepOptions as WorkflowStepOptions, type FileUploadParams as FileUploadParams, type WaitOptions as WaitOptions, };
     // (undocumented)
     type ParseMetadata = API.ParseMetadata;

@@ -98,12 +98,12 @@ const fromUrl = await client.v2.parse({ document_url: 'https://example.com/file.
 
 The response is a `V2ParseResponse`:
 
-| Field | Description |
-| --- | --- |
-| `markdown` | The full document as one Markdown string, in reading order. |
+| Field       | Description                                                                                          |
+| ----------- | ---------------------------------------------------------------------------------------------------- |
+| `markdown`  | The full document as one Markdown string, in reading order.                                          |
 | `structure` | A typed tree (`document` → pages → elements) with element types and character spans into `markdown`. |
-| `grounding` | A tree mirroring `structure` that adds pixel-coordinate bounding boxes for each element. |
-| `metadata` | Processing details: `page_count`, `failed_pages`, `duration_ms`, and `billing` (credits used). |
+| `grounding` | A tree mirroring `structure` that adds pixel-coordinate bounding boxes for each element.             |
+| `metadata`  | Processing details: `page_count`, `failed_pages`, `duration_ms`, and `billing` (credits used).       |
 
 If some pages cannot be parsed, the request still succeeds (HTTP 206) and `metadata.failed_pages` lists the pages that failed. If a synchronous parse times out, the client throws `V2SyncTimeoutError`; use [jobs](#process-large-documents-asynchronously-jobs) instead.
 
@@ -138,12 +138,12 @@ console.log(result.extraction_metadata); // per-field source spans in the Markdo
 
 The response is a `V2ExtractResult`:
 
-| Field | Description |
-| --- | --- |
-| `extraction` | The extracted values, matching your schema. |
+| Field                 | Description                                                                                            |
+| --------------------- | ------------------------------------------------------------------------------------------------------ |
+| `extraction`          | The extracted values, matching your schema.                                                            |
 | `extraction_metadata` | Mirrors `extraction`; each field carries the character spans in the Markdown that the value came from. |
-| `markdown` | The Markdown the extraction ran against, echoed back. |
-| `metadata` | Processing details, including credits used. |
+| `markdown`            | The Markdown the extraction ran against, echoed back.                                                  |
+| `metadata`            | Processing details, including credits used.                                                            |
 
 By default, unsupported schema fields are skipped and extraction continues. Pass `strict: true` to reject such schemas with an error (HTTP 422) instead.
 
@@ -243,15 +243,16 @@ API keys are per-environment: an EU key works only with `environment: 'eu'`.
 
 The v1 methods sit directly on the client.
 
-| Method | What it does |
-| --- | --- |
-| `client.parse(...)` | Parse a document with the DPT-2 model family. Also supports spreadsheets and other Office formats. |
-| `client.extract(...)` | Extract fields from Markdown. The `schema` parameter takes a JSON string. |
-| `client.split(...)` | Split a multi-document file into sub-documents by classification. |
-| `client.classify(...)` | Classify each page of a document. |
-| `client.section(...)` | Generate a hierarchical table of contents. |
-| `client.extractBuildSchema(...)` | Generate an extraction schema from sample documents. |
-| `client.parseJobs` | Async parse jobs (`create`, `get`, `list`). |
+| Method                           | What it does                                                                                       |
+| -------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `client.parse(...)`              | Parse a document with the DPT-2 model family. Also supports spreadsheets and other Office formats. |
+| `client.extract(...)`            | Extract fields from Markdown. The `schema` parameter takes a JSON string.                          |
+| `client.split(...)`              | Split a multi-document file into sub-documents by classification.                                  |
+| `client.classify(...)`           | Classify each page of a document.                                                                  |
+| `client.section(...)`            | Generate a hierarchical table of contents.                                                         |
+| `client.extractBuildSchema(...)` | Generate an extraction schema from sample documents.                                               |
+| `client.parseJobs`               | Async parse jobs (`create`, `get`, `list`).                                                        |
+| `client.extractJobs`             | Async extract jobs (`create`, `get`, `list`).                                                      |
 
 ```ts
 import fs from 'fs';
