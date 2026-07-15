@@ -139,7 +139,7 @@ export interface paths {
         };
         /**
          * ADE Get Parse Jobs
-         * @description Get the status of an async parse job. Once the job has ``completed``, ``data`` carries the parse result (or ``output_url`` when ``output_save_url`` was set).
+         * @description Get the status of an async parse job. Once the job has ``completed``, ``result`` carries the parse response (or ``output_url`` when ``output_save_url`` was set). Partial success (some pages failed) is reported in ``result.metadata.failed_pages``.
          */
         get: operations["parse_get_job"];
         put?: never;
@@ -230,10 +230,10 @@ export interface components {
         /** BaseElementOptions */
         BaseElementOptions: {
             /**
-             * Caption
+             * Markdown
              * @default true
              */
-            caption: boolean;
+            markdown: boolean;
         };
         /** BlocksOptions */
         BlocksOptions: {
@@ -251,6 +251,38 @@ export interface components {
             /** File */
             file: string;
         };
+        /**
+         * Box
+         * @description Axis-aligned bounding box in normalized page coordinates.
+         *
+         *     Every value is a fraction of the page's width (`xmin`/`xmax`) or height
+         *     (`ymin`/`ymax`) in `[0, 1]`, with at most 8 decimal places. To convert to
+         *     pixels, multiply by the dimensions of whatever raster of the page you are
+         *     drawing on. Coordinates are clamped and rounded at construction so the
+         *     in-process value always equals the serialized one.
+         */
+        Box: {
+            /**
+             * Xmax
+             * @description Right edge as a fraction of the page width, in `[0, 1]`.
+             */
+            xmax: number;
+            /**
+             * Xmin
+             * @description Left edge as a fraction of the page width, in `[0, 1]`.
+             */
+            xmin: number;
+            /**
+             * Ymax
+             * @description Bottom edge as a fraction of the page height, in `[0, 1]`.
+             */
+            ymax: number;
+            /**
+             * Ymin
+             * @description Top edge as a fraction of the page height, in `[0, 1]`.
+             */
+            ymin: number;
+        };
         /** Document */
         Document: {
             /**
@@ -258,6 +290,12 @@ export interface components {
              * @description The pages of the document, in source order.
              */
             children?: components["schemas"]["Page"][];
+            /**
+             * Markdown
+             * @description The full document markdown — identical to the top-level `markdown` field, included so the structure tree is self-contained. Present only when `options.inline_markdown` is `true`.
+             * @default null
+             */
+            markdown: string | null;
             /**
              * Type
              * @description The node type. Identifies this node as the root of the structure tree.
@@ -274,6 +312,12 @@ export interface components {
          *     via ``exclude_none=True`` when not set.
          */
         Element: {
+            /**
+             * Atomic Grounding
+             * @description Fine-grained grounding segments at the model's current granularity (visual lines today; finer in future versions, same schema). Present only on leaf elements — every type except `table`. `[]` only when segments are structurally impossible: `table_cell` (a cell has no finer granularity than itself) and elements whose markdown is suppressed via `blocks.<type>.markdown=false`. Any other leaf the model could not segment finer carries a single entry covering the element's full range and box. Omitted entirely when `options.atomic_grounding` is `false`.
+             * @default null
+             */
+            atomic_grounding: components["schemas"]["Grounding"][] | null;
             /**
              * Children
              * @description The cells (`table_cell` elements) of a `table` element. Present only when `type` is `table`.
@@ -292,11 +336,19 @@ export interface components {
              * @default null
              */
             colspan: number | null;
+            /** @description The element's spatial data: the page it appears on, its `[start, end)` range in the top-level `markdown` string, and its bounding box in normalized page coordinates. */
+            grounding: components["schemas"]["Grounding"];
             /**
              * Id
-             * @description A unique identifier for this element within the document. Use it to look up the element's entry in the top-level `grounding` map; treat the value as opaque.
+             * @description Semantic element id, unique within the document. Format `<type>-<index>`, where `<index>` is a per-type 0-based counter assigned in reading order — `text-0` is the first text element in the document, `figure-0` the first figure, `table_cell-0` the first cell of the first table. Stable within a response but not across re-parses of the same document.
              */
             id: string;
+            /**
+             * Markdown
+             * @description The element's slice of the top-level `markdown` string (`markdown[grounding.range.start:grounding.range.end]`). `""` for zero-length ranges (e.g. blocks suppressed via `blocks.<type>.markdown=false`). Present only when `options.inline_markdown` is `true`.
+             * @default null
+             */
+            markdown: string | null;
             /**
              * Row
              * @description 0-indexed row position of this cell within its parent `table`. Present only on `table_cell` elements.
@@ -310,14 +362,6 @@ export interface components {
              */
             rowspan: number | null;
             /**
-             * Span
-             * @description Unicode code point offsets `[start, end)` in the top-level `markdown` string covered by this element.
-             */
-            span: [
-                number,
-                number
-            ];
-            /**
              * Type
              * @description The element type. Determines which optional fields appear on this element.
              * @enum {string}
@@ -327,143 +371,29 @@ export interface components {
         /** FigureOptions */
         FigureOptions: {
             /**
-             * Caption
+             * Markdown
              * @default true
              */
-            caption: boolean;
+            markdown: boolean;
         };
         /**
-         * GroundingDocument
-         * @description Root of the `grounding` tree. Mirrors the hierarchy of `structure`
-         *     (`document → page → element → table_cell`), carrying the spatial data
-         *     (`box`, `parts`) that `structure` deliberately omits.
-         */
-        GroundingDocument: {
-            /**
-             * Children
-             * @description The pages of the document, in source order — the same order as `structure.children`.
-             */
-            children?: components["schemas"]["GroundingPage"][];
-            /**
-             * Type
-             * @description The node type. Identifies this node as the root of the grounding tree.
-             * @default document
-             * @constant
-             */
-            type: "document";
-        };
-        /**
-         * GroundingElement
-         * @description Spatial grounding for one document element.
+         * Grounding
+         * @description Where a node lives: its page, its slice of `markdown`, and its box.
          *
-         *     Mirrors the element's node in the `structure` tree (same `id`, same `span`)
-         *     and layers the spatial data on top: the element-level bounding box, its
-         *     fine-grained `parts`, and — for a `table` — its cells nested as `children`.
+         *     The same shape is used for page nodes, element nodes, and each
+         *     `atomic_grounding` entry, so any grounding object is self-contained — it
+         *     can be lifted out of the tree and still locates its content.
          */
-        GroundingElement: {
-            /**
-             * Box
-             * @description Bounding box `[left, top, right, bottom]` for the full element on the source page, in pixels.
-             */
-            box: [
-                number,
-                number,
-                number,
-                number
-            ];
-            /**
-             * Children
-             * @description The cells (`table_cell` grounding nodes) of a `table` element, mirroring the table's `children` in the `structure` tree. Present only when `type` is `table`.
-             * @default null
-             */
-            children: components["schemas"]["GroundingElement"][] | null;
-            /**
-             * Id
-             * @description The element's unique identifier within the document. Matches the same element's `id` in the `structure` tree.
-             */
-            id: string;
-            /**
-             * Parts
-             * @description Finer-grained grounding segments within the element. Per visual line for `text` and `marginalia`; empty for other element types or when `options.grounding.parts` is `false`.
-             */
-            parts?: components["schemas"]["GroundingEntry"][];
-            /**
-             * Span
-             * @description Unicode code point offsets `[start, end)` in the top-level `markdown` string covered by this element. Matches the element's `span` in the `structure` tree.
-             */
-            span: [
-                number,
-                number
-            ];
-            /**
-             * Type
-             * @description The element type. Matches the same element's `type` in the `structure` tree.
-             * @enum {string}
-             */
-            type: "text" | "table" | "table_cell" | "figure" | "marginalia" | "attestation" | "logo" | "card" | "scan_code";
-        };
-        /**
-         * GroundingEntry
-         * @description One fine-grained grounding segment (line-level or finer).
-         */
-        GroundingEntry: {
-            /**
-             * Box
-             * @description Bounding box `[left, top, right, bottom]` for this part on the source page, in pixels.
-             */
-            box: [
-                number,
-                number,
-                number,
-                number
-            ];
-            /**
-             * Span
-             * @description Unicode code point offsets `[start, end)` in the top-level `markdown` string covered by this part.
-             */
-            span: [
-                number,
-                number
-            ];
-        };
-        /** GroundingOptions */
-        GroundingOptions: {
-            /**
-             * Parts
-             * @default true
-             */
-            parts: boolean;
-        };
-        /**
-         * GroundingPage
-         * @description A page node in the `grounding` tree, mirroring the page in `structure`.
-         */
-        GroundingPage: {
-            /**
-             * Children
-             * @description Grounding for the elements on this page, in reading order — the same order and `id`s as the page's `children` in the `structure` tree. Empty for failed pages.
-             */
-            children?: components["schemas"]["GroundingElement"][];
+        Grounding: {
+            /** @description Bounding box in normalized page coordinates (`0`–`1` fractions of page width/height, at most 8 decimal places). A page node's box is always the full page `{0, 0, 1, 1}`. */
+            box: components["schemas"]["Box"];
             /**
              * Page
-             * @description The 0-indexed page number in the source document. Matches the page's `page` in the `structure` tree.
+             * @description 1-indexed page number this grounding is on. On a page node, the page's own number.
              */
             page: number;
-            /**
-             * Span
-             * @description Unicode code point offsets `[start, end)` in the top-level `markdown` string covered by this page. Zero-length `[n, n]` for failed pages.
-             */
-            span: [
-                number,
-                number
-            ];
-            /**
-             * Type
-             * @description The node type. Identifies this node as a page in the grounding tree.
-             * @default page
-             * @constant
-             */
-            type: "page";
+            /** @description `[start, end)` offsets into the top-level `markdown` string covered by this node or segment. */
+            range: components["schemas"]["Range"];
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -474,40 +404,23 @@ export interface components {
         Page: {
             /**
              * Children
-             * @description The elements detected on this page, in reading order.
+             * @description The elements detected on this page, in reading order. Empty for failed pages.
              */
             children?: components["schemas"]["Element"][];
+            /** @description The page's spatial data: `page` is the 1-indexed page number in the source document (not contiguous when `options.pages` filters out some pages); `range` covers this page's content in the top-level `markdown` string (zero-length `start == end` for failed pages); `box` is always the full page `{0, 0, 1, 1}`. */
+            grounding: components["schemas"]["Grounding"];
             /**
-             * Dpi
-             * @description DPI used to scale this page's PDF coordinates to pixels (pixels = PDF_points × dpi / 72). Present only for pages that originated from a PDF; omitted for image-input pages (which have no DPI concept — their coordinates are already pixels relative to the original upload) and for pages with `status` `failed`.
+             * Markdown
+             * @description This page's slice of the top-level `markdown` string (`markdown[grounding.range.start:grounding.range.end]`). `""` for failed pages. Present only when `options.inline_markdown` is `true`.
              * @default null
              */
-            dpi: number | null;
-            /**
-             * Height
-             * @description Page height in pixels. Omitted when `status` is `failed`.
-             * @default null
-             */
-            height: number | null;
-            /**
-             * Page
-             * @description The 0-indexed page number in the source document. Not contiguous when `options.pages` filters out some pages.
-             */
-            page: number;
+            markdown: string | null;
             /**
              * Reason
              * @description Failure reason. Present only when `status` is `failed`.
              * @default null
              */
             reason: string | null;
-            /**
-             * Span
-             * @description Unicode code point offsets `[start, end)` in the top-level `markdown` string covered by this page. Zero-length `[n, n]` for failed pages.
-             */
-            span: [
-                number,
-                number
-            ];
             /**
              * Status
              * @description Whether this page was parsed successfully (`ok`) or failed (`failed`).
@@ -522,12 +435,6 @@ export interface components {
              * @constant
              */
             type: "page";
-            /**
-             * Width
-             * @description Page width in pixels. Omitted when `status` is `failed`.
-             * @default null
-             */
-            width: number | null;
         };
         /**
          * ParseBilling
@@ -561,38 +468,48 @@ export interface components {
             duration_ms: number | null;
             /**
              * Failed Pages
-             * @description 0-indexed page numbers that failed to parse. Empty when all pages succeed; failed pages also appear in `structure.children` with `status: failed`.
+             * @description 1-indexed page numbers that failed to parse. Empty when all pages succeed; failed pages also appear in `structure.children` with `status: failed`.
              */
             failed_pages: number[];
             /**
              * Job Id
-             * @description The parse job identifier — always server-minted and unique per submit. On the async `/jobs` route this is the id the caller polls. Correlates with the job's entry in your billing dashboard.
+             * @description The parse job identifier — always server-minted and unique per submit. On the async `/jobs` route this is the id the caller polls. Correlates with the job's entry in your billing dashboard. Format: ``<service>-<26-character Crockford base32 ULID>`` matching ``^(parse|extract)-[0-9a-hjkmnp-tv-z]{26}$``. Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued.
              */
             job_id: string | null;
-            /**
-             * Markdown Chars
-             * @description Number of Unicode code points in the returned `markdown` string.
-             */
-            markdown_chars: number | null;
             /**
              * Model Version
              * @description The exact model snapshot that parsed the document, e.g. `dpt-3-pro-20260710`.
              */
             model_version: string | null;
             /**
+             * Openapi Spec
+             * @description URL of the OpenAPI spec covering this API, for inspection and client generation.
+             */
+            openapi_spec: string;
+            /**
+             * Output Markdown Chars
+             * @description Number of Unicode code points in the returned `markdown` string.
+             */
+            output_markdown_chars: number | null;
+            /**
              * Page Count
              * @description Total number of pages in the source document. Includes pages filtered out by `options.pages`; the actual returned pages are in `structure.children`.
              */
             page_count: number | null;
+            /**
+             * Range Units
+             * @description Units of every `range` offset in the response. Always `"unicode_codepoints"` (Unicode code points into `markdown`). Declared explicitly so consumers know how to slice the string — e.g. JavaScript strings are UTF-16, so a naive `.slice()` drifts when the markdown contains astral characters; such consumers must convert code-point offsets to UTF-16 indices first.
+             * @constant
+             */
+            range_units: "unicode_codepoints";
         };
         /**
          * ParseResponse
          * @description The parse result: the full document as `markdown`, its hierarchical
-         *     `structure`, per-element spatial `grounding`, and request `metadata`.
+         *     `structure` (with per-node spatial `grounding` inline), and request
+         *     `metadata`.
          */
         ParseResponse: {
-            /** @description The document's spatial grounding, as a tree mirroring `structure` (`document → page → element → table_cell`). Each element node carries the same `id` and `span` as in `structure`, plus its bounding box and finer-grained parts. */
-            grounding: components["schemas"]["GroundingDocument"];
             /**
              * Markdown
              * @description The full document as a single Markdown string, in reading order.
@@ -600,7 +517,7 @@ export interface components {
             markdown: string;
             /** @description Information about the request: model version, page count, duration, billing, and more. */
             metadata: components["schemas"]["ParseMetadata"];
-            /** @description The document's hierarchical structure: pages and the elements detected on each page. Spatial information for each element is in `grounding`. */
+            /** @description The document's hierarchical structure: pages and the elements detected on each page. Every node below the root carries its spatial data inline in a `grounding` object (`{page, range, box}`, normalized page coordinates); leaf elements additionally carry `atomic_grounding`. */
             structure: components["schemas"]["Document"];
         };
         /**
@@ -645,19 +562,35 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /**
+         * Range
+         * @description A `[start, end)` slice of the top-level `markdown` string.
+         */
+        Range: {
+            /**
+             * End
+             * @description Exclusive end offset into the top-level `markdown` string, in the units declared by `metadata.range_units` (Unicode code points).
+             */
+            end: number;
+            /**
+             * Start
+             * @description Inclusive start offset into the top-level `markdown` string, in the units declared by `metadata.range_units` (Unicode code points).
+             */
+            start: number;
+        };
         /** TableOptions */
         TableOptions: {
-            /**
-             * Caption
-             * @default true
-             */
-            caption: boolean;
             /**
              * Format
              * @default html
              * @enum {string}
              */
             format: "markdown" | "html";
+            /**
+             * Markdown
+             * @default true
+             */
+            markdown: boolean;
         };
         /**
          * V2Billing
@@ -665,6 +598,18 @@ export interface components {
          *     charged.
          */
         V2Billing: {
+            /**
+             * Input Markdown Chars
+             * @description Characters (Unicode code points) in the input markdown as submitted — the input basis of the credit charge. Extract responses only.
+             * @default null
+             */
+            input_markdown_chars: number | null;
+            /**
+             * Output Extraction Chars
+             * @description Characters in the serialized extraction output — the output basis of the credit charge. Extract responses only.
+             * @default null
+             */
+            output_extraction_chars: number | null;
             /**
              * Service Tier
              * @description The service tier the request ran in: `standard` or `priority`. A sync request reports `priority` (same lane, same price).
@@ -708,10 +653,19 @@ export interface components {
              */
             job_id: string;
             /**
-             * Version
+             * Model Version
              * @description Resolved model version.
              */
-            version: string;
+            model_version: string;
+            /** @description URL of the OpenAPI spec covering this API, for inspection and client generation. */
+            openapi_spec: string;
+            /**
+             * Range Units
+             * @description Units of every `range` offset in the response. Always `"unicode_codepoints"` (Unicode code points into `markdown`). Declared explicitly so consumers know how to slice the string — e.g. JavaScript strings are UTF-16, so a naive `.slice()` drifts when the markdown contains astral characters.
+             * @default unicode_codepoints
+             * @constant
+             */
+            range_units: "unicode_codepoints";
         };
         /**
          * V2ExtractOptions
@@ -749,6 +703,8 @@ export interface components {
              * @description Gateway job id (workflow id).
              */
             job_id: string;
+            /** @description URL of the OpenAPI spec covering this API, for inspection and client generation. */
+            openapi_spec: string;
         };
         /** ValidationError */
         ValidationError: {
@@ -799,7 +755,7 @@ export interface components {
         WorkflowStepOptions: {
             /**
              * Pages
-             * @description 0-indexed page indices to process. ``null`` = all pages. Negative indices are rejected; indices ≥ page_count are silently ignored.
+             * @description 1-indexed page numbers to process. ``null`` = all pages. Values < 1 are rejected; numbers > page_count are silently ignored.
              * @default null
              */
             pages: number[] | null;
@@ -967,7 +923,7 @@ export interface operations {
                         };
                         /**
                          * Extraction Metadata
-                         * @description Per-field metadata, mirroring ``extraction`` with leaf values replaced by ``{value, spans}`` objects.
+                         * @description Per-field metadata, mirroring ``extraction`` with leaf values replaced by ``{value, ranges}`` objects.
                          */
                         extraction_metadata: {
                             [key: string]: unknown;
@@ -977,8 +933,13 @@ export interface operations {
                          * @description Echoed input markdown.
                          */
                         markdown: string;
-                        /** @description Request metadata (job_id, version, duration_ms, doc_id, credit_usage). */
+                        /** @description Request metadata (job_id, model_version, duration_ms, doc_id, credit_usage). */
                         metadata: components["schemas"]["V2ExtractMetadata"];
+                        /**
+                         * Output Ref
+                         * @default null
+                         */
+                        output_ref: string | null;
                     };
                 };
             };
@@ -1021,10 +982,11 @@ export interface operations {
                             completed_at?: string | null;
                             created_at?: string | null;
                             failure_reason?: string | null;
+                            /** @description The unique identifier for this v2-extract job. Format: ``extract-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
                             job_id?: string;
+                            model_version?: string | null;
                             /** @enum {string} */
                             status?: "pending" | "processing" | "completed" | "failed";
-                            version?: string | null;
                         }[];
                         page?: number;
                         page_size?: number;
@@ -1151,6 +1113,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         created_at?: string | null;
+                        /** @description The unique identifier for this v2-extract job. Format: ``extract-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
                         job_id?: string;
                         /** @enum {string} */
                         status?: "pending" | "processing" | "completed" | "failed";
@@ -1187,6 +1150,7 @@ export interface operations {
                             code?: string;
                             message?: string;
                         };
+                        /** @description The unique identifier for this v2-extract job. Format: ``extract-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
                         job_id?: string;
                         /** @description Best-effort progress, present while processing only for jobs that report it. */
                         progress?: unknown;
@@ -1201,7 +1165,7 @@ export interface operations {
                             };
                             /**
                              * Extraction Metadata
-                             * @description Per-field metadata, mirroring ``extraction`` with leaf values replaced by ``{value, spans}`` objects.
+                             * @description Per-field metadata, mirroring ``extraction`` with leaf values replaced by ``{value, ranges}`` objects.
                              */
                             extraction_metadata: {
                                 [key: string]: unknown;
@@ -1211,8 +1175,13 @@ export interface operations {
                              * @description Echoed input markdown.
                              */
                             markdown: string;
-                            /** @description Request metadata (job_id, version, duration_ms, doc_id, credit_usage). */
+                            /** @description Request metadata (job_id, model_version, duration_ms, doc_id, credit_usage). */
                             metadata: components["schemas"]["V2ExtractMetadata"];
+                            /**
+                             * Output Ref
+                             * @default null
+                             */
+                            output_ref: string | null;
                         } | null;
                         /** @enum {string} */
                         status?: "pending" | "processing" | "completed" | "failed";
@@ -1254,22 +1223,31 @@ export interface operations {
                      * @description Optional object that customizes the parse. Use it to select which pages to process, adjust how content appears in the Markdown, or control how much detail the response includes. Sent as a JSON-serialized string in form data.
                      */
                     options?: {
+                        /**
+                         * Atomic Grounding
+                         * @description Include the fine-grained `atomic_grounding` array on leaf elements. Set `false` to omit the field entirely from every node.
+                         * @default true
+                         */
+                        atomic_grounding?: boolean;
                         blocks?: components["schemas"]["BlocksOptions"];
                         /**
-                         * Dpi
-                         * @description Resolution for PDF coordinate scaling. Bounding box coordinates and page dimensions are returned in pixels at this DPI (pixels = PDF_points × dpi / 72). Allowed range: 72–300. Has no effect for image inputs.
-                         * @default 200
+                         * Inline Markdown
+                         * @description Include each node's slice of the document `markdown` inline as a `markdown` field on every structure node: the document root, each page, and each element (including table cells). `atomic_grounding` entries do not carry it.
+                         * @default false
                          */
-                        dpi?: number;
-                        grounding?: components["schemas"]["GroundingOptions"];
+                        inline_markdown?: boolean;
                         /**
                          * Pages
                          * @default null
                          */
                         pages?: number[] | null;
+                        /**
+                         * Password
+                         * @description Password for encrypted PDFs. Not currently supported — providing a value returns a 422 error; decrypt the file before uploading.
+                         * @default null
+                         */
+                        password?: string | null;
                     };
-                    /** @description Encrypted PDFs are not currently supported. Providing a password returns a 422 error; decrypt the file before uploading. */
-                    password?: string;
                 };
             };
         };
@@ -1330,24 +1308,26 @@ export interface operations {
                         has_more?: boolean;
                         /** @description The caller's parse jobs for this page, newest first. */
                         jobs?: {
-                            /** @description Unix timestamp (seconds) for when the job was created. Mirrors ``received_at``; exposed so clients have an explicit creation time. */
-                            created_at?: number;
+                            /** @description ISO-8601 timestamp for when the job finished, if terminal. */
+                            completed_at?: string | null;
+                            /** @description ISO-8601 timestamp for when the job was created. */
+                            created_at?: string | null;
                             /** @description The reason the job failed. Present only when ``status`` is ``failed``. */
-                            failure_reason?: string;
-                            /** @description The unique identifier for the parse job. */
+                            failure_reason?: string | null;
+                            /** @description The unique identifier for the parse job. Format: ``<service>-<26-character Crockford base32 ULID>`` matching ``^(parse|extract)-[0-9a-hjkmnp-tv-z]{26}$``. Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
                             job_id?: string;
-                            /** @description Job completion as a decimal from 0 (not started) to 1 (complete). */
-                            progress?: number;
-                            /** @description Unix timestamp (seconds) for when the job was received. */
-                            received_at?: number;
                             /**
-                             * @description The job's current status: ``pending``, ``processing``, ``completed``, ``failed``, or ``cancelled``.
+                             * @description The job's current status: ``pending``, ``processing``, ``completed``, or ``failed``.
                              * @enum {string}
                              */
-                            status?: "pending" | "processing" | "completed" | "failed" | "cancelled";
+                            status?: "pending" | "processing" | "completed" | "failed";
+                            /** @description The model snapshot used to parse the document. */
+                            version?: string | null;
                         }[];
-                        /** @description The organization that owns these jobs. */
-                        org_id?: string | null;
+                        /** @description The 0-indexed page number. */
+                        page?: number;
+                        /** @description Items per page. */
+                        page_size?: number;
                     };
                 };
             };
@@ -1386,24 +1366,33 @@ export interface operations {
                      * @description Optional object that customizes the parse. Use it to select which pages to process, adjust how content appears in the Markdown, or control how much detail the response includes. Sent as a JSON-serialized string in form data.
                      */
                     options?: {
+                        /**
+                         * Atomic Grounding
+                         * @description Include the fine-grained `atomic_grounding` array on leaf elements. Set `false` to omit the field entirely from every node.
+                         * @default true
+                         */
+                        atomic_grounding?: boolean;
                         blocks?: components["schemas"]["BlocksOptions"];
                         /**
-                         * Dpi
-                         * @description Resolution for PDF coordinate scaling. Bounding box coordinates and page dimensions are returned in pixels at this DPI (pixels = PDF_points × dpi / 72). Allowed range: 72–300. Has no effect for image inputs.
-                         * @default 200
+                         * Inline Markdown
+                         * @description Include each node's slice of the document `markdown` inline as a `markdown` field on every structure node: the document root, each page, and each element (including table cells). `atomic_grounding` entries do not carry it.
+                         * @default false
                          */
-                        dpi?: number;
-                        grounding?: components["schemas"]["GroundingOptions"];
+                        inline_markdown?: boolean;
                         /**
                          * Pages
                          * @default null
                          */
                         pages?: number[] | null;
+                        /**
+                         * Password
+                         * @description Password for encrypted PDFs. Not currently supported — providing a value returns a 422 error; decrypt the file before uploading.
+                         * @default null
+                         */
+                        password?: string | null;
                     };
                     /** @description Public URL the full response is delivered to; the API response then carries ``output_url`` instead of inline data. */
                     output_save_url?: string;
-                    /** @description Encrypted PDFs are not currently supported. Providing a password returns a 422 error; decrypt the file before uploading. */
-                    password?: string;
                     /**
                      * @description Async service tier (``POST /jobs`` only). ``priority`` runs in the fast lane at the sync billing rate; absent → ``standard``.
                      * @enum {string}
@@ -1420,8 +1409,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @description The unique identifier for the created parse job. Poll ``GET /v2/parse/jobs/{job_id}`` for its status and result. */
+                        /** @description ISO-8601 timestamp for when the job was created. */
+                        created_at: string | null;
+                        /** @description The unique identifier for the created parse job. Poll ``GET /v2/parse/jobs/{job_id}`` for its status and result. Format: ``<service>-<26-character Crockford base32 ULID>`` matching ``^(parse|extract)-[0-9a-hjkmnp-tv-z]{26}$``. Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
                         job_id: string;
+                        /**
+                         * @description The job's status at creation — normally ``pending`` (a just-created job that is still running is reported as ``pending``), but may already be a terminal ``completed`` / ``failed`` if the job finished before the create response was rendered.
+                         * @enum {string}
+                         */
+                        status: "pending" | "processing" | "completed" | "failed";
                     };
                 };
             };
@@ -1446,66 +1442,29 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @description Unix timestamp (seconds) for when the job was created. Mirrors ``received_at``; exposed so clients have an explicit creation time. */
-                        created_at?: number | null;
-                        /** @description The parse result, present once the job has ``completed`` and ``output_save_url`` was not set. When ``output_save_url`` was set, the result is delivered there and ``output_url`` is returned instead. */
-                        data?: components["schemas"]["ParseResponse"] | null;
-                        /** @description The reason the job failed. Present only when ``status`` is ``failed``. */
-                        failure_reason?: string | null;
-                        /** @description The unique identifier for this parse job. */
+                        /** @description ISO-8601 timestamp; present once the job is terminal. */
+                        completed_at?: string;
+                        /** @description ISO-8601 timestamp for when the job was created. */
+                        created_at?: string | null;
+                        /** @description Present once the job has ``failed`` — the failure code + message. */
+                        error?: {
+                            /** @description Stable error code. */
+                            code?: string;
+                            message?: string;
+                        };
+                        /** @description The unique identifier for this parse job. Format: ``<service>-<26-character Crockford base32 ULID>`` matching ``^(parse|extract)-[0-9a-hjkmnp-tv-z]{26}$``. Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
                         job_id?: string;
-                        /** @description The result's ``metadata`` (model version, page count, billing, and more). Present once the job has ``completed``. */
-                        metadata?: components["schemas"]["ParseMetadata"] | null;
-                        /** @description The organization that owns this job. */
-                        org_id?: string | null;
-                        /** @description The URL the result was delivered to. Present once the job has ``completed`` and ``output_save_url`` was set; the result is delivered there instead of inline ``data``. */
+                        /** @description The URL the result was delivered to. Present once the job has ``completed`` and ``output_save_url`` was set, instead of inline ``result``. */
                         output_url?: string | null;
-                        /** @description Job completion progress as a decimal from 0 to 1, where 0 is not started, 1 is finished, and values between 0 and 1 indicate work in progress. */
+                        /** @description Job completion as a decimal from 0 (not started) to 1 (complete). Present while ``processing``. */
                         progress?: number;
-                        /** @description Unix timestamp (seconds) for when the job was received. */
-                        received_at?: number | null;
+                        /** @description The parse response, present once the job has ``completed`` and ``output_save_url`` was not set. When ``output_save_url`` was set, the result is delivered there and ``output_url`` is returned instead. */
+                        result?: components["schemas"]["ParseResponse"] | null;
                         /**
-                         * @description The job's current status: ``pending``, ``processing``, ``completed``, ``failed``, or ``cancelled``.
+                         * @description The job's current status: ``pending``, ``processing``, ``completed``, or ``failed``.
                          * @enum {string}
                          */
-                        status?: "pending" | "processing" | "completed" | "failed" | "cancelled";
-                        /** @description The model snapshot used to parse the document. */
-                        version?: string | null;
-                    };
-                };
-            };
-            /** @description Partial success (some pages failed to parse) */
-            206: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Unix timestamp (seconds) for when the job was created. Mirrors ``received_at``; exposed so clients have an explicit creation time. */
-                        created_at?: number | null;
-                        /** @description The parse result, present once the job has ``completed`` and ``output_save_url`` was not set. When ``output_save_url`` was set, the result is delivered there and ``output_url`` is returned instead. */
-                        data?: components["schemas"]["ParseResponse"] | null;
-                        /** @description The reason the job failed. Present only when ``status`` is ``failed``. */
-                        failure_reason?: string | null;
-                        /** @description The unique identifier for this parse job. */
-                        job_id?: string;
-                        /** @description The result's ``metadata`` (model version, page count, billing, and more). Present once the job has ``completed``. */
-                        metadata?: components["schemas"]["ParseMetadata"] | null;
-                        /** @description The organization that owns this job. */
-                        org_id?: string | null;
-                        /** @description The URL the result was delivered to. Present once the job has ``completed`` and ``output_save_url`` was set; the result is delivered there instead of inline ``data``. */
-                        output_url?: string | null;
-                        /** @description Job completion progress as a decimal from 0 to 1, where 0 is not started, 1 is finished, and values between 0 and 1 indicate work in progress. */
-                        progress?: number;
-                        /** @description Unix timestamp (seconds) for when the job was received. */
-                        received_at?: number | null;
-                        /**
-                         * @description The job's current status: ``pending``, ``processing``, ``completed``, ``failed``, or ``cancelled``.
-                         * @enum {string}
-                         */
-                        status?: "pending" | "processing" | "completed" | "failed" | "cancelled";
-                        /** @description The model snapshot used to parse the document. */
-                        version?: string | null;
+                        status?: "pending" | "processing" | "completed" | "failed";
                     };
                 };
             };
@@ -1645,6 +1604,11 @@ export interface operations {
                         output: {
                             [key: string]: unknown;
                         };
+                        /**
+                         * Output Ref
+                         * @default null
+                         */
+                        output_ref: string | null;
                     };
                 };
             };
@@ -1687,10 +1651,11 @@ export interface operations {
                             completed_at?: string | null;
                             created_at?: string | null;
                             failure_reason?: string | null;
+                            /** @description The unique identifier for this v2-workflow job. Format: ``v2-workflow-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
                             job_id?: string;
+                            model_version?: string | null;
                             /** @enum {string} */
                             status?: "pending" | "processing" | "completed" | "failed";
-                            version?: string | null;
                         }[];
                         page?: number;
                         page_size?: number;
@@ -1822,6 +1787,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         created_at?: string | null;
+                        /** @description The unique identifier for this v2-workflow job. Format: ``v2-workflow-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
                         job_id?: string;
                         /** @enum {string} */
                         status?: "pending" | "processing" | "completed" | "failed";
@@ -1858,6 +1824,7 @@ export interface operations {
                             code?: string;
                             message?: string;
                         };
+                        /** @description The unique identifier for this v2-workflow job. Format: ``v2-workflow-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
                         job_id?: string;
                         /** @description Best-effort progress, present while processing only for jobs that report it. */
                         progress?: unknown;
@@ -1872,6 +1839,11 @@ export interface operations {
                             output: {
                                 [key: string]: unknown;
                             };
+                            /**
+                             * Output Ref
+                             * @default null
+                             */
+                            output_ref: string | null;
                         } | null;
                         /** @enum {string} */
                         status?: "pending" | "processing" | "completed" | "failed";
