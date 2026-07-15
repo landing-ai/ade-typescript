@@ -57,8 +57,6 @@ export interface V2WorkflowParams {
 
   /** Optional projection map: response field name → `"$output.<step>.<field>..."`. */
   output?: Record<string, string> | null;
-
-  idempotency_key?: string | null;
 }
 
 export interface V2WorkflowJobCreateParams extends V2WorkflowParams {
@@ -101,7 +99,6 @@ export function prepareWorkflowRequest(params: V2WorkflowJobCreateParams): Prepa
   if (files.length === 0) {
     const body: Record<string, unknown> = { inputs: resolvedInputs, steps: params.steps };
     if (params.output != null) body['output'] = params.output;
-    if (params.idempotency_key != null) body['idempotency_key'] = params.idempotency_key;
     if (params.service_tier != null) body['service_tier'] = params.service_tier;
     return { multipart: false, body };
   }
@@ -112,7 +109,6 @@ export function prepareWorkflowRequest(params: V2WorkflowJobCreateParams): Prepa
     steps: JSON.stringify(params.steps),
   };
   if (params.output != null) form['output'] = JSON.stringify(params.output);
-  if (params.idempotency_key != null) form['idempotency_key'] = params.idempotency_key;
   if (params.service_tier != null) form['service_tier'] = params.service_tier;
   for (const [name, file] of files) form[name] = file;
   return { multipart: true, body: form };

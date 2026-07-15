@@ -204,7 +204,7 @@ console.log(response.markdown);
 
 #### V2 Extract
 
-Extract structured data from Markdown using a JSON schema. Provide exactly one of `markdown`, `markdown_ref` (from `client.v2.files.upload`), or `markdown_url`.
+Extract structured data from Markdown using a JSON schema. Provide exactly one of `markdown` or `markdown_url`.
 
 ```ts
 const response = await client.v2.extract({
@@ -229,16 +229,6 @@ const done = await client.v2.parseJobs.wait(job.job_id, { timeout: 600000, raise
 console.log(done.status, done.result);
 
 // client.v2.extractJobs.{create,get,list,wait} mirror the same shape for extract jobs.
-```
-
-#### File staging
-
-`client.v2.files.upload` stages bytes on the ADE data plane and returns a `file_ref` you can pass as `markdown_ref` to extract:
-
-<!-- prettier-ignore -->
-```ts
-const fileRef = await client.v2.files.upload({ file: fs.createReadStream('doc.md') });
-const result = await client.v2.extract({ schema: { type: 'object' }, markdown_ref: fileRef });
 ```
 
 `client.v2.parse` and `client.v2.extract` also accept `saveTo`, with the same auto-naming behavior as the V1 methods above.

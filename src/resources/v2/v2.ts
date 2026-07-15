@@ -54,9 +54,8 @@ export class V2 extends V2Resource {
   /**
    * Extract structured data from markdown synchronously (`POST /v2/extract`,
    * JSON body). `schema` accepts a JSON-Schema object or a JSON-encoded string.
-   * Provide exactly one of `markdown`, `markdown_ref`, or `markdown_url`.
-   * Rejects with `V2SyncTimeoutError` on a 504; use `extractJobs` for
-   * long-running documents.
+   * Provide exactly one of `markdown` or `markdown_url`. Rejects with
+   * `V2SyncTimeoutError` on a 504; use `extractJobs` for long-running documents.
    */
   async extract(
     body: V2ExtractParams & { saveTo?: string },

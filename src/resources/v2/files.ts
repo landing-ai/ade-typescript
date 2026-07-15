@@ -12,9 +12,8 @@ export interface FileUploadParams {
 
 export class Files extends V2Resource {
   /**
-   * Stage a file's bytes on the ADE data plane and return a `file_ref` string,
-   * which can be passed as `markdown_ref` to `client.v2.extract` /
-   * `client.v2.extractJobs.create`. Served on the ADE host under `/v1/files`.
+   * Stage a file's bytes on the ADE data plane and return a `file_ref` string.
+   * Served on the ADE host under `/v1/files`.
    */
   async upload(body: FileUploadParams, options?: RequestOptions): Promise<string> {
     const response = await this._client.post<V2FileUploadResponse>(
