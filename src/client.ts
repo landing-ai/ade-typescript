@@ -33,6 +33,14 @@ import {
 } from './resources/top-level';
 import { APIPromise } from './core/api-promise';
 import {
+  ExtractJobCreateParams,
+  ExtractJobCreateResponse,
+  ExtractJobGetResponse,
+  ExtractJobListParams,
+  ExtractJobListResponse,
+  ExtractJobs,
+} from './resources/extract-jobs';
+import {
   ParseJobCreateParams,
   ParseJobCreateResponse,
   ParseJobGetResponse,
@@ -1099,10 +1107,12 @@ export class LandingAIADE {
   static toFile = Uploads.toFile;
 
   parseJobs: API.ParseJobs = new API.ParseJobs(this);
+  extractJobs: API.ExtractJobs = new API.ExtractJobs(this);
   v2: V2 = new V2(this);
 }
 
 LandingAIADE.ParseJobs = ParseJobs;
+LandingAIADE.ExtractJobs = ExtractJobs;
 LandingAIADE.V2 = V2;
 
 export declare namespace LandingAIADE {
@@ -1130,6 +1140,15 @@ export declare namespace LandingAIADE {
     type ParseJobGetResponse as ParseJobGetResponse,
     type ParseJobCreateParams as ParseJobCreateParams,
     type ParseJobListParams as ParseJobListParams,
+  };
+
+  export {
+    ExtractJobs as ExtractJobs,
+    type ExtractJobCreateResponse as ExtractJobCreateResponse,
+    type ExtractJobListResponse as ExtractJobListResponse,
+    type ExtractJobGetResponse as ExtractJobGetResponse,
+    type ExtractJobCreateParams as ExtractJobCreateParams,
+    type ExtractJobListParams as ExtractJobListParams,
   };
 
   export {
