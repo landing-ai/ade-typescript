@@ -13,6 +13,9 @@ dist-bundle
 *.mcpb
 oidc
 
+# api-extractor working dir (surface-lock); the committed report lives in etc/
+temp
+
 # local env / secrets — never commit API keys
 .env
 .env.local

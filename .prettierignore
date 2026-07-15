@@ -5,3 +5,8 @@ CHANGELOG.md
 
 # don't format tsc output, will break source maps
 dist
+
+# spec-sync artifacts: specs/v1-ade.json must stay byte-identical to `jq -S` output (prettier
+# would reformat it and make check-drift see perpetual drift); etc/ holds the api-extractor report.
+specs
+etc
