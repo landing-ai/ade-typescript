@@ -137,14 +137,21 @@ Spec-sync PRs are AI-drafted and **require human review** before merge.
 and PRs authored by `GITHUB_TOKEN` do not trigger the gate workflows (GitHub anti-recursion), so the
 gates would never run on the sync PR.
 
+The pipeline also tracks the **V2** spec (`client.v2`) via a second `spec-sync-v2` job mirroring the
+V1 one. **Two-host rule (do not conflate):** the V2 **spec** is fetched from `aide.[env]/openapi.json`
+(the AIDE gateway), but the SDK and its contract tests call the V2 **API** at `api.ade.[env]`; the SDK
+never talks to `aide`. The `/v2/workflow*` routes **are** shipped (`client.v2.workflow` /
+`workflowJobs`) but **hand-maintained**: they stay in the tracked spec (so a workflow spec change
+still opens a mechanical spec-sync PR as a signal), but the AI-wiring step **excludes** them — a
+maintainer reconciles workflow spec drift by hand rather than having it auto-drafted.
+
 **Protected environment:** the `contract-tests` gate runs AI-drafted test code with
 `LANDINGAI_ADE_STAGING_APIKEY` in env. Configure a **`spec-sync-staging`** Environment (repo Settings
 → Environments) with a **required reviewer** so a maintainer approves before the staging key is
 exposed to spec-sync-generated code; the job references it via `environment:` and is inert until set.
 
-`scripts/spec-sync/release-gate.sh` (staging-in/production-out release check) is committed but not
-yet wired into `release.yml` — deferred. Tracking the **V2** spec (`client.v2`) is a follow-up that
-adds a second job mirroring this one, pointed at the AIDE gateway spec.
+`scripts/spec-sync/release-gate.sh` (staging-in/production-out release check) is committed but not yet
+wired into `release.yml` — deferred.
 
 ## Publishing and releases
 
