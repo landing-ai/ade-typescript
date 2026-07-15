@@ -10,7 +10,6 @@ dist-deno
 .idea/
 .eslintcache
 dist-bundle
-*.mcpb
 oidc
 
 # api-extractor working dir (surface-lock); the committed report lives in etc/
