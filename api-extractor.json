@@ -4,7 +4,7 @@
   // Surface-lock config: emit ONLY the public API report (etc/landingai-ade.api.md). The report
   // is the input to .github/workflows/pr-gates.yml (api-report freshness + additive-only
   // surface-lock). We do NOT ship a rollup .d.ts or a doc model. Scope is the root `landingai-ade`
-  // package only — packages/mcp-server/ has its own surface and is out of scope here.
+  // package.
   "projectFolder": ".",
 
   // The rolled-up declaration entry the build already emits via tsc-multi (./scripts/build).

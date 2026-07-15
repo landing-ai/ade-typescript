@@ -4,16 +4,14 @@
 # A maintainer runs this workflow (Actions -> Release -> Run workflow) and
 # picks the bump: patch / minor / major. The workflow then, in one shot:
 #   1. computes the next version from the latest git tag,
-#   2. stamps it into package.json, src/version.ts, and the mcp-server
-#      package.json + manifest.json,
+#   2. stamps it into package.json and src/version.ts,
 #   3. prepends a changelog section (grouped by Conventional Commit prefixes)
 #      to CHANGELOG.md,
 #   4. builds and tests the stamped tree — the release aborts here, before
 #      any commit or tag exists, if anything is red,
 #   5. lands that as a "release: x.y.z" commit directly on main,
 #   6. tags it and creates the GitHub Release, which triggers
-#      .github/workflows/publish-npm.yml (root package + packages/mcp-server
-#      + DXT release asset).
+#      .github/workflows/publish-npm.yml (root package).
 #
 # No release PR, no second confirmation: dispatching the workflow IS the
 # release decision. Ordinary PR merges never trigger any of this.
@@ -80,15 +78,13 @@ jobs:
         env:
           NEXT: ${{ steps.version.outputs.version }}
         run: |
-          for f in package.json packages/mcp-server/package.json packages/mcp-server/manifest.json; do
-            node -e "
-              const fs = require('fs');
-              const path = '$f';
-              const data = JSON.parse(fs.readFileSync(path, 'utf8'));
-              data.version = process.env.NEXT;
-              fs.writeFileSync(path, JSON.stringify(data, null, 2) + '\n');
-            "
-          done
+          node -e "
+            const fs = require('fs');
+            const path = 'package.json';
+            const data = JSON.parse(fs.readFileSync(path, 'utf8'));
+            data.version = process.env.NEXT;
+            fs.writeFileSync(path, JSON.stringify(data, null, 2) + '\n');
+          "
           sed -i -E "s/export const VERSION = '.*'/export const VERSION = '$NEXT'/" src/version.ts
           git diff --stat
 
@@ -120,7 +116,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package.json src/version.ts packages/mcp-server/package.json packages/mcp-server/manifest.json CHANGELOG.md
+          git add package.json src/version.ts CHANGELOG.md
           git commit -m "release: $NEXT"
           git push origin HEAD:main
           gh release create "v$NEXT" \
