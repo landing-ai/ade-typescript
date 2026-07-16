@@ -224,7 +224,7 @@ for (const j of jobs.jobs) {
 console.log(jobs.has_more);
 ```
 
-Extract jobs work the same way. The `create` method takes the same schema and Markdown arguments as `client.v2.extract`, plus `service_tier`; it does not accept `saveTo`.
+Extract jobs work the same way. The `create` method takes the same schema and Markdown arguments as `client.v2.extract`, plus `service_tier` and `output_save_url`; it does not accept `saveTo`. Set `output_save_url` to a public http(s) URL (e.g. a presigned S3 PUT URL) to have the finished result delivered there instead of inline — the completed job then reports `output_url` on `job.raw` in place of `result`.
 
 ## Environments
 

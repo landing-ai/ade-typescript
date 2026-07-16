@@ -247,6 +247,48 @@ describe('client.v2 routing', () => {
     expect(JSON.parse(String(sentBody))).toMatchObject({ service_tier: 'priority' });
   });
 
+  test('extractJobs.create sends output_save_url in the JSON body', async () => {
+    let sentBody: unknown;
+    const fetch: Fetch = async (_input, init) => {
+      sentBody = init?.body;
+      return jsonResponse({ job_id: 'ej-3' }, 202);
+    };
+    const client = new LandingAIADE({ apikey: 'k', environment: 'staging', maxRetries: 0, fetch });
+    const job = await client.v2.extractJobs.create({
+      schema: { type: 'object' },
+      markdown: 'hi',
+      output_save_url: 'https://example.com/put',
+    });
+    expect(job.job_id).toBe('ej-3');
+    expect(JSON.parse(String(sentBody))).toMatchObject({ output_save_url: 'https://example.com/put' });
+  });
+
+  test('extract (sync) surfaces schema_violation_error, warnings, and the moved billing counts', async () => {
+    const { client } = stubClient(() =>
+      jsonResponse({
+        extraction: { a: 1 },
+        extraction_metadata: {},
+        markdown: '# doc',
+        schema_violation_error: 'field `total` could not be extracted',
+        warnings: [{ code: 'partial', message: 'skipped a field' }],
+        metadata: {
+          job_id: 'j',
+          version: 'v',
+          model_version: 'dpt-3-pro-20260710',
+          duration_ms: 1,
+          input_markdown_chars: 10,
+          output_extraction_chars: 4,
+        },
+      }),
+    );
+    const res = await client.v2.extract({ schema: { type: 'object' }, markdown: 'hi' });
+    expect(res.schema_violation_error).toBe('field `total` could not be extracted');
+    expect(res.warnings?.[0]).toEqual({ code: 'partial', message: 'skipped a field' });
+    // Spec moved these two counts from `billing` onto the metadata itself.
+    expect(res.metadata.input_markdown_chars).toBe(10);
+    expect(res.metadata.output_extraction_chars).toBe(4);
+  });
+
   test('workflow (sync) routes to the V2 host and returns output + metadata', async () => {
     const { client, calls } = stubClient(() =>
       jsonResponse({

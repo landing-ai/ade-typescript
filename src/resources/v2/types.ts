@@ -267,6 +267,20 @@ export interface V2ExtractMetadata {
   billing?: V2Billing | null;
 
   /**
+   * Characters (Unicode code points) in the input markdown as submitted — the
+   * input basis of the credit charge. Spec moved this from `billing` onto the
+   * metadata; both locations are surfaced.
+   */
+  input_markdown_chars?: number | null;
+
+  /**
+   * Characters in the serialized extraction output — the output basis of the
+   * credit charge. Spec moved this from `billing` onto the metadata; both
+   * locations are surfaced.
+   */
+  output_extraction_chars?: number | null;
+
+  /**
    * Units of every `range` offset in the response. Always `unicode_codepoints`
    * (Unicode code points into `markdown`).
    */
@@ -287,6 +301,16 @@ export interface V2ExtractResult {
 
   /** Present when the output was delivered out-of-band (e.g. a ZDR save URL) instead of inline. */
   output_ref?: string | null;
+
+  /**
+   * Set when `options.strict` is false and the schema contained fields the model
+   * could not extract — the extraction is partial. Spec renamed `output_ref` →
+   * `schema_violation_error`; both are surfaced.
+   */
+  schema_violation_error?: string | null;
+
+  /** Non-fatal warnings emitted during extraction. */
+  warnings?: Array<Record<string, unknown>>;
 }
 
 // ---- Workflow ----

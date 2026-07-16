@@ -39,6 +39,15 @@ export interface V2ExtractParams {
 
 export interface V2ExtractJobCreateParams extends V2ExtractParams {
   /**
+   * URL to save the result to — e.g. a presigned S3 PUT URL. Async jobs only.
+   * When set, the finished result is delivered (HTTP PUT) to this URL and the
+   * completed job reports `output_url` (on `Job.raw`) instead of an inline
+   * `result`. Must be a public http(s) URL; private/loopback IPs are rejected at
+   * submit time.
+   */
+  output_save_url?: string | null;
+
+  /**
    * Async service tier. `priority` runs in the fast lane at the sync billing
    * rate; absent → `standard`.
    */
@@ -51,6 +60,7 @@ export function buildExtractBody(params: V2ExtractJobCreateParams): Record<strin
     ['markdown', params.markdown],
     ['markdown_url', params.markdown_url],
     ['model', params.model],
+    ['output_save_url', params.output_save_url],
     ['service_tier', params.service_tier],
   ];
   for (const [key, value] of entries) {

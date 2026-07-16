@@ -38,6 +38,13 @@ describe('V2 contract (staging)', () => {
       // `version` was renamed to `model_version` in the metadata.
       expect(res.metadata.range_units).toBe('unicode_codepoints');
       expect(typeof res.metadata.model_version).toBe('string');
+      // Spec-sync moved the credit-charge character counts from `billing` onto
+      // the metadata itself; a non-strict extract also surfaces
+      // `schema_violation_error` (null when the schema was fully satisfied).
+      expect(
+        res.metadata.input_markdown_chars == null || typeof res.metadata.input_markdown_chars === 'number',
+      ).toBe(true);
+      expect(res.schema_violation_error === undefined || res.schema_violation_error === null).toBe(true);
     },
     60_000,
   );
