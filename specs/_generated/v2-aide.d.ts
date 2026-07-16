@@ -368,6 +368,13 @@ export interface components {
              */
             type: "text" | "table" | "table_cell" | "figure" | "marginalia" | "attestation" | "logo" | "card" | "scan_code";
         };
+        /** ErrorResponse */
+        ErrorResponse: {
+            /** @description Stable snake_case error code (e.g. ``validation_error``, ``unknown_model_version``, ``invalid_url``, ``invalid_api_key``, ``rate_limit_exceeded``). */
+            code: string;
+            /** @description Human-readable detail. */
+            message: string;
+        };
         /** FigureOptions */
         FigureOptions: {
             /**
@@ -599,18 +606,6 @@ export interface components {
          */
         V2Billing: {
             /**
-             * Input Markdown Chars
-             * @description Characters (Unicode code points) in the input markdown as submitted — the input basis of the credit charge. Extract responses only.
-             * @default null
-             */
-            input_markdown_chars: number | null;
-            /**
-             * Output Extraction Chars
-             * @description Characters in the serialized extraction output — the output basis of the credit charge. Extract responses only.
-             * @default null
-             */
-            output_extraction_chars: number | null;
-            /**
              * Service Tier
              * @description The service tier the request ran in: `standard` or `priority`. A sync request reports `priority` (same lane, same price).
              * @default null
@@ -631,12 +626,6 @@ export interface components {
             /** @description Billing summary: the service tier the request ran in and the credits charged. */
             billing?: components["schemas"]["V2Billing"] | null;
             /**
-             * Credit Usage
-             * @description Credits billed for this request.
-             * @default 0
-             */
-            credit_usage: number;
-            /**
              * Doc Id
              * @description Present when the input markdown contained a ``<!-- doc_id=<id> -->`` comment (embedded by ``POST /v2/parse``). Links this extract call to the originating parse job.
              * @default null
@@ -647,6 +636,12 @@ export interface components {
              * @description End-to-end request duration in milliseconds.
              */
             duration_ms: number;
+            /**
+             * Input Markdown Chars
+             * @description Characters (Unicode code points) in the input markdown as submitted — the input basis of the credit charge.
+             * @default null
+             */
+            input_markdown_chars: number | null;
             /**
              * Job Id
              * @description Gateway job id (workflow id). Matches the ``x-request-id`` the gateway minted for this request and the billing row id in vision-agent.
@@ -659,6 +654,12 @@ export interface components {
             model_version: string;
             /** @description URL of the OpenAPI spec covering this API, for inspection and client generation. */
             openapi_spec: string;
+            /**
+             * Output Extraction Chars
+             * @description Characters in the serialized extraction output — the output basis of the credit charge.
+             * @default null
+             */
+            output_extraction_chars: number | null;
             /**
              * Range Units
              * @description Units of every `range` offset in the response. Always `"unicode_codepoints"` (Unicode code points into `markdown`). Declared explicitly so consumers know how to slice the string — e.g. JavaScript strings are UTF-16, so a naive `.slice()` drifts when the markdown contains astral characters.
@@ -674,7 +675,7 @@ export interface components {
         V2ExtractOptions: {
             /**
              * Strict
-             * @description When ``true``, returns HTTP 422 if the schema contains fields the model cannot extract. When ``false`` (default), unsupported fields are skipped and extraction continues.
+             * @description When ``true``, a schema containing fields the model cannot extract fails with a validation error — HTTP 422 on the sync route, or a failed job (``status: "failed"``) on the async ``/jobs`` route. When ``false`` (default), unsupported fields are skipped and extraction continues.
              * @default false
              */
             strict: boolean;
@@ -687,12 +688,6 @@ export interface components {
         V2WorkflowMetadata: {
             /** @description Billing summary: the service tier the request ran in and the credits charged. */
             billing?: components["schemas"]["V2Billing"] | null;
-            /**
-             * Credit Usage
-             * @description Combined credits billed for this request (parse + extract).
-             * @default 0
-             */
-            credit_usage: number;
             /**
              * Duration Ms
              * @description Total end-to-end duration across all stages in milliseconds.
@@ -761,7 +756,7 @@ export interface components {
             pages: number[] | null;
             /**
              * Strict
-             * @description When ``true``, returns 422 if the schema contains fields the model cannot extract. When ``false``, unsupported fields are skipped.
+             * @description When ``true``, a schema containing fields the model cannot extract fails with a validation error — HTTP 422 on the sync route, or a failed job on the async ``/jobs`` route. When ``false``, unsupported fields are skipped.
              * @default false
              */
             strict: boolean;
@@ -933,23 +928,31 @@ export interface operations {
                          * @description Echoed input markdown.
                          */
                         markdown: string;
-                        /** @description Request metadata (job_id, model_version, duration_ms, doc_id, credit_usage). */
+                        /** @description Request metadata (job_id, model_version, duration_ms, doc_id, billing). */
                         metadata: components["schemas"]["V2ExtractMetadata"];
                         /**
-                         * Output Ref
+                         * Schema Violation Error
+                         * @description Set when ``options.strict`` is false and the schema contained fields the model could not extract — the extraction is partial.
                          * @default null
                          */
-                        output_ref: string | null;
+                        schema_violation_error: string | null;
+                        /**
+                         * Warnings
+                         * @description Non-fatal warnings emitted during extraction.
+                         */
+                        warnings?: {
+                            [key: string]: unknown;
+                        }[];
                     };
                 };
             };
-            /** @description Validation Error */
+            /** @description Request validation failed. */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -993,13 +996,13 @@ export interface operations {
                     };
                 };
             };
-            /** @description Validation Error */
+            /** @description Request validation failed. */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -1037,6 +1040,12 @@ export interface operations {
                      * @default null
                      */
                     options?: components["schemas"]["V2ExtractOptions"] | null;
+                    /**
+                     * Output Save Url
+                     * @description URL to save the result to — e.g. a presigned S3 PUT URL. Async jobs only. When set, the finished result is delivered (HTTP PUT) to this URL and the completed job reports ``output_url`` instead of an inline ``result``. Must be a public http(s) URL; private/loopback IPs are rejected at submit time.
+                     * @default null
+                     */
+                    output_save_url?: string | null;
                     /**
                      * Schema
                      * @description JSON Schema describing the fields to extract. The schema must be an object type with a ``properties`` map of field names to their types and descriptions.
@@ -1080,6 +1089,12 @@ export interface operations {
                      */
                     options?: components["schemas"]["V2ExtractOptions"] | null;
                     /**
+                     * Output Save Url
+                     * @description URL to save the result to — e.g. a presigned S3 PUT URL. Async jobs only. When set, the finished result is delivered (HTTP PUT) to this URL and the completed job reports ``output_url`` instead of an inline ``result``. Must be a public http(s) URL; private/loopback IPs are rejected at submit time. JSON-serialized string in form data.
+                     * @default null
+                     */
+                    output_save_url?: string | null;
+                    /**
                      * Schema
                      * @description JSON Schema describing the fields to extract. The schema must be an object type with a ``properties`` map of field names to their types and descriptions. JSON-serialized string in form data.
                      * @example {
@@ -1120,6 +1135,15 @@ export interface operations {
                     };
                 };
             };
+            /** @description Request validation failed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
     };
     "v2-extract_get_job": {
@@ -1152,9 +1176,11 @@ export interface operations {
                         };
                         /** @description The unique identifier for this v2-extract job. Format: ``extract-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
                         job_id?: string;
-                        /** @description Best-effort progress, present while processing only for jobs that report it. */
-                        progress?: unknown;
-                        /** @description Present once status is ``completed``. */
+                        /** @description The URL the result was delivered to. Present once the job has ``completed`` and ``output_save_url`` was set, instead of inline ``result``. */
+                        output_url?: string | null;
+                        /** @description Job completion as a decimal from 0 (not started) to 1 (complete). Present while ``processing``. */
+                        progress?: number;
+                        /** @description Present once status is ``completed`` and ``output_save_url`` was not set. When ``output_save_url`` was set, the result is delivered there and ``output_url`` is returned instead. */
                         result?: {
                             /**
                              * Extraction
@@ -1175,26 +1201,43 @@ export interface operations {
                              * @description Echoed input markdown.
                              */
                             markdown: string;
-                            /** @description Request metadata (job_id, model_version, duration_ms, doc_id, credit_usage). */
+                            /** @description Request metadata (job_id, model_version, duration_ms, doc_id, billing). */
                             metadata: components["schemas"]["V2ExtractMetadata"];
                             /**
-                             * Output Ref
+                             * Schema Violation Error
+                             * @description Set when ``options.strict`` is false and the schema contained fields the model could not extract — the extraction is partial.
                              * @default null
                              */
-                            output_ref: string | null;
+                            schema_violation_error: string | null;
+                            /**
+                             * Warnings
+                             * @description Non-fatal warnings emitted during extraction.
+                             */
+                            warnings?: {
+                                [key: string]: unknown;
+                            }[];
                         } | null;
                         /** @enum {string} */
                         status?: "pending" | "processing" | "completed" | "failed";
                     };
                 };
             };
-            /** @description Validation Error */
+            /** @description Not found (e.g. no such job). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request validation failed. */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -1270,13 +1313,13 @@ export interface operations {
                     "application/json": components["schemas"]["ParseResponse"];
                 };
             };
-            /** @description Validation Error */
+            /** @description Request validation failed. */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -1316,13 +1359,13 @@ export interface operations {
                             failure_reason?: string | null;
                             /** @description The unique identifier for the parse job. Format: ``<service>-<26-character Crockford base32 ULID>`` matching ``^(parse|extract)-[0-9a-hjkmnp-tv-z]{26}$``. Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
                             job_id?: string;
+                            /** @description The model snapshot used to parse the document. */
+                            model_version?: string | null;
                             /**
                              * @description The job's current status: ``pending``, ``processing``, ``completed``, or ``failed``.
                              * @enum {string}
                              */
                             status?: "pending" | "processing" | "completed" | "failed";
-                            /** @description The model snapshot used to parse the document. */
-                            version?: string | null;
                         }[];
                         /** @description The 0-indexed page number. */
                         page?: number;
@@ -1331,13 +1374,13 @@ export interface operations {
                     };
                 };
             };
-            /** @description Validation Error */
+            /** @description Request validation failed. */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -1421,6 +1464,15 @@ export interface operations {
                     };
                 };
             };
+            /** @description Request validation failed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
     };
     parse_get_job: {
@@ -1473,15 +1525,17 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
             };
-            /** @description Validation Error */
+            /** @description Request validation failed. */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -1595,7 +1649,7 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        /** @description Request metadata (job_id, duration_ms, credit_usage). */
+                        /** @description Request metadata (job_id, duration_ms, billing). */
                         metadata: components["schemas"]["V2WorkflowMetadata"];
                         /**
                          * Output
@@ -1604,21 +1658,16 @@ export interface operations {
                         output: {
                             [key: string]: unknown;
                         };
-                        /**
-                         * Output Ref
-                         * @default null
-                         */
-                        output_ref: string | null;
                     };
                 };
             };
-            /** @description Validation Error */
+            /** @description Request validation failed. */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -1662,13 +1711,13 @@ export interface operations {
                     };
                 };
             };
-            /** @description Validation Error */
+            /** @description Request validation failed. */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -1794,6 +1843,15 @@ export interface operations {
                     };
                 };
             };
+            /** @description Request validation failed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
     };
     "v2-workflow_get_job": {
@@ -1826,11 +1884,11 @@ export interface operations {
                         };
                         /** @description The unique identifier for this v2-workflow job. Format: ``v2-workflow-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
                         job_id?: string;
-                        /** @description Best-effort progress, present while processing only for jobs that report it. */
-                        progress?: unknown;
+                        /** @description Job completion as a decimal from 0 (not started) to 1 (complete). Present while ``processing``. */
+                        progress?: number;
                         /** @description Present once status is ``completed``. */
                         result?: {
-                            /** @description Request metadata (job_id, duration_ms, credit_usage). */
+                            /** @description Request metadata (job_id, duration_ms, billing). */
                             metadata: components["schemas"]["V2WorkflowMetadata"];
                             /**
                              * Output
@@ -1839,24 +1897,28 @@ export interface operations {
                             output: {
                                 [key: string]: unknown;
                             };
-                            /**
-                             * Output Ref
-                             * @default null
-                             */
-                            output_ref: string | null;
                         } | null;
                         /** @enum {string} */
                         status?: "pending" | "processing" | "completed" | "failed";
                     };
                 };
             };
-            /** @description Validation Error */
+            /** @description Not found (e.g. no such job). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request validation failed. */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
         };
