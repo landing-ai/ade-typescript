@@ -118,9 +118,6 @@ export interface V2ParseMetadata {
 /** `[start, end)` Unicode code-point offsets into the top-level `markdown`. */
 export type V2Span = [number, number];
 
-/** `[left, top, right, bottom]` bounding box on the source page, in pixels. */
-export type V2Box = [number, number, number, number];
-
 /** A `[start, end)` slice of the top-level `markdown` string, in `metadata.range_units`. */
 export interface V2Range {
   start: number;
@@ -131,7 +128,7 @@ export interface V2Range {
 /**
  * Axis-aligned bounding box in normalized page coordinates: each value is a
  * fraction of the page width (`xmin`/`xmax`) or height (`ymin`/`ymax`) in
- * `[0, 1]`. (The legacy pixel-space box is the `V2Box` tuple above.)
+ * `[0, 1]`.
  */
 export interface V2GroundingBox {
   xmin: number;
@@ -242,51 +239,11 @@ export interface V2ParseStructure {
   markdown?: string | null;
 }
 
-/** One fine-grained grounding segment (line-level or finer). */
-export interface V2GroundingEntry {
-  span: V2Span;
-
-  box: V2Box;
-}
-
-export interface V2GroundingElement {
-  type: V2ElementType;
-
-  id: string;
-
-  span: V2Span;
-
-  box: V2Box;
-
-  parts?: Array<V2GroundingEntry>;
-
-  children?: Array<V2GroundingElement> | null;
-}
-
-export interface V2GroundingPage {
-  type?: 'page';
-
-  page: number;
-
-  span: V2Span;
-
-  children?: Array<V2GroundingElement>;
-}
-
-/** The document's spatial `grounding` tree, mirroring `structure`. */
-export interface V2GroundingDocument {
-  type?: 'document';
-
-  children?: Array<V2GroundingPage>;
-}
-
-/** V2 parse result: full `markdown`, hierarchical `structure`, spatial `grounding`, and `metadata`. */
+/** V2 parse result: full `markdown` and hierarchical `structure` (grounding is inline on each node). */
 export interface V2ParseResponse {
   markdown?: string | null;
 
   structure?: V2ParseStructure | null;
-
-  grounding?: V2GroundingDocument | null;
 
   metadata?: V2ParseMetadata | null;
 }
