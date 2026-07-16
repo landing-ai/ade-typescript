@@ -29,7 +29,7 @@ export interface V2ParseParams {
 
   /**
    * Encrypted PDFs are not currently supported: providing a password returns a
-   * 422. Decrypt the file before uploading.
+   * 422. Decrypt the file before uploading. Sent within `options` on the wire.
    */
   password?: string | null;
 }
@@ -61,15 +61,35 @@ export interface V2JobListParams {
  * contract; unset (`undefined`/`null`) fields are dropped so they aren't sent.
  */
 export function buildParseForm(params: V2ParseJobCreateParams): Record<string, unknown> {
-  const { options, ...rest } = params;
+  const { options, password, ...rest } = params;
   const body: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(rest)) {
     if (value !== undefined && value !== null) {
       body[key] = value;
     }
   }
-  if (options !== undefined && options !== null) {
-    body['options'] = typeof options === 'string' ? options : JSON.stringify(options);
+  // The parse request carries `password` inside `options` (encrypted PDFs are
+  // unsupported — any value returns 422). Fold the top-level convenience param
+  // into the options object, mirroring how `buildExtractBody` folds `strict`.
+  let opts = options;
+  if (password !== undefined && password !== null) {
+    if (opts === undefined || opts === null) {
+      opts = { password };
+    } else if (typeof opts === 'object') {
+      opts = { ...opts, password };
+    } else {
+      // `options` was pre-serialized as a JSON string; merge into it when it
+      // parses as an object, otherwise keep the caller's string and pass the
+      // password as a top-level field so it is never silently dropped.
+      try {
+        opts = { ...(JSON.parse(opts) as Record<string, unknown>), password };
+      } catch {
+        body['password'] = password;
+      }
+    }
+  }
+  if (opts !== undefined && opts !== null) {
+    body['options'] = typeof opts === 'string' ? opts : JSON.stringify(opts);
   }
   return body;
 }

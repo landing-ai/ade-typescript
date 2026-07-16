@@ -91,27 +91,26 @@ function baseIsoJob(raw: Record<string, unknown>): Job {
 
 export function normalizeParseJob(raw: Record<string, unknown>): Job {
   const status = toStatus(raw['status']);
-  const data = raw['data'];
-  const result = isRecord(data) ? (data as V2ParseResponse) : null;
+  // The parse-job envelope now carries the result under `result` (ISO-timestamp
+  // shape, like extract); older servers used `data`. Accept either.
+  const payload = raw['result'] ?? raw['data'];
+  const result = isRecord(payload) ? (payload as V2ParseResponse) : null;
 
-  let error: JobError | null = null;
-  const reason = raw['failure_reason'];
-  if (reason) {
-    error = { code: null, message: String(reason) };
-  }
-
-  // Prefer `created_at`; fall back to `received_at`. Use `??` (not truthiness)
-  // so an epoch-zero `created_at` is preserved rather than falling through.
+  // Prefer `created_at`; fall back to `received_at` (older envelope). Use `??`
+  // (not truthiness) so an epoch-zero `created_at` is preserved rather than
+  // falling through.
   const created = raw['created_at'] ?? raw['received_at'];
 
   return {
     job_id: String(raw['job_id']),
     status,
     created_at: toDate(created),
-    completed_at: null, // the parse envelope has no completed_at
+    completed_at: toDate(raw['completed_at']),
     progress: toProgress(raw['progress']),
     result,
-    error,
+    // The get envelope carries `error {code, message}`; the list envelope a
+    // `failure_reason` string. `isoError` handles both.
+    error: isoError(raw),
     is_terminal: isTerminalStatus(status),
     raw,
   };
