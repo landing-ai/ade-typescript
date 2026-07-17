@@ -1,5 +1,33 @@
 # Changelog
 
+## 2.9.0 (2026-07-17)
+
+Full Changelog: [v2.8.0...v2.9.0](https://github.com/landing-ai/ade-typescript/compare/v2.8.0...v2.9.0)
+
+### Features
+
+* **spec-sync:** track the V2 (client.v2) spec (#80) ([42a08a7](https://github.com/landing-ai/ade-typescript/commit/42a08a71c2ed534369b1a76593c47bec858c9e92))
+* spec-sync pipeline for V1 (Problem 3) (#74) ([d3eae16](https://github.com/landing-ai/ade-typescript/commit/d3eae16f50b1c77515d8e47b5f4174f68fa8193b))
+
+### Bug Fixes
+
+* **v2:** drop stale extract params (markdown_ref, idempotency_key) (#76) ([9b97cc9](https://github.com/landing-ai/ade-typescript/commit/9b97cc9b691e89cf37cc509af8c7b35d21654339))
+* **ci:** escape inner quotes in the dispatch-path publish payload (#79) ([bdf3a25](https://github.com/landing-ai/ade-typescript/commit/bdf3a2509c5088a321225c9548579ba122e9cd37))
+* **ci:** pin npm publish to registry.npmjs.org (#78) ([44f679b](https://github.com/landing-ai/ade-typescript/commit/44f679b65cd67ed95a94bf813adf176feebe333a))
+
+### Chores
+
+* remove the MCP server package and stop publishing landingai-ade-mcp (#82) ([f06e0e3](https://github.com/landing-ai/ade-typescript/commit/f06e0e37fd89f4ef4e34f6642c3107927b5aad48))
+
+### Documentation
+
+* rewrite README to lead with the v2 API (#77) ([489408d](https://github.com/landing-ai/ade-typescript/commit/489408ddc36c199af78657a246ddd5ecbb4afaac))
+
+### Other Changes
+
+* spec-sync: track V2 spec drift (#83) ([a49cb4a](https://github.com/landing-ai/ade-typescript/commit/a49cb4a129555d781d9989732992d3c25c2ebd20))
+* spec-sync: track V1 spec drift (#81) ([d48f90f](https://github.com/landing-ai/ade-typescript/commit/d48f90f84f103e2e2950fa1a837fc02a95873acd))
+
 ## 2.8.0 (2026-07-14)
 
 Full Changelog: [v2.7.0...v2.8.0](https://github.com/landing-ai/ade-typescript/compare/v2.7.0...v2.8.0)
