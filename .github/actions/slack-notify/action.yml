@@ -46,13 +46,19 @@ runs:
           *)       emoji="ℹ️" ;;
         esac
         # jq builds (and escapes) the Block Kit payload. jq is preinstalled on GitHub-hosted runners.
+        # GITHUB_REPOSITORY is a default env var the runner sets in every step (incl. composite
+        # actions), so the context footer names the source repo — ade-typescript vs ade-python — with
+        # no input to thread through and no per-repo config.
         payload="$(jq -n \
           --arg header "${emoji} ${TITLE}" \
-          --arg text "${TEXT}" '
+          --arg text "${TEXT}" \
+          --arg repo "${GITHUB_REPOSITORY}" '
           {
             blocks: [
               { type: "section",
-                text: { type: "mrkdwn", text: ("*" + $header + "*\n" + $text) } }
+                text: { type: "mrkdwn", text: ("*" + $header + "*\n" + $text) } },
+              { type: "context",
+                elements: [ { type: "mrkdwn", text: ("📦 `" + $repo + "` · spec-sync") } ] }
             ]
           }')"
         # Non-fatal by design: capture the HTTP status, never propagate a send failure.
