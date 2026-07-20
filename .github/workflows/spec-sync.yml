@@ -97,7 +97,7 @@ jobs:
           webhook: ${{ secrets.SLACK_SPEC_SYNC_WEBHOOK }}
           status: warning
           title: 'spec-sync ${{ env.SPEC_LABEL }}: new drift behind the open PR'
-          text: 'New ${{ env.SPEC_LABEL }} spec drift appeared beyond the open sync PR (live-spec `${{ steps.behind.outputs.hash }}`). Merge or close that PR and the next run opens a fresh one covering the rest.'
+          text: 'New ${{ env.SPEC_LABEL }} spec drift appeared beyond the <${{ steps.behind.outputs.pr_url }}|open sync PR> (live-spec `${{ steps.behind.outputs.hash }}`). Merge or close it and the next run opens a fresh one covering the rest.'
           link_url: ${{ steps.behind.outputs.pr_url }}
           link_text: 'View PR'
 
@@ -213,7 +213,7 @@ jobs:
           webhook: ${{ secrets.SLACK_SPEC_SYNC_WEBHOOK }}
           status: info
           title: 'spec-sync ${{ env.SPEC_LABEL }}: new spec drift → PR opened'
-          text: ${{ steps.ai_push.outputs.summary }}
+          text: '<${{ steps.open_pr.outputs.url }}|Open the PR> — ${{ steps.ai_push.outputs.summary }}'
           link_url: ${{ steps.open_pr.outputs.url }}
           link_text: 'Review PR'
 
@@ -229,7 +229,7 @@ jobs:
           title: 'spec-sync ${{ env.SPEC_LABEL }}: run failed'
           text: >-
             ${{ (steps.drift.outputs.code != '' && steps.drift.outputs.code != '0' && steps.drift.outputs.code != '10')
-            && format('Spec fetch/normalize failed (exit {0}). This targets staging — check whether the ADE cluster is unbooked (book via finops book-ade.yml) before assuming a real outage.', steps.drift.outputs.code)
+            && format('Spec fetch/normalize failed (exit {0}). This targets staging — check whether the ADE cluster is unbooked (book via <https://github.com/landing-ai/finops/actions/workflows/book-ade.yml|finops book-ade.yml>) before assuming a real outage.', steps.drift.outputs.code)
             || (steps.ai_wiring.outcome == 'failure'
             && 'AI wiring step failed. Any open sync PR has only the mechanical commit and needs manual wiring.'
             || 'spec-sync run failed. See the workflow run for details.') }}
@@ -316,7 +316,7 @@ jobs:
           webhook: ${{ secrets.SLACK_SPEC_SYNC_WEBHOOK }}
           status: warning
           title: 'spec-sync ${{ env.SPEC_LABEL }}: new drift behind the open PR'
-          text: 'New ${{ env.SPEC_LABEL }} spec drift appeared beyond the open sync PR (live-spec `${{ steps.behind.outputs.hash }}`). Merge or close that PR and the next run opens a fresh one covering the rest.'
+          text: 'New ${{ env.SPEC_LABEL }} spec drift appeared beyond the <${{ steps.behind.outputs.pr_url }}|open sync PR> (live-spec `${{ steps.behind.outputs.hash }}`). Merge or close it and the next run opens a fresh one covering the rest.'
           link_url: ${{ steps.behind.outputs.pr_url }}
           link_text: 'View PR'
 
@@ -435,7 +435,7 @@ jobs:
           webhook: ${{ secrets.SLACK_SPEC_SYNC_WEBHOOK }}
           status: info
           title: 'spec-sync ${{ env.SPEC_LABEL }}: new spec drift → PR opened'
-          text: ${{ steps.ai_push.outputs.summary }}
+          text: '<${{ steps.open_pr.outputs.url }}|Open the PR> — ${{ steps.ai_push.outputs.summary }}'
           link_url: ${{ steps.open_pr.outputs.url }}
           link_text: 'Review PR'
 
@@ -451,7 +451,7 @@ jobs:
           title: 'spec-sync ${{ env.SPEC_LABEL }}: run failed'
           text: >-
             ${{ (steps.drift.outputs.code != '' && steps.drift.outputs.code != '0' && steps.drift.outputs.code != '10')
-            && format('Spec fetch/normalize failed (exit {0}). This targets staging — check whether the ADE cluster is unbooked (book via finops book-ade.yml) before assuming a real outage.', steps.drift.outputs.code)
+            && format('Spec fetch/normalize failed (exit {0}). This targets staging — check whether the ADE cluster is unbooked (book via <https://github.com/landing-ai/finops/actions/workflows/book-ade.yml|finops book-ade.yml>) before assuming a real outage.', steps.drift.outputs.code)
             || (steps.ai_wiring.outcome == 'failure'
             && 'AI wiring step failed. Any open sync PR has only the mechanical commit and needs manual wiring.'
             || 'spec-sync run failed. See the workflow run for details.') }}
