@@ -98,8 +98,6 @@ jobs:
           status: warning
           title: 'spec-sync ${{ env.SPEC_LABEL }}: new drift behind the open PR'
           text: 'New ${{ env.SPEC_LABEL }} spec drift appeared beyond the <${{ steps.behind.outputs.pr_url }}|open sync PR> (live-spec `${{ steps.behind.outputs.hash }}`). Merge or close it and the next run opens a fresh one covering the rest.'
-          link_url: ${{ steps.behind.outputs.pr_url }}
-          link_text: 'View PR'
 
       # ---- Phase 1: mechanical (deterministic) ----
       - name: Mechanical commit + push
@@ -214,8 +212,6 @@ jobs:
           status: info
           title: 'spec-sync ${{ env.SPEC_LABEL }}: new spec drift → PR opened'
           text: '<${{ steps.open_pr.outputs.url }}|Open the PR> — ${{ steps.ai_push.outputs.summary }}'
-          link_url: ${{ steps.open_pr.outputs.url }}
-          link_text: 'Review PR'
 
       # Catch-all failure alert for this job. Tailors the message to the two failure modes worth
       # calling out — a spec fetch/normalize error (often the staging cluster being unbooked) and an
@@ -233,8 +229,7 @@ jobs:
             || (steps.ai_wiring.outcome == 'failure'
             && 'AI wiring step failed. Any open sync PR has only the mechanical commit and needs manual wiring.'
             || 'spec-sync run failed. See the workflow run for details.') }}
-          link_url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          link_text: 'View run'
+            · <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View run>
 
   # V2 loop. Same machinery as the V1 job above, pointed at the V2 spec on the AIDE gateway and a
   # separate sync branch, with a V2-tailored wiring prompt. Kept a distinct job (not a matrix) so the
@@ -317,8 +312,6 @@ jobs:
           status: warning
           title: 'spec-sync ${{ env.SPEC_LABEL }}: new drift behind the open PR'
           text: 'New ${{ env.SPEC_LABEL }} spec drift appeared beyond the <${{ steps.behind.outputs.pr_url }}|open sync PR> (live-spec `${{ steps.behind.outputs.hash }}`). Merge or close it and the next run opens a fresh one covering the rest.'
-          link_url: ${{ steps.behind.outputs.pr_url }}
-          link_text: 'View PR'
 
       # ---- Phase 1: mechanical (deterministic) ----
       - name: Mechanical commit + push
@@ -436,8 +429,6 @@ jobs:
           status: info
           title: 'spec-sync ${{ env.SPEC_LABEL }}: new spec drift → PR opened'
           text: '<${{ steps.open_pr.outputs.url }}|Open the PR> — ${{ steps.ai_push.outputs.summary }}'
-          link_url: ${{ steps.open_pr.outputs.url }}
-          link_text: 'Review PR'
 
       # Catch-all failure alert for this job. Tailors the message to the two failure modes worth
       # calling out — a spec fetch/normalize error (often the staging cluster being unbooked) and an
@@ -455,5 +446,4 @@ jobs:
             || (steps.ai_wiring.outcome == 'failure'
             && 'AI wiring step failed. Any open sync PR has only the mechanical commit and needs manual wiring.'
             || 'spec-sync run failed. See the workflow run for details.') }}
-          link_url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          link_text: 'View run'
+            · <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View run>
