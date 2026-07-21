@@ -43,6 +43,15 @@ export interface V2ExtractJobCreateParams extends V2ExtractParams {
    * rate; absent → `standard`.
    */
   service_tier?: 'standard' | 'priority' | null;
+
+  /**
+   * URL to save the result to — e.g. a presigned S3 PUT URL. Async jobs only.
+   * When set, the finished result is delivered (HTTP PUT) to this URL and the
+   * completed job reports `output_url` (in `Job.raw`) instead of an inline
+   * `result`. Must be a public http(s) URL; private/loopback IPs are rejected
+   * at submit time.
+   */
+  output_save_url?: string | null;
 }
 
 export function buildExtractBody(params: V2ExtractJobCreateParams): Record<string, unknown> {
@@ -52,6 +61,7 @@ export function buildExtractBody(params: V2ExtractJobCreateParams): Record<strin
     ['markdown_url', params.markdown_url],
     ['model', params.model],
     ['service_tier', params.service_tier],
+    ['output_save_url', params.output_save_url],
   ];
   for (const [key, value] of entries) {
     if (value !== undefined && value !== null) {

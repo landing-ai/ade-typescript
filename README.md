@@ -175,9 +175,37 @@ console.log(person.name); // TypeScript knows this is a string
 console.log(person.age); // TypeScript knows this is a number
 ```
 
+## Ground
+
+Use `client.v2.ground` to map extracted fields back to the document blocks they were quoted from. It is a pure, stateless join: pass the `extraction_metadata` from an extract call together with the `structure` tree from the parse the Markdown came from, and it returns a `grounding` tree — mirroring `extraction_metadata` — where each `{ value, ranges }` leaf is replaced by the list of `structure` blocks its ranges overlap (each with its `block_id`, `type`, page, and bounding box). Pairing an extraction with the parse it actually came from is the caller's responsibility.
+
+```ts
+import fs from 'fs';
+import LandingAIADE from 'landingai-ade';
+
+const client = new LandingAIADE();
+
+const parsed = await client.v2.parse({ document: fs.createReadStream('invoice.pdf') });
+const extracted = await client.v2.extract({
+  schema: { type: 'object', properties: { invoice_number: { type: 'string' } } },
+  markdown: parsed.markdown!,
+});
+
+const grounded = await client.v2.ground({
+  extraction_metadata: extracted.extraction_metadata,
+  structure: parsed.structure!,
+  // saveTo: './output', // optional
+});
+
+// A tree mirroring the extraction: each field resolves to the blocks it came from.
+console.log(grounded.grounding['invoice_number']);
+```
+
+For inputs that take longer than a synchronous request allows, `client.v2.groundJobs` shares the same async shape described below.
+
 ## Process Large Documents Asynchronously (Jobs)
 
-For documents that take longer than a synchronous request allows, create a job and wait for it. `client.v2.parseJobs` and `client.v2.extractJobs` share the same shape: `create`, `get`, `list`, and `wait`.
+For documents that take longer than a synchronous request allows, create a job and wait for it. `client.v2.parseJobs`, `client.v2.extractJobs`, and `client.v2.groundJobs` share the same shape: `create`, `get`, `list`, and `wait`.
 
 ```ts
 import fs from 'fs';
@@ -224,7 +252,7 @@ for (const j of jobs.jobs) {
 console.log(jobs.has_more);
 ```
 
-Extract jobs work the same way. The `create` method takes the same schema and Markdown arguments as `client.v2.extract`, plus `service_tier`; it does not accept `saveTo`.
+Extract jobs work the same way. The `create` method takes the same schema and Markdown arguments as `client.v2.extract`, plus `service_tier` and an optional `output_save_url` (a presigned URL the finished result is delivered to; the completed job then reports `output_url` in `Job.raw` instead of an inline `result`); it does not accept `saveTo`. Ground jobs likewise mirror `client.v2.ground`, taking `extraction_metadata` and `structure`.
 
 ## Environments
 

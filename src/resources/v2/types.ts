@@ -20,11 +20,12 @@ export interface JobError {
 }
 
 /**
- * One normalized job shape across parse, extract, and workflow (the envelopes
- * diverge upstream). `result` is a `V2ParseResponse` for parse jobs, a
- * `V2ExtractResult` for extract jobs, and a `V2WorkflowResult` for workflow
- * jobs, or `null` until completion. `raw` retains the full original envelope
- * for any field not surfaced here (e.g. `org_id`, `output_url`, `version`).
+ * One normalized job shape across parse, extract, ground, and workflow (the
+ * envelopes diverge upstream). `result` is a `V2ParseResponse` for parse jobs,
+ * a `V2ExtractResult` for extract jobs, a `V2GroundResult` for ground jobs, and
+ * a `V2WorkflowResult` for workflow jobs, or `null` until completion. `raw`
+ * retains the full original envelope for any field not surfaced here (e.g.
+ * `org_id`, `output_url`, `model_version`).
  */
 export interface Job {
   job_id: string;
@@ -37,7 +38,7 @@ export interface Job {
 
   progress: number | null;
 
-  result: V2ParseResponse | V2ExtractResult | V2WorkflowResult | null;
+  result: V2ParseResponse | V2ExtractResult | V2GroundResult | V2WorkflowResult | null;
 
   error: JobError | null;
 
@@ -266,6 +267,12 @@ export interface V2ExtractMetadata {
 
   billing?: V2Billing | null;
 
+  /** Characters (Unicode code points) in the input markdown as submitted — the input basis of the credit charge. */
+  input_markdown_chars?: number | null;
+
+  /** Characters in the serialized extraction output — the output basis of the credit charge. */
+  output_extraction_chars?: number | null;
+
   /**
    * Units of every `range` offset in the response. Always `unicode_codepoints`
    * (Unicode code points into `markdown`).
@@ -287,6 +294,43 @@ export interface V2ExtractResult {
 
   /** Present when the output was delivered out-of-band (e.g. a ZDR save URL) instead of inline. */
   output_ref?: string | null;
+
+  /**
+   * Set when `options.strict` is false and the schema contained fields the
+   * model could not extract — the extraction is partial.
+   */
+  schema_violation_error?: string | null;
+
+  /** Non-fatal warnings emitted during extraction. */
+  warnings?: Array<Record<string, unknown>>;
+}
+
+// ---- Ground ----
+
+/** Response metadata for a v2 ground call. */
+export interface V2GroundMetadata {
+  job_id: string;
+
+  duration_ms: number;
+
+  billing?: V2Billing | null;
+
+  /** URL of the OpenAPI spec covering this API, for inspection and client generation. */
+  openapi_spec?: string;
+}
+
+/**
+ * V2 ground result. `grounding` mirrors the `extraction_metadata` tree: nested
+ * objects and arrays keep their shape, and each `{value, ranges}` leaf is
+ * replaced by the list of `structure` blocks its ranges overlap (each entry
+ * carrying `block_id`, `type`, an optional `parent_id`, the block's own
+ * `grounding`, and — when present — the overlapping `atomic_grounding` subset).
+ * A leaf is `null` for a synthesised value and `[]` when no block overlapped.
+ */
+export interface V2GroundResult {
+  grounding: Record<string, unknown>;
+
+  metadata: V2GroundMetadata;
 }
 
 // ---- Workflow ----
