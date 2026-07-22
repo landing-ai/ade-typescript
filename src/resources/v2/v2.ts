@@ -4,9 +4,10 @@ import { multipartFormRequestOptions } from '../../internal/uploads';
 import { V2Resource, throwIfSyncTimeout } from './_base';
 import { Files } from './files';
 import { ExtractJobs, V2ExtractParams, buildExtractBody } from './extract';
+import { GroundJobs, V2GroundParams, buildGroundBody } from './ground';
 import { ParseJobs, V2ParseParams, buildParseForm } from './parse';
 import { WorkflowJobs, V2WorkflowParams, prepareWorkflowRequest } from './workflow';
-import { V2ExtractResult, V2ParseResponse, V2WorkflowResult } from './types';
+import { V2ExtractResult, V2GroundResult, V2ParseResponse, V2WorkflowResult } from './types';
 
 /**
  * Container for the additive V2 (ADE gateway) surface: `client.v2.*`. All
@@ -17,6 +18,7 @@ export class V2 extends V2Resource {
   files: Files = new Files(this._client);
   parseJobs: ParseJobs = new ParseJobs(this._client);
   extractJobs: ExtractJobs = new ExtractJobs(this._client);
+  groundJobs: GroundJobs = new GroundJobs(this._client);
   workflowJobs: WorkflowJobs = new WorkflowJobs(this._client);
 
   /**
@@ -71,6 +73,38 @@ export class V2 extends V2Resource {
       if (saveTo) {
         const filename = _getInputFilename(null, rest.markdown_url ?? null);
         _saveResponse(saveTo, filename, 'extract', result);
+      }
+      return result;
+    } catch (err) {
+      throwIfSyncTimeout(err);
+      throw err;
+    }
+  }
+
+  /**
+   * Map extracted fields back to the document blocks they were quoted from
+   * synchronously (`POST /v2/ground`, JSON body). Pass the `extraction_metadata`
+   * from an extract call and the `structure` tree from the parse the markdown
+   * came from; resolves with a `V2GroundResult` whose `grounding` mirrors the
+   * `extraction_metadata` tree. Rejects with `V2SyncTimeoutError` on a 504; use
+   * `groundJobs` for long-running inputs.
+   *
+   * Pass `saveTo` to also write the response to disk, mirroring the V1 `saveTo`
+   * behavior.
+   */
+  async ground(
+    body: V2GroundParams & { saveTo?: string },
+    options?: RequestOptions,
+  ): Promise<V2GroundResult> {
+    const { saveTo, ...rest } = body;
+    try {
+      const result = await this._client.post<V2GroundResult>(this.v2Url('/v2/ground'), {
+        body: buildGroundBody(rest),
+        maxRetries: 1, // see parse(): cap sync retries so a 504 costs <= 2 attempts
+        ...options,
+      });
+      if (saveTo) {
+        _saveResponse(saveTo, _getInputFilename(null, null), 'ground', result);
       }
       return result;
     } catch (err) {

@@ -48,7 +48,7 @@ jobs:
           bot_token: ${{ secrets.SLACK_BOT_TOKEN }}
           status: failure
           title: 'spec-sync ${{ steps.pr.outputs.label }}: gates failed on the sync PR'
-          text: 'PR Gates failed on the <${{ steps.pr.outputs.url }}|open sync PR> — it can''t merge until they are green. See <${{ github.event.workflow_run.html_url }}|the gate run>.'
+          text: "PR Gates failed on the <${{ steps.pr.outputs.url }}|open sync PR> — it can't merge until they are green. See <${{ github.event.workflow_run.html_url }}|the gate run>."
           thread_ts: ${{ steps.pr.outputs.ts }}
 
   # ⑦ Sync PR merged — reply under its thread and broadcast to the channel.

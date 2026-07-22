@@ -43,6 +43,57 @@ describe('V2 contract (staging)', () => {
   );
 
   runIf(
+    'ground (sync) resolves extracted fields to structure blocks',
+    async () => {
+      const client = new LandingAIADE({ apikey: apiKey!, environment: 'staging' });
+      // Ground is a pure, stateless join of an extraction's `{value, ranges}`
+      // leaves against the `grounding.range` on each `structure` block, so a
+      // self-consistent synthetic pair exercises the route without a full
+      // parse→extract chain. The single field's range overlaps `text-1`.
+      const box = { xmin: 0.1, ymin: 0.12, xmax: 0.42, ymax: 0.15 };
+      const res = await client.v2.ground({
+        extraction_metadata: {
+          invoice_number: { value: 'INV-042', ranges: [{ start: 13, end: 31 }] },
+        },
+        structure: {
+          type: 'document',
+          children: [
+            {
+              type: 'page',
+              page: 1,
+              children: [
+                {
+                  type: 'text',
+                  id: 'text-1',
+                  grounding: { page: 1, range: { start: 13, end: 31 }, box },
+                },
+              ],
+            },
+          ],
+        },
+      });
+      expect(res.grounding).toBeDefined();
+      expect(res.grounding['invoice_number']).toBeDefined();
+      expect(typeof res.metadata.job_id).toBe('string');
+    },
+    60_000,
+  );
+
+  runIf(
+    'groundJobs.list returns a normalized JobList',
+    async () => {
+      const client = new LandingAIADE({ apikey: apiKey!, environment: 'staging' });
+      const list = await client.v2.groundJobs.list({ page: 0, page_size: 1 });
+      expect(Array.isArray(list.jobs)).toBe(true);
+      for (const job of list.jobs) {
+        expect(typeof job.job_id).toBe('string');
+        expect(job.created_at === null || job.created_at instanceof Date).toBe(true);
+      }
+    },
+    30_000,
+  );
+
+  runIf(
     'parseJobs.list returns a normalized JobList against the new envelope',
     async () => {
       const client = new LandingAIADE({ apikey: apiKey!, environment: 'staging' });

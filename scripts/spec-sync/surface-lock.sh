@@ -50,9 +50,32 @@ echo "surface-lock: checking $report against $baseline_tag"
 # Keep only declaration lines: drop `import` lines (scripts/spec-sync/strip-api-report.cjs already
 # removes the path-volatile fetch-typing imports, but strip here too so the gate is robust even if
 # the report was generated without that step), TSDoc/comment lines (incl. api-extractor's `// @public`
-# markers), and blank lines — so cosmetic churn never reads as an API change. A single awk pass (not a
-# grep chain): awk always exits 0, so an all-filtered stream can't surface a non-zero under pipefail.
-normalize() { awk '!/^import / && !/^[[:space:]]*(\/\/|\/\*|\*)/ && !/^[[:space:]]*$/'; }
+# markers), and blank lines — so cosmetic churn never reads as an API change.
+#
+# Then EXPLODE barrel re-exports into one member per line. api-extractor emits each namespace's
+# re-exports as a single `export { A as A, type B as B, ... };` line, so ADDING one symbol mutates that
+# line rather than adding a new one — a pure addition would then read as a removed+added line pair and
+# false-positive the `comm -23` below (a "phantom break": the exact scenario this header warned about).
+# Splitting members onto their own lines makes the gate symbol-granular, matching how python's griffe
+# gate already behaves: an added symbol is a new line (additive, passes) and a removed symbol is a
+# missing line (caught). Members are `NAME as ALIAS` (optionally `type `-prefixed) with no inner commas,
+# so a plain comma split is safe; non-export lines pass through unchanged.
+#
+# awk always exits 0, so an all-filtered stream can't surface a non-zero under pipefail.
+normalize() {
+  awk '
+    /^import / { next }
+    /^[[:space:]]*(\/\/|\/\*|\*)/ { next }
+    /^[[:space:]]*$/ { next }
+    /export[[:space:]]*\{/ {
+      open = index($0, "{"); rest = substr($0, open + 1); sub(/\}.*$/, "", rest)
+      n = split(rest, parts, ",")
+      for (i = 1; i <= n; i++) { m = parts[i]; gsub(/^[[:space:]]+|[[:space:]]+$/, "", m); if (m != "") print "export-member " m }
+      next
+    }
+    { print }
+  '
+}
 
 # Read the baseline report explicitly (cat-file -e above only proved the blob exists). Fail LOUD on
 # a read failure / empty baseline rather than letting an empty left operand make `comm` report "no
