@@ -23,8 +23,8 @@ scope_note="${SUMMARY_SCOPE_NOTE:-}"
 # Truncate while streaming so huge spec diffs don't get fully captured into memory.
 diff="$({
   echo '### files changed'; git diff --stat origin/main...HEAD
-  echo; echo '### SDK surface (src / api.md / docs / README)'
-  git diff origin/main...HEAD -- src api.md docs README.md
+  echo; echo '### SDK surface (src / api.md / README)'
+  git diff origin/main...HEAD -- src api.md README.md
   echo; echo '### spec paths diff (may be truncated below)'
   git diff origin/main...HEAD -- specs ':(exclude)specs/_generated'
 } | head -c 120000)"
