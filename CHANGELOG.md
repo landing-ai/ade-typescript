@@ -1,5 +1,25 @@
 # Changelog
 
+## 2.10.0 (2026-07-22)
+
+Full Changelog: [v2.9.0...v2.10.0](https://github.com/landing-ai/ade-typescript/compare/v2.9.0...v2.10.0)
+
+### Features
+
+* **v2:** wire client.v2.ground + extract output_save_url from spec drift (#90) ([5f2e563](https://github.com/landing-ai/ade-typescript/commit/5f2e5631b8970b2cae630a68d95535ef47af6efe))
+* **spec-sync:** read specs from S3 instead of live staging (#88) ([72c8ddd](https://github.com/landing-ai/ade-typescript/commit/72c8dddbdbfb647ae493e5cabed47c1ad3ff2403))
+* **spec-sync:** Phase 2 lifecycle notifications (gates, merge, aging) (#86) ([605c3e0](https://github.com/landing-ai/ade-typescript/commit/605c3e0d0d72794132a914b3631004ef05846093))
+* **spec-sync:** notify Slack on drift PRs and failures (#85) ([d2f0b43](https://github.com/landing-ai/ade-typescript/commit/d2f0b4351c39442fea2e40aa71c1ee1751fb4a34))
+
+### Bug Fixes
+
+* **spec-sync:** address Copilot review from ade-python #118 (#87) ([727841e](https://github.com/landing-ai/ade-typescript/commit/727841eb97624014f6342f1464c531dd1520651d))
+
+### Documentation
+
+* add Copilot code-review instructions for spec-sync PRs (#91) ([4c1f359](https://github.com/landing-ai/ade-typescript/commit/4c1f3592cbd6ceed876b3a29b8f6a93c15d15e36))
+* **spec-sync:** S3-source doc accuracy + actionable failure alerts (#89) ([da011bb](https://github.com/landing-ai/ade-typescript/commit/da011bb323828f27034ecad27cd23981ca560536))
+
 ## 2.9.0 (2026-07-17)
 
 Full Changelog: [v2.8.0...v2.9.0](https://github.com/landing-ai/ade-typescript/compare/v2.8.0...v2.9.0)
