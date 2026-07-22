@@ -56,4 +56,10 @@ fi
 body="$(gh pr view "$pr_url" --json body --jq .body)" || { echo "could not read PR body; keeping it."; exit 0; }
 if [ -z "$body" ]; then echo "PR body empty/unreadable; keeping it."; exit 0; fi
 
-gh pr edit "$pr_url" --body "$body"$'\n\n'"## What changed"$'\n'"_AI-generated from the PR diff — verify against the actual changes._"$'\n\n'"$summary"
+# Avoid duplicating the section if the workflow is re-run.
+if printf '%s\n' "$body" | grep -qF '## What changed'; then
+  echo 'What changed section already present; keeping the existing PR body.'
+  exit 0
+fi
+
+printf '%s\n\n## What changed\n_AI-generated from the PR diff — verify against the actual changes._\n\n%s\n' "$body" "$summary" | gh pr edit "$pr_url" --body-file -
