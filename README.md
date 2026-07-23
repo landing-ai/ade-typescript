@@ -175,6 +175,30 @@ console.log(person.name); // TypeScript knows this is a string
 console.log(person.age); // TypeScript knows this is a number
 ```
 
+## Build a Schema
+
+Use `client.v2.buildSchema` to generate (or refine) an extraction JSON Schema from one or more source Markdown documents and/or a natural-language prompt. Supply any combination of `markdowns` (inline content strings), `markdown_urls`, a `prompt`, and an existing `schema` to iterate on — at least one must be provided. The `schema` parameter accepts a JSON Schema object or a JSON string.
+
+```ts
+import fs from 'fs';
+import LandingAIADE from 'landingai-ade';
+
+const client = new LandingAIADE();
+const parsed = await client.v2.parse({ document: fs.createReadStream('path/to/invoice.pdf') });
+
+const built = await client.v2.buildSchema({
+  markdowns: [parsed.markdown!], // or markdown_urls: ['https://example.com/doc.md']
+  prompt: 'Capture the invoice number, issue date, and line-item totals.',
+  saveTo: './output', // optional
+});
+
+// `extraction_schema` is the generated JSON Schema, serialized as a string.
+const schema = JSON.parse(built.extraction_schema);
+const result = await client.v2.extract({ schema, markdown: parsed.markdown! });
+```
+
+The response is a `V2BuildSchemaResult` with the generated `extraction_schema` (a JSON-Schema string) and `metadata` (processing details plus any `warnings`).
+
 ## Ground
 
 Use `client.v2.ground` to map extracted fields back to the document blocks they were quoted from. It is a pure, stateless join: pass the `extraction_metadata` from an extract call together with the `structure` tree from the parse the Markdown came from, and it returns a `grounding` tree — mirroring `extraction_metadata` — where each `{ value, ranges }` leaf is replaced by the list of `structure` blocks its ranges overlap (each with its `block_id`, `type`, page, and bounding box). Pairing an extraction with the parse it actually came from is the caller's responsibility.
@@ -205,7 +229,7 @@ For inputs that take longer than a synchronous request allows, `client.v2.ground
 
 ## Process Large Documents Asynchronously (Jobs)
 
-For documents that take longer than a synchronous request allows, create a job and wait for it. `client.v2.parseJobs`, `client.v2.extractJobs`, and `client.v2.groundJobs` share the same shape: `create`, `get`, `list`, and `wait`.
+For documents that take longer than a synchronous request allows, create a job and wait for it. `client.v2.parseJobs`, `client.v2.extractJobs`, `client.v2.buildSchemaJobs`, and `client.v2.groundJobs` share the same shape: `create`, `get`, `list`, and `wait`.
 
 ```ts
 import fs from 'fs';
@@ -252,7 +276,7 @@ for (const j of jobs.jobs) {
 console.log(jobs.has_more);
 ```
 
-Extract jobs work the same way. The `create` method takes the same schema and Markdown arguments as `client.v2.extract`, plus `service_tier` and an optional `output_save_url` (a presigned URL the finished result is delivered to; the completed job then reports `output_url` in `Job.raw` instead of an inline `result`); it does not accept `saveTo`. Ground jobs likewise mirror `client.v2.ground`, taking `extraction_metadata` and `structure`.
+Extract jobs work the same way. The `create` method takes the same schema and Markdown arguments as `client.v2.extract`, plus `service_tier` and an optional `output_save_url` (a presigned URL the finished result is delivered to; the completed job then reports `output_url` in `Job.raw` instead of an inline `result`); it does not accept `saveTo`. Build-schema jobs mirror `client.v2.buildSchema`, taking the same `markdowns`/`markdown_urls`/`prompt`/`schema` arguments plus `service_tier`, and their `result` is a `V2BuildSchemaResult`. Ground jobs likewise mirror `client.v2.ground`, taking `extraction_metadata` and `structure`.
 
 ## Environments
 

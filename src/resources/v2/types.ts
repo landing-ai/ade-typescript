@@ -20,10 +20,11 @@ export interface JobError {
 }
 
 /**
- * One normalized job shape across parse, extract, ground, and workflow (the
- * envelopes diverge upstream). `result` is a `V2ParseResponse` for parse jobs,
- * a `V2ExtractResult` for extract jobs, a `V2GroundResult` for ground jobs, and
- * a `V2WorkflowResult` for workflow jobs, or `null` until completion. `raw`
+ * One normalized job shape across parse, extract, build-schema, ground, and
+ * workflow (the envelopes diverge upstream). `result` is a `V2ParseResponse`
+ * for parse jobs, a `V2ExtractResult` for extract jobs, a `V2BuildSchemaResult`
+ * for build-schema jobs, a `V2GroundResult` for ground jobs, and a
+ * `V2WorkflowResult` for workflow jobs, or `null` until completion. `raw`
  * retains the full original envelope for any field not surfaced here (e.g.
  * `org_id`, `output_url`, `model_version`).
  */
@@ -38,7 +39,7 @@ export interface Job {
 
   progress: number | null;
 
-  result: V2ParseResponse | V2ExtractResult | V2GroundResult | V2WorkflowResult | null;
+  result: V2ParseResponse | V2ExtractResult | V2BuildSchemaResult | V2GroundResult | V2WorkflowResult | null;
 
   error: JobError | null;
 
@@ -303,6 +304,61 @@ export interface V2ExtractResult {
 
   /** Non-fatal warnings emitted during extraction. */
   warnings?: Array<Record<string, unknown>>;
+}
+
+// ---- Build schema ----
+
+/**
+ * A structured warning from the schema-generation process. `code` classifies
+ * the warning (e.g. `nonconformant_schema`); `msg` is the human-readable
+ * description.
+ */
+export interface BuildSchemaWarning {
+  code: string;
+
+  msg: string;
+}
+
+/** Response metadata for a v2 build-schema call. */
+export interface V2BuildSchemaMetadata {
+  /** URL of the OpenAPI spec covering this API, for inspection and client generation. */
+  openapi_spec: string;
+
+  /** Gateway job id (workflow id). */
+  job_id?: string;
+
+  /** End-to-end request duration in milliseconds. */
+  duration_ms?: number;
+
+  /**
+   * Name of the first source document. Retained for v1 compatibility but not
+   * populated in this version — always `null`.
+   */
+  filename?: string | null;
+
+  /** Organization ID. */
+  org_id?: string | null;
+
+  /**
+   * Model version used for generation. build-schema is version-free, so this is
+   * always `null`; retained for v1 response-shape compatibility.
+   */
+  version?: string | null;
+
+  billing?: V2Billing | null;
+
+  /** Structured warnings from the schema-generation process. */
+  warnings?: Array<BuildSchemaWarning>;
+}
+
+/**
+ * V2 build-schema result. `extraction_schema` is the generated JSON Schema
+ * serialized as a string (VTRA parity — the field is a string, not an object).
+ */
+export interface V2BuildSchemaResult {
+  extraction_schema: string;
+
+  metadata: V2BuildSchemaMetadata;
 }
 
 // ---- Ground ----

@@ -2,12 +2,19 @@ import { _getInputFilename, _saveResponse } from '../../client';
 import { RequestOptions } from '../../internal/request-options';
 import { multipartFormRequestOptions } from '../../internal/uploads';
 import { V2Resource, throwIfSyncTimeout } from './_base';
+import { BuildSchemaJobs, V2BuildSchemaParams, buildBuildSchemaBody } from './build-schema';
 import { Files } from './files';
 import { ExtractJobs, V2ExtractParams, buildExtractBody } from './extract';
 import { GroundJobs, V2GroundParams, buildGroundBody } from './ground';
 import { ParseJobs, V2ParseParams, buildParseForm } from './parse';
 import { WorkflowJobs, V2WorkflowParams, prepareWorkflowRequest } from './workflow';
-import { V2ExtractResult, V2GroundResult, V2ParseResponse, V2WorkflowResult } from './types';
+import {
+  V2BuildSchemaResult,
+  V2ExtractResult,
+  V2GroundResult,
+  V2ParseResponse,
+  V2WorkflowResult,
+} from './types';
 
 /**
  * Container for the additive V2 (ADE gateway) surface: `client.v2.*`. All
@@ -18,6 +25,7 @@ export class V2 extends V2Resource {
   files: Files = new Files(this._client);
   parseJobs: ParseJobs = new ParseJobs(this._client);
   extractJobs: ExtractJobs = new ExtractJobs(this._client);
+  buildSchemaJobs: BuildSchemaJobs = new BuildSchemaJobs(this._client);
   groundJobs: GroundJobs = new GroundJobs(this._client);
   workflowJobs: WorkflowJobs = new WorkflowJobs(this._client);
 
@@ -73,6 +81,38 @@ export class V2 extends V2Resource {
       if (saveTo) {
         const filename = _getInputFilename(null, rest.markdown_url ?? null);
         _saveResponse(saveTo, filename, 'extract', result);
+      }
+      return result;
+    } catch (err) {
+      throwIfSyncTimeout(err);
+      throw err;
+    }
+  }
+
+  /**
+   * Generate or edit a JSON Schema for extraction synchronously
+   * (`POST /v2/extract/build-schema`, JSON body). Supply any combination of
+   * source `markdowns` (inline content) / `markdown_urls`, a natural-language
+   * `prompt`, and/or an existing `schema` to iterate on; `extraction_schema` on
+   * the result is the generated JSON Schema serialized as a string. Rejects with
+   * `V2SyncTimeoutError` on a 504; use `buildSchemaJobs` for long-running inputs.
+   *
+   * Pass `saveTo` to also write the response to disk, mirroring the V1 `saveTo`
+   * behavior.
+   */
+  async buildSchema(
+    body: V2BuildSchemaParams & { saveTo?: string },
+    options?: RequestOptions,
+  ): Promise<V2BuildSchemaResult> {
+    const { saveTo, ...rest } = body;
+    try {
+      const result = await this._client.post<V2BuildSchemaResult>(this.v2Url('/v2/extract/build-schema'), {
+        body: buildBuildSchemaBody(rest),
+        maxRetries: 1, // see parse(): cap sync retries so a 504 costs <= 2 attempts
+        ...options,
+      });
+      if (saveTo) {
+        _saveResponse(saveTo, _getInputFilename(null, null), 'build-schema', result);
       }
       return result;
     } catch (err) {

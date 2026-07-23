@@ -43,6 +43,36 @@ describe('V2 contract (staging)', () => {
   );
 
   runIf(
+    'buildSchema (sync) generates an extraction schema string with metadata',
+    async () => {
+      const client = new LandingAIADE({ apikey: apiKey!, environment: 'staging' });
+      const res = await client.v2.buildSchema({
+        markdowns: [SAMPLE_MARKDOWN],
+        prompt: 'Capture the company name and total revenue.',
+      });
+      // `extraction_schema` is the generated JSON Schema serialized as a string.
+      expect(typeof res.extraction_schema).toBe('string');
+      expect(() => JSON.parse(res.extraction_schema)).not.toThrow();
+      expect(typeof res.metadata.openapi_spec).toBe('string');
+    },
+    60_000,
+  );
+
+  runIf(
+    'buildSchemaJobs.list returns a normalized JobList',
+    async () => {
+      const client = new LandingAIADE({ apikey: apiKey!, environment: 'staging' });
+      const list = await client.v2.buildSchemaJobs.list({ page: 0, page_size: 1 });
+      expect(Array.isArray(list.jobs)).toBe(true);
+      for (const job of list.jobs) {
+        expect(typeof job.job_id).toBe('string');
+        expect(job.created_at === null || job.created_at instanceof Date).toBe(true);
+      }
+    },
+    30_000,
+  );
+
+  runIf(
     'ground (sync) resolves extracted fields to structure blocks',
     async () => {
       const client = new LandingAIADE({ apikey: apiKey!, environment: 'staging' });

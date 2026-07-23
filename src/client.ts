@@ -50,6 +50,7 @@ import {
 } from './resources/parse-jobs';
 import { V2 } from './resources/v2';
 import type {
+  BuildSchemaWarning,
   FileUploadParams,
   Job,
   JobError,
@@ -57,6 +58,10 @@ import type {
   JobStatus,
   PrebuiltWorkflowStep,
   V2Billing,
+  V2BuildSchemaJobCreateParams,
+  V2BuildSchemaMetadata,
+  V2BuildSchemaParams,
+  V2BuildSchemaResult,
   V2ElementType,
   V2ExtractJobCreateParams,
   V2ExtractMetadata,
@@ -1164,6 +1169,9 @@ export declare namespace LandingAIADE {
     type V2ParseBilling as V2ParseBilling,
     type V2ExtractResult as V2ExtractResult,
     type V2ExtractMetadata as V2ExtractMetadata,
+    type V2BuildSchemaResult as V2BuildSchemaResult,
+    type V2BuildSchemaMetadata as V2BuildSchemaMetadata,
+    type BuildSchemaWarning as BuildSchemaWarning,
     type V2GroundResult as V2GroundResult,
     type V2GroundMetadata as V2GroundMetadata,
     type V2FileUploadResponse as V2FileUploadResponse,
@@ -1171,6 +1179,8 @@ export declare namespace LandingAIADE {
     type V2ParseJobCreateParams as V2ParseJobCreateParams,
     type V2ExtractParams as V2ExtractParams,
     type V2ExtractJobCreateParams as V2ExtractJobCreateParams,
+    type V2BuildSchemaParams as V2BuildSchemaParams,
+    type V2BuildSchemaJobCreateParams as V2BuildSchemaJobCreateParams,
     type V2GroundParams as V2GroundParams,
     type V2GroundJobCreateParams as V2GroundJobCreateParams,
     type V2JobListParams as V2JobListParams,

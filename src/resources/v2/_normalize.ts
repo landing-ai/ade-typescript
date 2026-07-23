@@ -8,6 +8,7 @@ import {
   Job,
   JobError,
   JobStatus,
+  V2BuildSchemaResult,
   V2ExtractResult,
   V2GroundResult,
   V2ParseResponse,
@@ -121,6 +122,13 @@ export function normalizeExtractJob(raw: Record<string, unknown>): Job {
   const job = baseIsoJob(raw);
   const payload = raw['result'];
   job.result = isRecord(payload) ? (payload as unknown as V2ExtractResult) : null;
+  return job;
+}
+
+export function normalizeBuildSchemaJob(raw: Record<string, unknown>): Job {
+  const job = baseIsoJob(raw);
+  const payload = raw['result'];
+  job.result = isRecord(payload) ? (payload as unknown as V2BuildSchemaResult) : null;
   return job;
 }
 
