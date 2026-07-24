@@ -33,3 +33,17 @@ When performing a code review on these PRs:
 - Once the wiring commit is present, focus the review on whether the wired surface matches
   the spec diff: routes, parameter names, request/response fields, required-vs-optional,
   and sync/async (job) surface consistency.
+- Do **not** flag the prose inside the snapshot files (`specs/v2-aide.json`,
+  `specs/_generated/`) — `summary` / `description` / `title` wording and the like. Those files
+  are a verbatim mirror of the upstream OpenAPI spec (published to S3 by the API's CI) and are
+  regenerated on every sync, so they cannot be edited in this repo. Wording fixes — e.g. a
+  build-schema endpoint whose `summary` reads `"ADE Extract"`, or a build-schema jobs endpoint
+  described as an "Extract job" — must land upstream, not here.
+
+## Known-intentional SDK conventions (do not report)
+
+- `saveTo` directory-mode filenames are intentionally `{method}_output.json` when no single
+  input file or URL can be derived. Methods whose inputs are arrays or absent — e.g.
+  `client.v2.buildSchema` (`markdowns` / `markdown_urls`) and `client.v2.ground` — pass
+  `_getInputFilename(null, null)` on purpose, mirroring the shared V1/V2 helper. This is
+  deliberate and consistent; do not report it as lost input-derived naming.
