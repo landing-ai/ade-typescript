@@ -195,6 +195,12 @@ jobs:
       # tools — and before the `git add -A` below — enforce the product-code ALLOWLIST: revert every
       # tracked edit and delete every untracked file OUTSIDE src/ tests/ api.md README.md. This stops
       # an injected edit to e.g. a config that defines what `format`/`build` run from executing here.
+      #
+      # The action STAGES its edits (git add) but does not commit. `git checkout -- .` restores the
+      # working tree FROM THE INDEX, so a staged edit survives it — the revert must therefore unstage
+      # first (`git reset -q`) so it sees every AI edit as a working-tree change and `git clean` sees
+      # new files as untracked. Without the reset the allowlist is a no-op and non-product edits (a
+      # config, a dotfile) reach `format`/`build` and the commit below.
       # (`git clean` has no -x, so gitignored paths like node_modules/ and dist/ are untouched.)
       #
       # Then format, build, and refresh the API report so the AI's additive surface is reflected in
@@ -204,6 +210,7 @@ jobs:
       - name: Restrict AI edits to product code, then format + refresh the API report
         if: steps.drift.outputs.code == '10' && steps.existing.outputs.open != 'true'
         run: |
+          git reset -q # unstage the action's edits so the allowlist revert + clean below actually apply
           git checkout -- . ':(exclude)src' ':(exclude)tests' ':(exclude)api.md' ':(exclude)README.md'
           git clean -fd -e /src -e /tests
           ./scripts/format
@@ -461,9 +468,13 @@ jobs:
             --max-turns 250
             --allowedTools "Edit,Write,Read,Glob,Grep,Bash(git diff:*)"
 
+      # See the V1 job's copy of this step for why: the action stages its edits, so `git checkout`
+      # (which restores from the index) is a no-op on them — unstage with `git reset -q` first so the
+      # product-code allowlist revert + clean actually apply before format/build run.
       - name: Restrict AI edits to product code, then format + refresh the API report
         if: steps.drift.outputs.code == '10' && steps.existing.outputs.open != 'true'
         run: |
+          git reset -q # unstage the action's edits so the allowlist revert + clean below actually apply
           git checkout -- . ':(exclude)src' ':(exclude)tests' ':(exclude)api.md' ':(exclude)README.md'
           git clean -fd -e /src -e /tests
           ./scripts/format
