@@ -83,7 +83,6 @@ describe('V2 environment / base URL resolution', () => {
     expect(client.v2).toBeDefined();
     expect(typeof client.v2.parse).toBe('function');
     expect(typeof client.v2.extract).toBe('function');
-    expect(client.v2.files).toBeDefined();
     expect(client.v2.parseJobs).toBeDefined();
     expect(client.v2.extractJobs).toBeDefined();
   });

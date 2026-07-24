@@ -225,11 +225,9 @@ const grounded = await client.v2.ground({
 console.log(grounded.grounding['invoice_number']);
 ```
 
-For inputs that take longer than a synchronous request allows, `client.v2.groundJobs` shares the same async shape described below.
-
 ## Process Large Documents Asynchronously (Jobs)
 
-For documents that take longer than a synchronous request allows, create a job and wait for it. `client.v2.parseJobs`, `client.v2.extractJobs`, `client.v2.buildSchemaJobs`, and `client.v2.groundJobs` share the same shape: `create`, `get`, `list`, and `wait`.
+For documents that take longer than a synchronous request allows, create a job and wait for it. `client.v2.parseJobs`, `client.v2.extractJobs`, and `client.v2.buildSchemaJobs` share the same shape: `create`, `get`, `list`, and `wait`.
 
 ```ts
 import fs from 'fs';

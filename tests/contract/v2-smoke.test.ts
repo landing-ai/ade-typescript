@@ -1,4 +1,4 @@
-import LandingAIADE, { toFile } from 'landingai-ade';
+import LandingAIADE from 'landingai-ade';
 
 // V2 (`client.v2`) contract smoke test. Like the V1 one, it hits the LIVE staging API — gated on a
 // real key, excluded from the default `./scripts/test` run, and required only on `spec-sync/*`
@@ -12,19 +12,6 @@ const runIf = apiKey ? test : test.skip;
 const SAMPLE_MARKDOWN = '# Acme Inc. — Q1 Report\n\nTotal revenue for the quarter was **$1,250,000**.\n';
 
 describe('V2 contract (staging)', () => {
-  runIf(
-    'files.upload stages bytes and returns a file_ref',
-    async () => {
-      const client = new LandingAIADE({ apikey: apiKey!, environment: 'staging' });
-      const fileRef = await client.v2.files.upload({
-        file: await toFile(Buffer.from(SAMPLE_MARKDOWN), 'doc.md', { type: 'text/markdown' }),
-      });
-      expect(typeof fileRef).toBe('string');
-      expect(fileRef.length).toBeGreaterThan(0);
-    },
-    60_000,
-  );
-
   runIf(
     'extract (sync) returns a structured extraction with range_units metadata',
     async () => {
@@ -107,20 +94,6 @@ describe('V2 contract (staging)', () => {
       expect(typeof res.metadata.job_id).toBe('string');
     },
     60_000,
-  );
-
-  runIf(
-    'groundJobs.list returns a normalized JobList',
-    async () => {
-      const client = new LandingAIADE({ apikey: apiKey!, environment: 'staging' });
-      const list = await client.v2.groundJobs.list({ page: 0, page_size: 1 });
-      expect(Array.isArray(list.jobs)).toBe(true);
-      for (const job of list.jobs) {
-        expect(typeof job.job_id).toBe('string');
-        expect(job.created_at === null || job.created_at instanceof Date).toBe(true);
-      }
-    },
-    30_000,
   );
 
   runIf(

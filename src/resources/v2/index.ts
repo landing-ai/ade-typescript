@@ -1,9 +1,8 @@
 export { V2 } from './v2';
-export { Files, type FileUploadParams } from './files';
 export { ParseJobs, type V2ParseParams, type V2ParseJobCreateParams, type V2JobListParams } from './parse';
 export { ExtractJobs, type V2ExtractParams, type V2ExtractJobCreateParams } from './extract';
 export { BuildSchemaJobs, type V2BuildSchemaParams, type V2BuildSchemaJobCreateParams } from './build-schema';
-export { GroundJobs, type V2GroundParams, type V2GroundJobCreateParams } from './ground';
+export { type V2GroundParams } from './ground';
 export {
   WorkflowJobs,
   type V2WorkflowParams,
@@ -25,7 +24,6 @@ export {
   type V2ElementType,
   type V2ExtractMetadata,
   type V2ExtractResult,
-  type V2FileUploadResponse,
   type V2GroundMetadata,
   type V2GroundResult,
   type V2Grounding,

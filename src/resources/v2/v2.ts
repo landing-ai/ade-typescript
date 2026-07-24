@@ -3,9 +3,8 @@ import { RequestOptions } from '../../internal/request-options';
 import { multipartFormRequestOptions } from '../../internal/uploads';
 import { V2Resource, throwIfSyncTimeout } from './_base';
 import { BuildSchemaJobs, V2BuildSchemaParams, buildBuildSchemaBody } from './build-schema';
-import { Files } from './files';
 import { ExtractJobs, V2ExtractParams, buildExtractBody } from './extract';
-import { GroundJobs, V2GroundParams, buildGroundBody } from './ground';
+import { V2GroundParams, buildGroundBody } from './ground';
 import { ParseJobs, V2ParseParams, buildParseForm } from './parse';
 import { WorkflowJobs, V2WorkflowParams, prepareWorkflowRequest } from './workflow';
 import {
@@ -22,11 +21,9 @@ import {
  * transport (auth, retries, fetch). Using it does not change any V1 behavior.
  */
 export class V2 extends V2Resource {
-  files: Files = new Files(this._client);
   parseJobs: ParseJobs = new ParseJobs(this._client);
   extractJobs: ExtractJobs = new ExtractJobs(this._client);
   buildSchemaJobs: BuildSchemaJobs = new BuildSchemaJobs(this._client);
-  groundJobs: GroundJobs = new GroundJobs(this._client);
   workflowJobs: WorkflowJobs = new WorkflowJobs(this._client);
 
   /**
@@ -126,8 +123,7 @@ export class V2 extends V2Resource {
    * synchronously (`POST /v2/ground`, JSON body). Pass the `extraction_metadata`
    * from an extract call and the `structure` tree from the parse the markdown
    * came from; resolves with a `V2GroundResult` whose `grounding` mirrors the
-   * `extraction_metadata` tree. Rejects with `V2SyncTimeoutError` on a 504; use
-   * `groundJobs` for long-running inputs.
+   * `extraction_metadata` tree. Rejects with `V2SyncTimeoutError` on a 504.
    *
    * Pass `saveTo` to also write the response to disk, mirroring the V1 `saveTo`
    * behavior.
@@ -155,10 +151,9 @@ export class V2 extends V2Resource {
 
   /**
    * Run a workflow synchronously (`POST /v2/workflow`). Phase 1 supports a single
-   * `parse-extract` step. Reference documents by uploading via
-   * `client.v2.files.upload` and passing the returned ref as
-   * `inputs.<name>.document_ref`, or use `document_url`. Rejects with
-   * `V2SyncTimeoutError` on a 504; use `workflowJobs` for long-running documents.
+   * `parse-extract` step. Reference documents inline via `inputs.<name>.document`
+   * or by `document_url`. Rejects with `V2SyncTimeoutError` on a 504; use
+   * `workflowJobs` for long-running documents.
    */
   async workflow(
     body: V2WorkflowParams & { saveTo?: string },

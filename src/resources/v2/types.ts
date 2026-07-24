@@ -408,18 +408,6 @@ export interface V2WorkflowResult {
   metadata: V2WorkflowMetadata;
 }
 
-// ---- Files ----
-
-/**
- * `POST /v1/files` returns an open string map; `file_ref` is the key the SDK
- * consumes to reference staged markdown/documents.
- */
-export interface V2FileUploadResponse {
-  file_ref?: string | null;
-
-  [key: string]: unknown;
-}
-
 const TERMINAL_STATUSES: ReadonlySet<JobStatus> = new Set<JobStatus>(['completed', 'failed', 'cancelled']);
 
 export function isTerminalStatus(status: JobStatus): boolean {

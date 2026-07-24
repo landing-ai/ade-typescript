@@ -10,7 +10,6 @@ import {
   JobStatus,
   V2BuildSchemaResult,
   V2ExtractResult,
-  V2GroundResult,
   V2ParseResponse,
   V2WorkflowResult,
   isTerminalStatus,
@@ -129,13 +128,6 @@ export function normalizeBuildSchemaJob(raw: Record<string, unknown>): Job {
   const job = baseIsoJob(raw);
   const payload = raw['result'];
   job.result = isRecord(payload) ? (payload as unknown as V2BuildSchemaResult) : null;
-  return job;
-}
-
-export function normalizeGroundJob(raw: Record<string, unknown>): Job {
-  const job = baseIsoJob(raw);
-  const payload = raw['result'];
-  job.result = isRecord(payload) ? (payload as unknown as V2GroundResult) : null;
   return job;
 }
 
