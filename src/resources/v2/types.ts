@@ -103,7 +103,8 @@ export interface V2ParseMetadata {
   /** 1-indexed pages that failed to parse. Empty when all pages succeed. */
   failed_pages?: Array<number> | null;
 
-  duration_ms?: number | null;
+  /** Total processing time in milliseconds. Required per spec; the value may be `null`. */
+  duration_ms: number | null;
 
   billing?: V2ParseBilling | null;
 
@@ -247,7 +248,7 @@ export interface V2ParseResponse {
 
   structure?: V2ParseStructure | null;
 
-  metadata?: V2ParseMetadata | null;
+  metadata: V2ParseMetadata;
 }
 
 // ---- Extract ----
@@ -327,8 +328,8 @@ export interface V2BuildSchemaMetadata {
   /** Gateway job id (workflow id). */
   job_id?: string;
 
-  /** End-to-end request duration in milliseconds. */
-  duration_ms?: number;
+  /** End-to-end request duration in milliseconds. Server-defaulted to `0`, so always present. */
+  duration_ms: number;
 
   /**
    * Name of the first source document. Retained for v1 compatibility but not
