@@ -174,7 +174,14 @@ jobs:
 
             Distinguish REQUEST fields — add a new OPTIONAL property to the method's params
             interface — from RESPONSE fields — add the field to the corresponding response
-            interface. Types are camelCase on the wire-facing params where the existing code is
+            interface. For a RESPONSE field, mirror the generated reference type in
+            specs/_generated/v1-ade.d.ts EXACTLY: match its required-vs-optional and its
+            nullability. A field the reference marks required (present, no trailing `?`) must be
+            declared required — do NOT soften it to a `?`-optional; add `| null` only when the
+            reference does. This holds whether you add a new field or wire a whole new response
+            type. Declaring a NEW response field required is allowed and does NOT violate the
+            additive rule below (that rule forbids only changing an EXISTING property to required).
+            Types are camelCase on the wire-facing params where the existing code is
             (follow the neighbouring file exactly).
 
             You may only edit product code: src/, tests/, api.md, and README.md. Do NOT edit
@@ -437,7 +444,14 @@ jobs:
 
             Distinguish REQUEST fields — wire as a new optional property on the method's params
             interface — from RESPONSE-model fields — add the field to the corresponding response type
-            under src/resources/v2/types.ts. For a genuinely new route, read
+            under src/resources/v2/types.ts. For a RESPONSE field, mirror the generated reference
+            type in specs/_generated/v2-aide.d.ts EXACTLY: match its required-vs-optional and its
+            nullability. A field the reference marks required (present, no trailing `?`) must be
+            declared required — do NOT soften it to a `?`-optional; add `| null` only when the
+            reference does. This holds whether you add a new field or wire a whole new response
+            type. Declaring a NEW response field required is allowed and does NOT violate the
+            additive rule below (that rule forbids only changing an EXISTING property to required).
+            For a genuinely new route, read
             src/resources/v2/extract.ts and src/resources/v2/parse.ts and mirror their structure:
 
             - Add a resource module under src/resources/v2/ with a sync method (multipart or JSON per
