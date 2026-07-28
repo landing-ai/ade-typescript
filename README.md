@@ -274,7 +274,7 @@ for (const j of jobs.jobs) {
 console.log(jobs.has_more);
 ```
 
-Extract jobs work the same way. The `create` method takes the same schema and Markdown arguments as `client.v2.extract`, plus `service_tier` and an optional `output_save_url` (a presigned URL the finished result is delivered to; the completed job then reports `output_url` in `Job.raw` instead of an inline `result`); it does not accept `saveTo`. Build-schema jobs mirror `client.v2.buildSchema`, taking the same `markdowns`/`markdown_urls`/`prompt`/`schema` arguments plus `service_tier`, and their `result` is a `V2BuildSchemaResult`. Ground jobs likewise mirror `client.v2.ground`, taking `extraction_metadata` and `structure`.
+Extract jobs work the same way. The `create` method takes the same schema and Markdown arguments as `client.v2.extract`, plus `service_tier` and an optional `output_save_url` (a presigned URL the finished result is delivered to; the completed job then reports `output_url` in `Job.raw` instead of an inline `result`); it does not accept `saveTo`. Build-schema jobs mirror `client.v2.buildSchema`, taking the same `markdowns`/`markdown_urls`/`prompt`/`schema` arguments plus `service_tier`, and their `result` is a `V2BuildSchemaResult`. Ground has no async jobs surface — use the synchronous `client.v2.ground` directly.
 
 ## Environments
 

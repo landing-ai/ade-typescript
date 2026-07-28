@@ -95,7 +95,7 @@ export function normalizeParseJob(raw: Record<string, unknown>): Job {
   // The parse-job envelope now carries the result under `result` (ISO-timestamp
   // shape, like extract); older servers used `data`. Accept either.
   const payload = raw['result'] ?? raw['data'];
-  const result = isRecord(payload) ? (payload as V2ParseResponse) : null;
+  const result = isRecord(payload) ? (payload as unknown as V2ParseResponse) : null;
 
   // Prefer `created_at`; fall back to `received_at` (older envelope). Use `??`
   // (not truthiness) so an epoch-zero `created_at` is preserved rather than

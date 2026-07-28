@@ -34,11 +34,11 @@
 
 import fs from 'node:fs';
 
-import LandingAIADE, { toFile } from 'landingai-ade';
+import LandingAIADE from 'landingai-ade';
 
-const ALL_CHECKS = ['files', 'extract', 'extract_jobs', 'parse', 'parse_jobs', 'workflow', 'workflow_jobs'];
+const ALL_CHECKS = ['extract', 'extract_jobs', 'parse', 'parse_jobs', 'workflow', 'workflow_jobs'];
 
-/** A tiny self-contained markdown doc + schema so extract/files run without any file. */
+/** A tiny self-contained markdown doc + schema so extract runs without any file. */
 const SAMPLE_MARKDOWN = '# Acme Inc. — Q1 Report\n\nTotal revenue for the quarter was **$1,250,000**.\n';
 
 const REVENUE_SCHEMA = {
@@ -199,17 +199,6 @@ async function main() {
     console.log(`── ${name} `.padEnd(60, '─') + `\n   SKIP  (${why})\n`);
     results[name] = 'SKIP';
   };
-
-  let fileRef;
-
-  if (checks.includes('files')) {
-    await record('files.upload', async () => {
-      fileRef = await client.v2.files.upload({
-        file: await toFile(Buffer.from(SAMPLE_MARKDOWN), 'doc.md', { type: 'text/markdown' }),
-      });
-      return `file_ref=${fileRef}`;
-    });
-  }
 
   if (checks.includes('extract')) {
     await record('v2.extract (sync)', async () => {
