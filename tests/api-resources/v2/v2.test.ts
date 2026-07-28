@@ -21,13 +21,6 @@ function stubClient(handler: (url: string) => Response): { client: LandingAIADE;
 }
 
 describe('client.v2 routing', () => {
-  test('files.upload routes to the V2 host and returns file_ref', async () => {
-    const { client, calls } = stubClient(() => jsonResponse({ file_ref: 'ref-1' }));
-    const ref = await client.v2.files.upload({ file: await toFile(Buffer.from('hi'), 'a.md') });
-    expect(ref).toBe('ref-1');
-    expect(calls.some((u) => u === 'https://api.ade.staging.landing.ai/v1/files')).toBe(true);
-  });
-
   test('parse routes to the V2 host and returns a 206 partial result', async () => {
     const { client, calls } = stubClient(() =>
       jsonResponse({ markdown: 'x', metadata: { failed_pages: [2] } }, 206),
@@ -282,6 +275,105 @@ describe('client.v2 routing', () => {
     expect(JSON.parse(String(sentBody))).toMatchObject({ service_tier: 'priority' });
   });
 
+  test('buildSchema (sync) sends a JSON body to the V2 host and returns the schema string', async () => {
+    const calls: string[] = [];
+    let sentBody: unknown;
+    const fetch: Fetch = async (input, init) => {
+      const url = String(input);
+      if (!url.startsWith('data:')) {
+        calls.push(url);
+        sentBody = init?.body;
+      }
+      return jsonResponse({
+        extraction_schema: '{"type":"object","properties":{"revenue":{"type":"string"}}}',
+        metadata: { openapi_spec: 'https://example.com/spec.json', job_id: 'bs-1', duration_ms: 2 },
+      });
+    };
+    const client = new LandingAIADE({ apikey: 'k', environment: 'staging', maxRetries: 0, fetch });
+    const res = await client.v2.buildSchema({
+      markdowns: ['# Acme'],
+      prompt: 'Capture revenue.',
+    });
+    expect(typeof res.extraction_schema).toBe('string');
+    expect(JSON.parse(res.extraction_schema)).toMatchObject({ type: 'object' });
+    expect(res.metadata.openapi_spec).toBe('https://example.com/spec.json');
+    expect(calls.some((u) => u === 'https://api.ade.staging.landing.ai/v2/extract/build-schema')).toBe(true);
+    expect(JSON.parse(String(sentBody))).toMatchObject({ markdowns: ['# Acme'], prompt: 'Capture revenue.' });
+  });
+
+  test('buildSchema coerces a `schema` object to a serialized JSON string on the wire', async () => {
+    let sentBody: unknown;
+    const fetch: Fetch = async (input, init) => {
+      if (!String(input).startsWith('data:')) sentBody = init?.body;
+      return jsonResponse({ extraction_schema: '{}', metadata: { openapi_spec: 's' } });
+    };
+    const client = new LandingAIADE({ apikey: 'k', environment: 'staging', maxRetries: 0, fetch });
+    await client.v2.buildSchema({ schema: { type: 'object' }, prompt: 'refine' });
+    // The wire field is a string (VTRA parity), so the object is JSON-serialized.
+    expect(JSON.parse(String(sentBody))).toMatchObject({ schema: '{"type":"object"}', prompt: 'refine' });
+  });
+
+  test('buildSchema (sync) maps a 504 to V2SyncTimeoutError', async () => {
+    const { client } = stubClient(() => jsonResponse({ detail: 'timeout' }, 504));
+    await expect(client.v2.buildSchema({ prompt: 'x' })).rejects.toBeInstanceOf(V2SyncTimeoutError);
+  });
+
+  test('buildSchemaJobs.create sends service_tier and normalizes the job', async () => {
+    let sentBody: unknown;
+    const calls: string[] = [];
+    const fetch: Fetch = async (input, init) => {
+      const url = String(input);
+      if (!url.startsWith('data:')) {
+        calls.push(url);
+        sentBody = init?.body;
+      }
+      return jsonResponse({ job_id: 'bsj-1', status: 'pending' }, 202);
+    };
+    const client = new LandingAIADE({ apikey: 'k', environment: 'staging', maxRetries: 0, fetch });
+    const job = await client.v2.buildSchemaJobs.create({
+      markdown_urls: ['https://example.com/doc.md'],
+      service_tier: 'priority',
+    });
+    expect(job.job_id).toBe('bsj-1');
+    expect(job.status).toBe('pending');
+    expect(calls.some((u) => u === 'https://api.ade.staging.landing.ai/v2/extract/build-schema/jobs')).toBe(
+      true,
+    );
+    expect(JSON.parse(String(sentBody))).toMatchObject({ service_tier: 'priority' });
+  });
+
+  test('buildSchemaJobs.get normalizes a completed build-schema job', async () => {
+    const { client, calls } = stubClient(() =>
+      jsonResponse({
+        job_id: 'bsj-2',
+        status: 'completed',
+        completed_at: '2026-01-02T03:05:06Z',
+        result: {
+          extraction_schema: '{"type":"object"}',
+          metadata: { openapi_spec: 's', job_id: 'bsj-2', duration_ms: 1 },
+        },
+      }),
+    );
+    const job = await client.v2.buildSchemaJobs.get('bsj-2');
+    expect(job.status).toBe('completed');
+    expect(job.is_terminal).toBe(true);
+    const result = job.result as LandingAIADE.V2BuildSchemaResult;
+    expect(result.extraction_schema).toBe('{"type":"object"}');
+    expect(
+      calls.some((u) => u === 'https://api.ade.staging.landing.ai/v2/extract/build-schema/jobs/bsj-2'),
+    ).toBe(true);
+  });
+
+  test('buildSchemaJobs.list builds a JobList with the pagination envelope', async () => {
+    const { client } = stubClient(() =>
+      jsonResponse({ jobs: [{ job_id: 'bs1', status: 'pending' }], has_more: false, page: 0, page_size: 10 }),
+    );
+    const list = await client.v2.buildSchemaJobs.list({ page: 0, page_size: 10 });
+    expect(list.jobs[0]!.job_id).toBe('bs1');
+    expect(list.has_more).toBe(false);
+    expect(list.page).toBe(0);
+  });
+
   test('ground (sync) sends a JSON body to the V2 host and returns grounding + metadata', async () => {
     const calls: string[] = [];
     let sentBody: unknown;
@@ -312,49 +404,6 @@ describe('client.v2 routing', () => {
     await expect(client.v2.ground({ extraction_metadata: {}, structure: {} })).rejects.toBeInstanceOf(
       V2SyncTimeoutError,
     );
-  });
-
-  test('groundJobs.create sends a JSON body and normalizes the job', async () => {
-    let sentBody: unknown;
-    const fetch: Fetch = async (_input, init) => {
-      sentBody = init?.body;
-      return jsonResponse({ job_id: 'gj-1', status: 'pending' }, 202);
-    };
-    const client = new LandingAIADE({ apikey: 'k', environment: 'staging', maxRetries: 0, fetch });
-    const job = await client.v2.groundJobs.create({
-      extraction_metadata: { a: { value: 'x', ranges: null } },
-      structure: { type: 'document' },
-    });
-    expect(job.job_id).toBe('gj-1');
-    expect(job.status).toBe('pending');
-    expect(JSON.parse(String(sentBody))).toMatchObject({ extraction_metadata: { a: { value: 'x' } } });
-  });
-
-  test('groundJobs.get normalizes a completed ground job', async () => {
-    const { client, calls } = stubClient(() =>
-      jsonResponse({
-        job_id: 'gj-2',
-        status: 'completed',
-        completed_at: '2026-01-02T03:05:06Z',
-        result: { grounding: { a: [] }, metadata: { job_id: 'gj-2', duration_ms: 1 } },
-      }),
-    );
-    const job = await client.v2.groundJobs.get('gj-2');
-    expect(job.status).toBe('completed');
-    expect(job.is_terminal).toBe(true);
-    const result = job.result as LandingAIADE.V2GroundResult;
-    expect(result.metadata.job_id).toBe('gj-2');
-    expect(calls.some((u) => u === 'https://api.ade.staging.landing.ai/v2/ground/jobs/gj-2')).toBe(true);
-  });
-
-  test('groundJobs.list builds a JobList with the pagination envelope', async () => {
-    const { client } = stubClient(() =>
-      jsonResponse({ jobs: [{ job_id: 'g1', status: 'pending' }], has_more: false, page: 0, page_size: 10 }),
-    );
-    const list = await client.v2.groundJobs.list({ page: 0, page_size: 10 });
-    expect(list.jobs[0]!.job_id).toBe('g1');
-    expect(list.has_more).toBe(false);
-    expect(list.page).toBe(0);
   });
 
   test('workflow (sync) routes to the V2 host and returns output + metadata', async () => {

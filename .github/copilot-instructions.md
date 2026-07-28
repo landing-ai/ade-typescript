@@ -15,7 +15,7 @@ PRs authored by `spec-sync[bot]` on branch `spec-sync/v2` arrive as **up to two 
 in this order**:
 
 1. **Mechanical snapshot** — `chore(spec-sync): update V2 spec snapshot + regenerated
-   reference types`. Touches `specs/v2-aide.json` and `specs/_generated/` **only**. By
+reference types`. Touches `specs/v2-aide.json` and `specs/_generated/` **only**. By
    design it does **not** wire the client: no new resources, methods, public types,
    exports, tests, or docs. This is expected and correct.
 2. **AI wiring** — `feat(spec-sync): wire client.v2 to spec diff (AI)`. Adds the client

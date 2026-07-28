@@ -20,10 +20,11 @@ export interface JobError {
 }
 
 /**
- * One normalized job shape across parse, extract, ground, and workflow (the
- * envelopes diverge upstream). `result` is a `V2ParseResponse` for parse jobs,
- * a `V2ExtractResult` for extract jobs, a `V2GroundResult` for ground jobs, and
- * a `V2WorkflowResult` for workflow jobs, or `null` until completion. `raw`
+ * One normalized job shape across parse, extract, build-schema, ground, and
+ * workflow (the envelopes diverge upstream). `result` is a `V2ParseResponse`
+ * for parse jobs, a `V2ExtractResult` for extract jobs, a `V2BuildSchemaResult`
+ * for build-schema jobs, a `V2GroundResult` for ground jobs, and a
+ * `V2WorkflowResult` for workflow jobs, or `null` until completion. `raw`
  * retains the full original envelope for any field not surfaced here (e.g.
  * `org_id`, `output_url`, `model_version`).
  */
@@ -38,7 +39,7 @@ export interface Job {
 
   progress: number | null;
 
-  result: V2ParseResponse | V2ExtractResult | V2GroundResult | V2WorkflowResult | null;
+  result: V2ParseResponse | V2ExtractResult | V2BuildSchemaResult | V2GroundResult | V2WorkflowResult | null;
 
   error: JobError | null;
 
@@ -102,7 +103,8 @@ export interface V2ParseMetadata {
   /** 1-indexed pages that failed to parse. Empty when all pages succeed. */
   failed_pages?: Array<number> | null;
 
-  duration_ms?: number | null;
+  /** Total processing time in milliseconds. Required per spec; the value may be `null`. */
+  duration_ms: number | null;
 
   billing?: V2ParseBilling | null;
 
@@ -246,7 +248,7 @@ export interface V2ParseResponse {
 
   structure?: V2ParseStructure | null;
 
-  metadata?: V2ParseMetadata | null;
+  metadata: V2ParseMetadata;
 }
 
 // ---- Extract ----
@@ -305,6 +307,61 @@ export interface V2ExtractResult {
   warnings?: Array<Record<string, unknown>>;
 }
 
+// ---- Build schema ----
+
+/**
+ * A structured warning from the schema-generation process. `code` classifies
+ * the warning (e.g. `nonconformant_schema`); `msg` is the human-readable
+ * description.
+ */
+export interface BuildSchemaWarning {
+  code: string;
+
+  msg: string;
+}
+
+/** Response metadata for a v2 build-schema call. */
+export interface V2BuildSchemaMetadata {
+  /** URL of the OpenAPI spec covering this API, for inspection and client generation. */
+  openapi_spec: string;
+
+  /** Gateway job id (workflow id). */
+  job_id?: string;
+
+  /** End-to-end request duration in milliseconds. Server-defaulted to `0`, so always present. */
+  duration_ms: number;
+
+  /**
+   * Name of the first source document. Retained for v1 compatibility but not
+   * populated in this version — always `null`.
+   */
+  filename?: string | null;
+
+  /** Organization ID. */
+  org_id?: string | null;
+
+  /**
+   * Model version used for generation. build-schema is version-free, so this is
+   * always `null`; retained for v1 response-shape compatibility.
+   */
+  version?: string | null;
+
+  billing?: V2Billing | null;
+
+  /** Structured warnings from the schema-generation process. */
+  warnings?: Array<BuildSchemaWarning>;
+}
+
+/**
+ * V2 build-schema result. `extraction_schema` is the generated JSON Schema
+ * serialized as a string (VTRA parity — the field is a string, not an object).
+ */
+export interface V2BuildSchemaResult {
+  extraction_schema: string;
+
+  metadata: V2BuildSchemaMetadata;
+}
+
 // ---- Ground ----
 
 /** Response metadata for a v2 ground call. */
@@ -350,18 +407,6 @@ export interface V2WorkflowResult {
   output: Record<string, unknown>;
 
   metadata: V2WorkflowMetadata;
-}
-
-// ---- Files ----
-
-/**
- * `POST /v1/files` returns an open string map; `file_ref` is the key the SDK
- * consumes to reference staged markdown/documents.
- */
-export interface V2FileUploadResponse {
-  file_ref?: string | null;
-
-  [key: string]: unknown;
 }
 
 const TERMINAL_STATUSES: ReadonlySet<JobStatus> = new Set<JobStatus>(['completed', 'failed', 'cancelled']);

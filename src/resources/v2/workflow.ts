@@ -18,7 +18,7 @@ import { Job, JobList } from './types';
 /**
  * One declared document input. Provide exactly one of `document` (a file — the
  * SDK stages it as a multipart part and references it by name), `document_ref`
- * (from `client.v2.files.upload`), or `document_url`.
+ * (a previously staged file reference), or `document_url`.
  */
 export interface WorkflowDocumentInput {
   document?: Uploadable | null;

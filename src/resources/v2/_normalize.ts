@@ -8,8 +8,8 @@ import {
   Job,
   JobError,
   JobStatus,
+  V2BuildSchemaResult,
   V2ExtractResult,
-  V2GroundResult,
   V2ParseResponse,
   V2WorkflowResult,
   isTerminalStatus,
@@ -95,7 +95,7 @@ export function normalizeParseJob(raw: Record<string, unknown>): Job {
   // The parse-job envelope now carries the result under `result` (ISO-timestamp
   // shape, like extract); older servers used `data`. Accept either.
   const payload = raw['result'] ?? raw['data'];
-  const result = isRecord(payload) ? (payload as V2ParseResponse) : null;
+  const result = isRecord(payload) ? (payload as unknown as V2ParseResponse) : null;
 
   // Prefer `created_at`; fall back to `received_at` (older envelope). Use `??`
   // (not truthiness) so an epoch-zero `created_at` is preserved rather than
@@ -124,10 +124,10 @@ export function normalizeExtractJob(raw: Record<string, unknown>): Job {
   return job;
 }
 
-export function normalizeGroundJob(raw: Record<string, unknown>): Job {
+export function normalizeBuildSchemaJob(raw: Record<string, unknown>): Job {
   const job = baseIsoJob(raw);
   const payload = raw['result'];
-  job.result = isRecord(payload) ? (payload as unknown as V2GroundResult) : null;
+  job.result = isRecord(payload) ? (payload as unknown as V2BuildSchemaResult) : null;
   return job;
 }
 
