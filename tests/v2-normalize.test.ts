@@ -51,6 +51,28 @@ describe('normalizeParseJob', () => {
     expect(job.result).toBeNull();
   });
 
+  test('envelope metadata is surfaced for a delivered (output_save_url) job', () => {
+    const job = normalizeParseJob({
+      job_id: 'p3',
+      status: 'completed',
+      created_at: '2026-01-02T03:04:05Z',
+      output_url: 'https://example.com/delivered.json',
+      result: null,
+      metadata: { job_id: 'p3', page_count: 2, duration_ms: 7 },
+    });
+    expect(job.result).toBeNull(); // delivered out-of-band
+    expect((job.metadata as any)?.page_count).toBe(2);
+  });
+
+  test('envelope metadata is null for an inline job', () => {
+    const job = normalizeParseJob({
+      job_id: 'p4',
+      status: 'completed',
+      result: { markdown: '# hi', metadata: { duration_ms: 1 } },
+    });
+    expect(job.metadata).toBeNull();
+  });
+
   test('unknown status defaults to pending but preserves raw', () => {
     const job = normalizeParseJob({ job_id: 'p', status: 'some_brand_new_status' });
     expect(job.status).toBe('pending');
@@ -92,6 +114,33 @@ describe('normalizeExtractJob', () => {
   test('list envelope failure_reason maps to error.message', () => {
     const job = normalizeExtractJob({ job_id: 'e3', status: 'failed', failure_reason: 'nope' });
     expect(job.error?.message).toBe('nope');
+  });
+
+  test('envelope metadata is surfaced for a delivered (output_save_url) job', () => {
+    const job = normalizeExtractJob({
+      job_id: 'e4',
+      status: 'completed',
+      created_at: '2026-01-02T03:04:05Z',
+      output_url: 'https://example.com/delivered.json',
+      result: null,
+      metadata: { job_id: 'e4', version: 'v', duration_ms: 9, billing: { total_credits: 1 } },
+    });
+    expect(job.result).toBeNull(); // delivered out-of-band
+    expect((job.metadata as any)?.billing.total_credits).toBe(1);
+  });
+
+  test('envelope metadata is null for an inline job', () => {
+    const job = normalizeExtractJob({
+      job_id: 'e5',
+      status: 'completed',
+      result: {
+        extraction: {},
+        extraction_metadata: {},
+        markdown: '',
+        metadata: { job_id: 'e5', version: 'v', duration_ms: 1 },
+      },
+    });
+    expect(job.metadata).toBeNull();
   });
 });
 

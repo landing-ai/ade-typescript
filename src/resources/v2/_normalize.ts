@@ -9,7 +9,9 @@ import {
   JobError,
   JobStatus,
   V2BuildSchemaResult,
+  V2ExtractMetadata,
   V2ExtractResult,
+  V2ParseMetadata,
   V2ParseResponse,
   V2WorkflowResult,
   isTerminalStatus,
@@ -39,6 +41,15 @@ function toDate(value: unknown): Date | null {
 
 function toProgress(value: unknown): number | null {
   return typeof value === 'number' ? value : null;
+}
+
+/**
+ * Envelope-level `metadata`: the receipt (billing included) a delivered job
+ * returns next to `output_url` when `output_save_url` was set. `null` for inline
+ * jobs, whose metadata lives inside `result` instead.
+ */
+function toMetadata<T>(value: unknown): T | null {
+  return isRecord(value) ? (value as unknown as T) : null;
 }
 
 function toStatus(value: unknown): JobStatus {
@@ -109,6 +120,7 @@ export function normalizeParseJob(raw: Record<string, unknown>): Job {
     completed_at: toDate(raw['completed_at']),
     progress: toProgress(raw['progress']),
     result,
+    metadata: toMetadata<V2ParseMetadata>(raw['metadata']),
     // The get envelope carries `error {code, message}`; the list envelope a
     // `failure_reason` string. `isoError` handles both.
     error: isoError(raw),
@@ -121,6 +133,9 @@ export function normalizeExtractJob(raw: Record<string, unknown>): Job {
   const job = baseIsoJob(raw);
   const payload = raw['result'];
   job.result = isRecord(payload) ? (payload as unknown as V2ExtractResult) : null;
+  // Same shape as the inline `result`'s metadata, hoisted to the envelope for
+  // delivered (`output_save_url`) jobs.
+  job.metadata = toMetadata<V2ExtractMetadata>(raw['metadata']);
   return job;
 }
 

@@ -97,6 +97,27 @@ describe('V2 contract (staging)', () => {
   );
 
   runIf(
+    'parseJobs.get normalizes the envelope-level metadata receipt',
+    async () => {
+      const client = new LandingAIADE({ apikey: apiKey!, environment: 'staging' });
+      const list = await client.v2.parseJobs.list({ page: 0, page_size: 5 });
+      for (const listed of list.jobs) {
+        const job = await client.v2.parseJobs.get(listed.job_id);
+        // `metadata` is the receipt (billing included) returned next to
+        // `output_url` for jobs created with an `output_save_url`. A smoke test
+        // cannot mint a presigned delivery URL, so assert the normalizer's
+        // contract on whatever staging returns — an object or `null` — and
+        // require it whenever a completed job actually was delivered.
+        expect(job.metadata === null || typeof job.metadata === 'object').toBe(true);
+        if (job.status === 'completed' && typeof job.raw['output_url'] === 'string') {
+          expect(job.metadata).not.toBeNull();
+        }
+      }
+    },
+    60_000,
+  );
+
+  runIf(
     'parseJobs.list returns a normalized JobList against the new envelope',
     async () => {
       const client = new LandingAIADE({ apikey: apiKey!, environment: 'staging' });

@@ -240,6 +240,73 @@ describe('client.v2 routing', () => {
     expect(result.metadata?.range_units).toBe('unicode_codepoints');
   });
 
+  test('parseJobs.get surfaces the envelope metadata alongside output_url', async () => {
+    // A job created with `output_save_url` has its result delivered out-of-band:
+    // the envelope carries `output_url` + the parse `metadata` receipt instead of
+    // an inline `result`.
+    const { client } = stubClient(() =>
+      jsonResponse({
+        job_id: 'pj-10',
+        status: 'completed',
+        created_at: '2026-01-02T03:04:05Z',
+        completed_at: '2026-01-02T03:05:06Z',
+        result: null,
+        output_url: 'https://example.com/delivered.json',
+        metadata: {
+          job_id: 'pj-10',
+          page_count: 3,
+          duration_ms: 1200,
+          billing: { service_tier: 'standard', total_credits: 3 },
+        },
+      }),
+    );
+    const job = await client.v2.parseJobs.get('pj-10');
+    expect(job.result).toBeNull();
+    const metadata = job.metadata as LandingAIADE.V2ParseMetadata;
+    expect(metadata.page_count).toBe(3);
+    expect(metadata.duration_ms).toBe(1200);
+    expect(metadata.billing?.total_credits).toBe(3);
+    expect(job.raw['output_url']).toBe('https://example.com/delivered.json');
+  });
+
+  test('extractJobs.get surfaces the envelope metadata alongside output_url', async () => {
+    const { client } = stubClient(() =>
+      jsonResponse({
+        job_id: 'ej-10',
+        status: 'completed',
+        created_at: '2026-01-02T03:04:05Z',
+        result: null,
+        output_url: 'https://example.com/delivered.json',
+        metadata: {
+          job_id: 'ej-10',
+          version: 'v',
+          model_version: 'dpt-3-pro-20260710',
+          duration_ms: 42,
+          billing: { total_credits: 2 },
+        },
+      }),
+    );
+    const job = await client.v2.extractJobs.get('ej-10');
+    expect(job.result).toBeNull();
+    const metadata = job.metadata as LandingAIADE.V2ExtractMetadata;
+    expect(metadata.model_version).toBe('dpt-3-pro-20260710');
+    expect(metadata.duration_ms).toBe(42);
+    expect(metadata.billing?.total_credits).toBe(2);
+  });
+
+  test('an inline job carries no envelope metadata (it lives inside result)', async () => {
+    const { client } = stubClient(() =>
+      jsonResponse({
+        job_id: 'pj-11',
+        status: 'completed',
+        result: { markdown: 'hi', metadata: { duration_ms: 5 } },
+      }),
+    );
+    const job = await client.v2.parseJobs.get('pj-11');
+    expect(job.metadata).toBeNull();
+    expect((job.result as LandingAIADE.V2ParseResponse).metadata?.duration_ms).toBe(5);
+  });
+
   test('parseJobs.get maps a failed job error object', async () => {
     const { client } = stubClient(() =>
       jsonResponse({ job_id: 'pj-f', status: 'failed', error: { code: 'bad', message: 'nope' } }),

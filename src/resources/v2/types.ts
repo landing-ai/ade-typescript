@@ -41,6 +41,15 @@ export interface Job {
 
   result: V2ParseResponse | V2ExtractResult | V2BuildSchemaResult | V2GroundResult | V2WorkflowResult | null;
 
+  /**
+   * Envelope-level metadata (billing included), returned alongside `output_url`
+   * once a job created with an `output_save_url` has `completed` — the delivery
+   * moves the content, not the receipt. A `V2ParseMetadata` for parse jobs and a
+   * `V2ExtractMetadata` for extract jobs; `null` for inline jobs, which carry
+   * their metadata inside `result` instead.
+   */
+  metadata?: V2ParseMetadata | V2ExtractMetadata | null;
+
   error: JobError | null;
 
   /** `true` when `status` is `completed`, `failed`, or `cancelled`. */

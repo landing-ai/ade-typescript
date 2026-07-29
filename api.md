@@ -59,6 +59,8 @@ The `client.v2` sub-client targets LandingAI's next-generation ADE gateway on it
 
 `client.v2.parseJobs`, `client.v2.extractJobs`, and `client.v2.buildSchemaJobs` all return a single, unified <a href="./src/resources/v2/types.ts">`Job`</a> shape even though the underlying parse/extract/build-schema job envelopes differ upstream — `Job.raw` retains the full original envelope as an escape hatch.
 
+A parse or extract job created with an `output_save_url` has its result delivered out-of-band; the completed job then carries `Job.metadata` (a `V2ParseMetadata` or `V2ExtractMetadata` receipt, billing included) next to `output_url` in `Job.raw` instead of an inline `result`. Inline jobs keep their metadata inside `result` and report `Job.metadata` as `null`.
+
 Types:
 
 - <code><a href="./src/resources/v2/types.ts">Job</a></code>
@@ -66,7 +68,9 @@ Types:
 - <code><a href="./src/resources/v2/types.ts">JobList</a></code>
 - <code><a href="./src/resources/v2/types.ts">JobStatus</a></code>
 - <code><a href="./src/resources/v2/types.ts">V2ParseResponse</a></code>
+- <code><a href="./src/resources/v2/types.ts">V2ParseMetadata</a></code>
 - <code><a href="./src/resources/v2/types.ts">V2ExtractResult</a></code>
+- <code><a href="./src/resources/v2/types.ts">V2ExtractMetadata</a></code>
 - <code><a href="./src/resources/v2/types.ts">V2BuildSchemaResult</a></code>
 - <code><a href="./src/resources/v2/types.ts">V2BuildSchemaMetadata</a></code>
 - <code><a href="./src/resources/v2/types.ts">BuildSchemaWarning</a></code>

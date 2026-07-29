@@ -260,7 +260,7 @@ try {
 }
 ```
 
-The `create`, `get`, and `wait` methods return a normalized `Job` with `job_id`, `status` (`pending`, `processing`, `completed`, `failed`, or `cancelled`), `progress`, `result`, `error`, `is_terminal`, and `raw` (the unmodified API envelope, for any field not surfaced on the typed shape). The `list` method returns a `JobList` with a `jobs` array and `has_more`, plus the `page`/`page_size` pagination fields; `org_id` is populated only by older parse envelopes. Fields an endpoint doesn't populate are `null`.
+The `create`, `get`, and `wait` methods return a normalized `Job` with `job_id`, `status` (`pending`, `processing`, `completed`, `failed`, or `cancelled`), `progress`, `result`, `metadata`, `error`, `is_terminal`, and `raw` (the unmodified API envelope, for any field not surfaced on the typed shape). The `list` method returns a `JobList` with a `jobs` array and `has_more`, plus the `page`/`page_size` pagination fields; `org_id` is populated only by older parse envelopes. Fields an endpoint doesn't populate are `null`.
 
 ```ts
 // Poll manually instead of blocking
@@ -274,7 +274,25 @@ for (const j of jobs.jobs) {
 console.log(jobs.has_more);
 ```
 
-Extract jobs work the same way. The `create` method takes the same schema and Markdown arguments as `client.v2.extract`, plus `service_tier` and an optional `output_save_url` (a presigned URL the finished result is delivered to; the completed job then reports `output_url` in `Job.raw` instead of an inline `result`); it does not accept `saveTo`. Build-schema jobs mirror `client.v2.buildSchema`, taking the same `markdowns`/`markdown_urls`/`prompt`/`schema` arguments plus `service_tier`, and their `result` is a `V2BuildSchemaResult`. Ground has no async jobs surface — use the synchronous `client.v2.ground` directly.
+Extract jobs work the same way. The `create` method takes the same schema and Markdown arguments as `client.v2.extract`, plus `service_tier` and an optional `output_save_url` (a presigned URL the finished result is delivered to; the completed job then reports `output_url` in `Job.raw` instead of an inline `result`); it does not accept `saveTo`.
+
+```ts
+// A job created with `output_save_url` delivers the result out-of-band, but the
+// receipt still comes back on the job: `Job.metadata` carries the parse/extract
+// metadata (billing included) alongside `output_url` in `Job.raw`.
+const delivery = await client.v2.extractJobs.create({
+  schema: { type: 'object', properties: { revenue: { type: 'string' } } },
+  markdown: '# Acme Inc. — Q1 Report',
+  output_save_url: 'https://example.com/presigned-put-url',
+});
+const done = await client.v2.extractJobs.wait(delivery.job_id);
+if (done.result === null && done.metadata) {
+  const metadata = done.metadata as LandingAIADE.V2ExtractMetadata;
+  console.log(done.raw['output_url'], metadata.duration_ms, metadata.billing?.total_credits);
+}
+```
+
+Inline jobs leave `Job.metadata` `null` and carry their metadata inside `result` instead. Build-schema jobs mirror `client.v2.buildSchema`, taking the same `markdowns`/`markdown_urls`/`prompt`/`schema` arguments plus `service_tier`, and their `result` is a `V2BuildSchemaResult`. Ground has no async jobs surface — use the synchronous `client.v2.ground` directly.
 
 ## Environments
 
