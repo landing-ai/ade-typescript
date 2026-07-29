@@ -9,6 +9,7 @@ export type { Logger, LogLevel } from './internal/utils/log';
 import { castToError, isAbortError } from './internal/errors';
 import type { APIResponseProps } from './internal/parse';
 import { getPlatformHeaders } from './internal/detect-platform';
+import { SOURCE, buildUserAgent } from './internal/client-identity';
 import * as Shims from './internal/shims';
 import * as Opts from './internal/request-options';
 import { stringifyQuery } from './internal/utils/query';
@@ -607,7 +608,9 @@ export class LandingAIADE {
   }
 
   private getUserAgent(): string {
-    return `${this.constructor.name}/JS ${VERSION}`;
+    // Structured client identity (landing-ai/ade-typescript#96), built in the
+    // single seam in `internal/client-identity`. Never throws.
+    return buildUserAgent(VERSION);
   }
 
   protected defaultIdempotencyKey(): string {
@@ -1021,6 +1024,10 @@ export class LandingAIADE {
       {
         Accept: 'application/json',
         'User-Agent': this.getUserAgent(),
+        // Client identity (landing-ai/ade-typescript#96). Sits before
+        // `defaultHeaders`/per-request `headers` below, so a caller can still
+        // override the identity if it must.
+        'X-Source': SOURCE,
         'X-Stainless-Retry-Count': String(retryCount),
         ...(options.timeout ? { 'X-Stainless-Timeout': String(Math.trunc(options.timeout / 1000)) } : {}),
         runtime_tag: `ade-typescript-v${VERSION}`,
