@@ -160,4 +160,22 @@ describe('never throws', () => {
     });
     jest.dontMock('landingai-ade/internal/detect-platform');
   });
+
+  test('non-ASCII platform values are stripped to ASCII', () => {
+    jest.isolateModules(() => {
+      jest.doMock('landingai-ade/internal/detect-platform', () => ({
+        getPlatformHeaders: () => ({
+          'X-Stainless-OS': 'Linux',
+          'X-Stainless-Arch': 'arm\u{1F525}', // arm🔥
+          'X-Stainless-Runtime': 'node',
+          'X-Stainless-Runtime-Version': 'v20.0.0',
+        }),
+      }));
+      const { buildUserAgent: build } = require('landingai-ade/internal/client-identity');
+      const ua: string = build('1.2.3');
+      expect(ua).toMatch(/^[\x20-\x7E]*$/); // printable ASCII — header-encodable
+      expect(ua).toContain('(Linux arm)'); // emoji stripped, not split into a 3rd word
+    });
+    jest.dontMock('landingai-ade/internal/detect-platform');
+  });
 });

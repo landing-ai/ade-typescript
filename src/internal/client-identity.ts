@@ -37,12 +37,13 @@ const PRODUCT = 'ade-typescript';
 const PLACEHOLDER = 'unknown';
 
 /**
- * Anything that would break the parser's `(<os> <arch>)` shape — whitespace,
- * `;`/`,`, or parentheses — is collapsed into a single `-` so an exotic platform
- * never splits into extra "words".
+ * Keep only visible-ASCII token characters; collapse everything else into a
+ * single `-`. This covers what would break the parser's `(<os> <arch>)` shape
+ * (whitespace, `;`/`,`, parentheses) AND non-ASCII values, so an exotic platform
+ * string can never split into extra "words" or smuggle a non-header-safe byte in.
  */
 const cleanToken = (value: string): string =>
-  value.replace(/[\s;,()]+/g, '-').replace(/^-+|-+$/g, '') || PLACEHOLDER;
+  value.replace(/[^A-Za-z0-9._:+-]+/g, '-').replace(/^-+|-+$/g, '') || PLACEHOLDER;
 
 /**
  * Build the structured `User-Agent`. Never throws.

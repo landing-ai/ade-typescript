@@ -420,6 +420,19 @@ console.log(raw.headers.get('X-My-Header'));
 console.log(data.chunks);
 ```
 
+### Client Identity Headers
+
+Every request carries two headers that let the platform attribute traffic to this SDK:
+
+- `X-Source: sdk`
+- a structured `User-Agent`, e.g. `ade-typescript/2.10.0 (MacOS arm64) node/20`
+
+You can override either one by supplying the same header via `defaultHeaders` on the client or `headers` on a request — a caller-supplied value replaces the SDK default. Leave them untouched to keep accurate attribution.
+
+```ts
+const client = new LandingAIADE({ defaultHeaders: { 'User-Agent': 'my-app/1.0' } }); // replaces the SDK User-Agent
+```
+
 ### File Uploads
 
 Request parameters that correspond to file uploads (such as `document`, `markdown`, and `file`) can be passed in several forms:
