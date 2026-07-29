@@ -1560,6 +1560,8 @@ export interface operations {
                         };
                         /** @description The unique identifier for this v2-extract job. Format: ``extract-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
                         job_id?: string;
+                        /** @description The result's metadata block (billing included), present alongside ``output_url`` once a job with ``output_save_url`` has ``completed`` — the delivery moves the content, not the receipt. Same shape as the inline ``result``'s ``metadata``; inline jobs carry it there instead. */
+                        metadata?: Record<string, never> | null;
                         /** @description The URL the result was delivered to. Present once the job has ``completed`` and ``output_save_url`` was set, instead of inline ``result``. */
                         output_url?: string | null;
                         /** @description Job completion as a decimal from 0 (not started) to 1 (complete). Present while ``processing``. */
@@ -2008,6 +2010,8 @@ export interface operations {
                         };
                         /** @description The unique identifier for this parse job. Format: ``<service>-<26-character Crockford base32 ULID>`` matching ``^(parse|extract)-[0-9a-hjkmnp-tv-z]{26}$``. Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
                         job_id?: string;
+                        /** @description The parse metadata (billing included), present alongside ``output_url`` once a job with ``output_save_url`` has ``completed`` — the delivery moves the content, not the receipt. Inline jobs carry it inside ``result`` instead. */
+                        metadata?: components["schemas"]["ParseMetadata"] | null;
                         /** @description The URL the result was delivered to. Present once the job has ``completed`` and ``output_save_url`` was set, instead of inline ``result``. */
                         output_url?: string | null;
                         /** @description Job completion as a decimal from 0 (not started) to 1 (complete). Present while ``processing``. */
