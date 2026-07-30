@@ -1,7 +1,7 @@
 export { V2 } from './v2';
 export { ParseJobs, type V2ParseParams, type V2ParseJobCreateParams, type V2JobListParams } from './parse';
 export { ExtractJobs, type V2ExtractParams, type V2ExtractJobCreateParams } from './extract';
-export { BuildSchemaJobs, type V2BuildSchemaParams, type V2BuildSchemaJobCreateParams } from './build-schema';
+export { type V2BuildSchemaParams, type V2BuildSchemaJobCreateParams } from './build-schema';
 export { type V2GroundParams } from './ground';
 export {
   WorkflowJobs,

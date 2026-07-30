@@ -57,7 +57,7 @@ Methods:
 
 The `client.v2` sub-client targets LandingAI's next-generation ADE gateway on its own host (`api.ade.[env].landing.ai`), separate from the V1 host (`api.va.[env].landing.ai`). It is **additive** — `client.v2.*` is a separate surface from the top-level `client.*` (V1) methods above, and using it does not change any V1 behavior.
 
-`client.v2.parseJobs`, `client.v2.extractJobs`, and `client.v2.buildSchemaJobs` all return a single, unified <a href="./src/resources/v2/types.ts">`Job`</a> shape even though the underlying parse/extract/build-schema job envelopes differ upstream — `Job.raw` retains the full original envelope as an escape hatch.
+`client.v2.parseJobs` and `client.v2.extractJobs` both return a single, unified <a href="./src/resources/v2/types.ts">`Job`</a> shape even though the underlying parse/extract job envelopes differ upstream — `Job.raw` retains the full original envelope as an escape hatch.
 
 Types:
 
@@ -78,7 +78,6 @@ Methods:
 
 - <code title="post /v2/parse">client.v2.<a href="./src/resources/v2/v2.ts">parse</a>({ ...params }) -> V2ParseResponse</code>
 - <code title="post /v2/extract">client.v2.<a href="./src/resources/v2/v2.ts">extract</a>({ ...params }) -> V2ExtractResult</code>
-- <code title="post /v2/extract/build-schema">client.v2.<a href="./src/resources/v2/v2.ts">buildSchema</a>({ ...params }) -> V2BuildSchemaResult</code>
 - <code title="post /v2/ground">client.v2.<a href="./src/resources/v2/v2.ts">ground</a>({ ...params }) -> V2GroundResult</code>
 - <code title="post /v2/parse/jobs">client.v2.parseJobs.<a href="./src/resources/v2/parse.ts">create</a>({ ...params }) -> Job</code>
 - <code title="get /v2/parse/jobs/{job_id}">client.v2.parseJobs.<a href="./src/resources/v2/parse.ts">get</a>(jobID) -> Job</code>
@@ -88,10 +87,6 @@ Methods:
 - <code title="get /v2/extract/jobs/{job_id}">client.v2.extractJobs.<a href="./src/resources/v2/extract.ts">get</a>(jobID) -> Job</code>
 - <code title="get /v2/extract/jobs">client.v2.extractJobs.<a href="./src/resources/v2/extract.ts">list</a>({ ...params }) -> JobList</code>
 - <code>client.v2.extractJobs.<a href="./src/resources/v2/extract.ts">wait</a>(jobID, { ...options }) -> Job</code>
-- <code title="post /v2/extract/build-schema/jobs">client.v2.buildSchemaJobs.<a href="./src/resources/v2/build-schema.ts">create</a>({ ...params }) -> Job</code>
-- <code title="get /v2/extract/build-schema/jobs/{job_id}">client.v2.buildSchemaJobs.<a href="./src/resources/v2/build-schema.ts">get</a>(jobID) -> Job</code>
-- <code title="get /v2/extract/build-schema/jobs">client.v2.buildSchemaJobs.<a href="./src/resources/v2/build-schema.ts">list</a>({ ...params }) -> JobList</code>
-- <code>client.v2.buildSchemaJobs.<a href="./src/resources/v2/build-schema.ts">wait</a>(jobID, { ...options }) -> Job</code>
 - <code title="post /v2/workflow">client.v2.<a href="./src/resources/v2/v2.ts">workflow</a>({ ...params }) -> V2WorkflowResult</code>
 - <code title="post /v2/workflow/jobs">client.v2.workflowJobs.<a href="./src/resources/v2/workflow.ts">create</a>({ ...params }) -> Job</code>
 - <code title="get /v2/workflow/jobs/{job_id}">client.v2.workflowJobs.<a href="./src/resources/v2/workflow.ts">get</a>(jobID) -> Job</code>
