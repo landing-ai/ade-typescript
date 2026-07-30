@@ -35,7 +35,7 @@ When performing a code review on these PRs:
   and sync/async (job) surface consistency.
 - Do **not** flag the prose inside the snapshot files (`specs/v2-aide.json`,
   `specs/_generated/`) — `summary` / `description` / `title` wording and the like. Those files
-  are a verbatim mirror of the upstream OpenAPI spec (published to S3 by the API's CI) and are
+  are a verbatim mirror of the upstream OpenAPI spec (fetched live from staging on each sync) and are
   regenerated on every sync, so they cannot be edited in this repo. Wording fixes — e.g. a
   build-schema endpoint whose `summary` reads `"ADE Extract"`, or a build-schema jobs endpoint
   described as an "Extract job" — must land upstream, not here.
