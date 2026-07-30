@@ -9,6 +9,10 @@ if [ "$#" -ne 1 ]; then
 fi
 
 url="$1"
+# Fetch first, separately from normalization, so the two failure modes stay distinguishable. A fetch
+# failure (source unreachable — e.g. an unbooked staging cluster) exits 20, which the caller treats
+# as an expected no-op; a reachable-but-invalid spec still fails loudly below.
+raw="$(curl -fsSL --max-time 30 --retry 3 --retry-delay 2 "$url")" || exit 20
 # `jq -S` sorts object keys only; array element order (e.g. `required`, `enum`, `tags`) is
 # preserved as emitted by the backend. This assumes the gateway emits arrays deterministically.
 # If it ever reorders them, drift detection would fire on cosmetic churn (phantom PRs) — start
@@ -17,7 +21,7 @@ url="$1"
 # emit nothing and exit 0 — a silent "empty spec" that check-drift would treat as drift and commit,
 # clobbering the committed snapshot. Reject empty output loudly instead. (Malformed JSON already
 # fails via jq's non-zero exit under pipefail.)
-normalized="$(curl -fsSL --max-time 30 --retry 3 --retry-delay 2 "$url" | jq -S .)"
+normalized="$(printf '%s' "$raw" | jq -S .)"
 if [ -z "$normalized" ]; then
   echo "fetch-normalize: empty/blank spec from $url" >&2
   exit 1
