@@ -101,10 +101,11 @@ gates on the **production** spec ("staging in, production out").
 
 On each run it fetches and normalizes the live spec (`scripts/spec-sync/fetch-normalize.sh`) and
 diffs it against the committed snapshot `specs/v1-ade.json` (`scripts/spec-sync/check-drift.sh`).
-Staging auto-reclaims and must be booked, so an unreachable spec source is treated as an expected
-no-op — the run ends cleanly with no PR and no Slack alert, and the next run picks up drift once
-staging is booked. A spec that is reachable but empty or invalid still fails loudly and alerts. On
-drift it opens one PR on a fixed branch (`spec-sync/v1`) with two attributed commits:
+Staging auto-reclaims and must be booked, so an unavailable spec source (an unbooked cluster 404s, or
+the host stops answering) is treated as an expected no-op — the run ends cleanly with no PR and no
+Slack alert, and the next run picks up drift once staging is booked. A reachable source that returns
+an error status (401/403/5xx) or an empty/invalid spec still fails loudly and alerts. On drift it
+opens one PR on a fixed branch (`spec-sync/v1`) with two attributed commits:
 
 1. **Mechanical** — the updated `specs/v1-ade.json` snapshot plus regenerated _reference_ types in
    `specs/_generated/v1-ade.d.ts` (`scripts/spec-sync/gen-models.sh`, `openapi-typescript`). These
