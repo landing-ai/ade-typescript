@@ -236,7 +236,7 @@ try {
 }
 ```
 
-The `create`, `get`, and `wait` methods return a normalized `Job` with `job_id`, `status` (`pending`, `processing`, `completed`, `failed`, or `cancelled`), `progress`, `result`, `error`, `is_terminal`, and `raw` (the unmodified API envelope, for any field not surfaced on the typed shape). The `list` method returns a `JobList` with a `jobs` array and `has_more`, plus the `page`/`page_size` pagination fields; `org_id` is populated only by older parse envelopes. Fields an endpoint doesn't populate are `null`.
+The `create`, `get`, and `wait` methods return a normalized `Job` with `job_id`, `status` (`pending`, `processing`, `completed`, `failed`, or `cancelled`), `progress`, `result`, `metadata`, `error`, `is_terminal`, and `raw` (the unmodified API envelope, for any field not surfaced on the typed shape). `progress` is an estimate rather than a measurement: it can jump forward and plateaus near `0.98`, so treat `status`/`is_terminal` — not `progress` — as the signal that a job finished. The `list` method returns a `JobList` with a `jobs` array and `has_more`, plus the `page`/`page_size` pagination fields; `org_id` is populated only by older parse envelopes. Fields an endpoint doesn't populate are `null`.
 
 ```ts
 // Poll manually instead of blocking
@@ -251,6 +251,20 @@ console.log(jobs.has_more);
 ```
 
 Extract jobs work the same way. The `create` method takes the same schema and Markdown arguments as `client.v2.extract`, plus `service_tier` and an optional `output_save_url` (a presigned URL the finished result is delivered to; the completed job then reports `output_url` in `Job.raw` instead of an inline `result`); it does not accept `saveTo`. Ground has no async jobs surface — use the synchronous `client.v2.ground` directly.
+
+The delivery moves the content, not the receipt: a job completed through `output_save_url` still reports its metadata block (billing included) on `Job.metadata`, so you can bill and audit the run without fetching the delivered payload back.
+
+```ts
+const done = await client.v2.parseJobs.wait(job.job_id);
+if (done.metadata) {
+  // Delivered to `output_save_url`; the content is at `done.raw.output_url`.
+  const metadata = done.metadata as LandingAIADE.V2ParseMetadata;
+  console.log(done.raw['output_url'], metadata.billing?.total_credits);
+} else {
+  // Inline job: the same metadata rides inside `result`.
+  console.log((done.result as LandingAIADE.V2ParseResponse | null)?.metadata.billing?.total_credits);
+}
+```
 
 ## Environments
 

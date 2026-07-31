@@ -51,6 +51,32 @@ describe('normalizeParseJob', () => {
     expect(job.result).toBeNull();
   });
 
+  test('envelope metadata is surfaced when the result was delivered to output_save_url', () => {
+    const job = normalizeParseJob({
+      job_id: 'p3',
+      status: 'completed',
+      completed_at: '2026-01-02T03:04:05Z',
+      output_url: 'https://example.com/out.json',
+      result: null,
+      metadata: { job_id: 'p3', page_count: 2, duration_ms: 900 },
+    });
+    expect(job.result).toBeNull();
+    expect((job.metadata as any).page_count).toBe(2);
+    expect(job.raw['output_url']).toBe('https://example.com/out.json');
+  });
+
+  test('envelope metadata is null for an inline job and for a non-object value', () => {
+    const inline = normalizeParseJob({
+      job_id: 'p4',
+      status: 'completed',
+      result: { markdown: '# hi', metadata: { job_id: 'p4' } },
+    });
+    expect(inline.metadata).toBeNull();
+    // A scalar/array where an object was expected must not leak through.
+    expect(normalizeParseJob({ job_id: 'p5', metadata: 'nope' }).metadata).toBeNull();
+    expect(normalizeParseJob({ job_id: 'p6', metadata: [] }).metadata).toBeNull();
+  });
+
   test('unknown status defaults to pending but preserves raw', () => {
     const job = normalizeParseJob({ job_id: 'p', status: 'some_brand_new_status' });
     expect(job.status).toBe('pending');
@@ -92,6 +118,18 @@ describe('normalizeExtractJob', () => {
   test('list envelope failure_reason maps to error.message', () => {
     const job = normalizeExtractJob({ job_id: 'e3', status: 'failed', failure_reason: 'nope' });
     expect(job.error?.message).toBe('nope');
+  });
+
+  test('envelope metadata rides alongside output_url on a delivered job', () => {
+    const job = normalizeExtractJob({
+      job_id: 'e4',
+      status: 'completed',
+      completed_at: '2026-01-02T03:04:09Z',
+      output_url: 'https://example.com/out.json',
+      metadata: { job_id: 'e4', duration_ms: 10, billing: { total_credits: 3 } },
+    });
+    expect(job.result).toBeNull();
+    expect((job.metadata as any).billing.total_credits).toBe(3);
   });
 });
 

@@ -240,6 +240,65 @@ describe('client.v2 routing', () => {
     expect(result.metadata?.range_units).toBe('unicode_codepoints');
   });
 
+  test('parseJobs.get surfaces the envelope metadata receipt beside output_url', async () => {
+    const { client } = stubClient(() =>
+      jsonResponse({
+        job_id: 'pj-zdr',
+        status: 'completed',
+        completed_at: '2026-01-02T03:05:06Z',
+        // A job created with `output_save_url`: the parsed content went to the
+        // presigned URL, and only the metadata receipt rides on the envelope.
+        output_url: 'https://example.com/delivered.json',
+        result: null,
+        metadata: {
+          job_id: 'pj-zdr',
+          page_count: 3,
+          duration_ms: 1200,
+          billing: { service_tier: 'standard', total_credits: 6 },
+        },
+      }),
+    );
+    const job = await client.v2.parseJobs.get('pj-zdr');
+    expect(job.result).toBeNull(); // delivered out-of-band instead
+    expect(job.raw['output_url']).toBe('https://example.com/delivered.json');
+    const metadata = job.metadata as LandingAIADE.V2ParseMetadata;
+    expect(metadata.page_count).toBe(3);
+    expect(metadata.billing?.total_credits).toBe(6);
+  });
+
+  test('extractJobs.get surfaces the envelope metadata receipt beside output_url', async () => {
+    const { client } = stubClient(() =>
+      jsonResponse({
+        job_id: 'ej-zdr',
+        status: 'completed',
+        created_at: '2026-01-02T03:04:05Z',
+        output_url: 'https://example.com/delivered.json',
+        metadata: { job_id: 'ej-zdr', duration_ms: 42, billing: { total_credits: 2 } },
+      }),
+    );
+    const job = await client.v2.extractJobs.get('ej-zdr');
+    expect(job.result).toBeNull();
+    expect((job.metadata as Record<string, unknown>)['duration_ms']).toBe(42);
+  });
+
+  test('an inline job reports a null envelope metadata (it rides inside result)', async () => {
+    const { client } = stubClient(() =>
+      jsonResponse({
+        job_id: 'ej-inline',
+        status: 'completed',
+        result: {
+          extraction: {},
+          extraction_metadata: {},
+          markdown: '',
+          metadata: { job_id: 'ej-inline', version: 'v', duration_ms: 1 },
+        },
+      }),
+    );
+    const job = await client.v2.extractJobs.get('ej-inline');
+    expect(job.metadata).toBeNull();
+    expect((job.result as LandingAIADE.V2ExtractResult).metadata.duration_ms).toBe(1);
+  });
+
   test('parseJobs.get maps a failed job error object', async () => {
     const { client } = stubClient(() =>
       jsonResponse({ job_id: 'pj-f', status: 'failed', error: { code: 'bad', message: 'nope' } }),

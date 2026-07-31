@@ -41,6 +41,16 @@ export interface Job {
 
   result: V2ParseResponse | V2ExtractResult | V2BuildSchemaResult | V2GroundResult | V2WorkflowResult | null;
 
+  /**
+   * The result's metadata block (billing included), carried on the envelope
+   * alongside `raw.output_url` once a job created with `output_save_url` has
+   * completed — the out-of-band delivery moves the content, not the receipt.
+   * `null` for inline jobs, which carry the same metadata inside `result`
+   * instead. A `V2ParseMetadata` for parse jobs; the extract envelope declares
+   * it as an untyped object, so it widens to `Record<string, unknown>` there.
+   */
+  metadata: V2ParseMetadata | V2ExtractMetadata | Record<string, unknown> | null;
+
   error: JobError | null;
 
   /** `true` when `status` is `completed`, `failed`, or `cancelled`. */

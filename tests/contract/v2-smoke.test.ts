@@ -67,6 +67,29 @@ describe('V2 contract (staging)', () => {
   );
 
   runIf(
+    'an inline extract job leaves the new envelope-level metadata receipt null',
+    async () => {
+      const client = new LandingAIADE({ apikey: apiKey!, environment: 'staging' });
+      const created = await client.v2.extractJobs.create({
+        schema: { type: 'object', properties: { revenue: { type: 'string' } } },
+        markdown: SAMPLE_MARKDOWN,
+      });
+      const done = await client.v2.extractJobs.wait(created.job_id, { timeout: 90_000 });
+      // `metadata` (added by this spec sync) is the receipt for an out-of-band
+      // delivery: the gateway populates it only alongside `output_url`, for jobs
+      // created with `output_save_url`. This job is inline, so it must normalize
+      // to `null` and the metadata must ride inside `result` instead.
+      expect(done.metadata === null || typeof done.metadata === 'object').toBe(true);
+      if (done.status === 'completed') {
+        expect(done.metadata).toBeNull();
+        const result = done.result as LandingAIADE.V2ExtractResult | null;
+        expect(typeof result?.metadata.duration_ms).toBe('number');
+      }
+    },
+    120_000,
+  );
+
+  runIf(
     'parseJobs.list returns a normalized JobList against the new envelope',
     async () => {
       const client = new LandingAIADE({ apikey: apiKey!, environment: 'staging' });

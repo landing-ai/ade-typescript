@@ -10,6 +10,7 @@ function makeJob(status: JobStatus, error: Job['error'] = null): Job {
     completed_at: null,
     progress: null,
     result: null,
+    metadata: null,
     error,
     is_terminal: status === 'completed' || status === 'failed' || status === 'cancelled',
     raw: {},

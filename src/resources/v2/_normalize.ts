@@ -41,6 +41,16 @@ function toProgress(value: unknown): number | null {
   return typeof value === 'number' ? value : null;
 }
 
+/**
+ * Envelope-level `metadata`: the receipt a completed `output_save_url` job
+ * keeps alongside `output_url` after the result itself was delivered
+ * out-of-band. Inline jobs carry their metadata inside `result`, so the
+ * envelope field is absent and normalizes to `null`.
+ */
+function toMetadata(value: unknown): Job['metadata'] {
+  return isRecord(value) ? value : null;
+}
+
 function toStatus(value: unknown): JobStatus {
   // Unknown/renamed status from the gateway must not crash the normalizer; the
   // original raw status is still available via `job.raw`.
@@ -84,6 +94,7 @@ function baseIsoJob(raw: Record<string, unknown>): Job {
     completed_at: toDate(raw['completed_at']),
     progress: toProgress(raw['progress']),
     result: null,
+    metadata: toMetadata(raw['metadata']),
     error: isoError(raw),
     is_terminal: isTerminalStatus(status),
     raw,
@@ -109,6 +120,7 @@ export function normalizeParseJob(raw: Record<string, unknown>): Job {
     completed_at: toDate(raw['completed_at']),
     progress: toProgress(raw['progress']),
     result,
+    metadata: toMetadata(raw['metadata']),
     // The get envelope carries `error {code, message}`; the list envelope a
     // `failure_reason` string. `isoError` handles both.
     error: isoError(raw),
