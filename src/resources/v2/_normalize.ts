@@ -56,6 +56,16 @@ function toStatus(value: unknown): JobStatus {
   return 'pending';
 }
 
+/**
+ * Top-level envelope `metadata`: the receipt (billing included) a completed job
+ * returns alongside `output_url` when its result was delivered to an
+ * `output_save_url`. Absent on inline jobs, which carry it inside `result`.
+ */
+function toMetadata(raw: Record<string, unknown>): Record<string, unknown> | null {
+  const metadata = raw['metadata'];
+  return isRecord(metadata) ? metadata : null;
+}
+
 /** Extract job error: an `error {code, message}` object, or a `failure_reason` string (list envelope). */
 function isoError(raw: Record<string, unknown>): JobError | null {
   const err = raw['error'];
@@ -109,6 +119,9 @@ export function normalizeParseJob(raw: Record<string, unknown>): Job {
     completed_at: toDate(raw['completed_at']),
     progress: toProgress(raw['progress']),
     result,
+    // Typed as `V2ParseMetadata` upstream; kept as the raw record so an
+    // unrecognized field is never dropped (see `Job.metadata`).
+    metadata: toMetadata(raw),
     // The get envelope carries `error {code, message}`; the list envelope a
     // `failure_reason` string. `isoError` handles both.
     error: isoError(raw),
@@ -121,6 +134,9 @@ export function normalizeExtractJob(raw: Record<string, unknown>): Job {
   const job = baseIsoJob(raw);
   const payload = raw['result'];
   job.result = isRecord(payload) ? (payload as unknown as V2ExtractResult) : null;
+  // Same receipt-alongside-`output_url` block as parse; the extract envelope
+  // types it as a bare object upstream.
+  job.metadata = toMetadata(raw);
   return job;
 }
 

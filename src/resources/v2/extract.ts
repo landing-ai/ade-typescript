@@ -48,8 +48,9 @@ export interface V2ExtractJobCreateParams extends V2ExtractParams {
    * URL to save the result to — e.g. a presigned S3 PUT URL. Async jobs only.
    * When set, the finished result is delivered (HTTP PUT) to this URL and the
    * completed job reports `output_url` (in `Job.raw`) instead of an inline
-   * `result`. Must be a public http(s) URL; private/loopback IPs are rejected
-   * at submit time.
+   * `result` — the metadata receipt (billing included) still comes back on
+   * `Job.metadata`. Must be a public http(s) URL; private/loopback IPs are
+   * rejected at submit time.
    */
   output_save_url?: string | null;
 }

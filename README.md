@@ -236,7 +236,7 @@ try {
 }
 ```
 
-The `create`, `get`, and `wait` methods return a normalized `Job` with `job_id`, `status` (`pending`, `processing`, `completed`, `failed`, or `cancelled`), `progress`, `result`, `error`, `is_terminal`, and `raw` (the unmodified API envelope, for any field not surfaced on the typed shape). The `list` method returns a `JobList` with a `jobs` array and `has_more`, plus the `page`/`page_size` pagination fields; `org_id` is populated only by older parse envelopes. Fields an endpoint doesn't populate are `null`.
+The `create`, `get`, and `wait` methods return a normalized `Job` with `job_id`, `status` (`pending`, `processing`, `completed`, `failed`, or `cancelled`), `progress`, `result`, `metadata`, `error`, `is_terminal`, and `raw` (the unmodified API envelope, for any field not surfaced on the typed shape). `progress` is an estimate, not a measurement: it approaches but never reaches 1 (long-running jobs plateau near 0.98), so key completion off `status`, which can go terminal from any progress value. The `list` method returns a `JobList` with a `jobs` array and `has_more`, plus the `page`/`page_size` pagination fields; `org_id` is populated only by older parse envelopes. Fields an endpoint doesn't populate are `null`.
 
 ```ts
 // Poll manually instead of blocking
@@ -250,7 +250,17 @@ for (const j of jobs.jobs) {
 console.log(jobs.has_more);
 ```
 
-Extract jobs work the same way. The `create` method takes the same schema and Markdown arguments as `client.v2.extract`, plus `service_tier` and an optional `output_save_url` (a presigned URL the finished result is delivered to; the completed job then reports `output_url` in `Job.raw` instead of an inline `result`); it does not accept `saveTo`. Ground has no async jobs surface — use the synchronous `client.v2.ground` directly.
+Extract jobs work the same way. The `create` method takes the same schema and Markdown arguments as `client.v2.extract`, plus `service_tier` and an optional `output_save_url` (a presigned URL the finished result is delivered to; the completed job then reports `output_url` in `Job.raw` instead of an inline `result`); it does not accept `saveTo`. The delivery moves the content, not the receipt: a completed job whose result went to an `output_save_url` still returns its metadata block — billing included — on `Job.metadata`, while an inline job leaves `Job.metadata` `null` and carries the same block inside `result.metadata`.
+
+```ts
+// A job whose result was delivered out-of-band still reports its metadata receipt
+const delivered = await client.v2.parseJobs.wait(job.job_id);
+console.log(delivered.raw['output_url']); // where the parse output was PUT
+const receipt = delivered.metadata as LandingAIADE.V2ParseMetadata | null;
+console.log(receipt?.page_count, receipt?.billing?.total_credits);
+```
+
+Ground has no async jobs surface — use the synchronous `client.v2.ground` directly.
 
 ## Environments
 

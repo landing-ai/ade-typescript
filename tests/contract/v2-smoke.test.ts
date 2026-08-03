@@ -67,6 +67,30 @@ describe('V2 contract (staging)', () => {
   );
 
   runIf(
+    'extractJobs job envelope carries the metadata receipt field',
+    async () => {
+      const client = new LandingAIADE({ apikey: apiKey!, environment: 'staging' });
+      const created = await client.v2.extractJobs.create({
+        schema: { type: 'object', properties: { revenue: { type: 'string' } } },
+        markdown: SAMPLE_MARKDOWN,
+      });
+      const done = await client.v2.extractJobs.wait(created.job_id, { timeout: 120_000 });
+      expect(done.is_terminal).toBe(true);
+      // Wired by the V2 spec-sync: the job envelope now carries a top-level
+      // `metadata` receipt alongside `output_url` when the result was delivered
+      // to an `output_save_url`. This job is inline, so the receipt is `null`
+      // and the metadata lives on the result instead.
+      expect(done.metadata === null || typeof done.metadata === 'object').toBe(true);
+      if (done.status === 'completed' && done.raw['output_url'] == null) {
+        expect(done.metadata).toBeNull();
+        const result = done.result as LandingAIADE.V2ExtractResult;
+        expect(typeof result.metadata.duration_ms).toBe('number');
+      }
+    },
+    180_000,
+  );
+
+  runIf(
     'parseJobs.list returns a normalized JobList against the new envelope',
     async () => {
       const client = new LandingAIADE({ apikey: apiKey!, environment: 'staging' });
