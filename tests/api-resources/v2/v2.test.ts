@@ -240,6 +240,63 @@ describe('client.v2 routing', () => {
     expect(result.metadata?.range_units).toBe('unicode_codepoints');
   });
 
+  test('parseJobs.get surfaces the delivered-result metadata receipt', async () => {
+    // With `output_save_url` set, the content goes to the URL and the envelope
+    // returns `output_url` plus the metadata receipt at the top level.
+    const { client } = stubClient(() =>
+      jsonResponse({
+        job_id: 'pj-10',
+        status: 'completed',
+        output_url: 'https://example.com/out.json',
+        metadata: {
+          job_id: 'pj-10',
+          duration_ms: 1200,
+          page_count: 3,
+          billing: { service_tier: 'standard', total_credits: 3 },
+        },
+      }),
+    );
+    const job = await client.v2.parseJobs.get('pj-10');
+    expect(job.result).toBeNull();
+    const metadata = job.metadata as LandingAIADE.V2ParseMetadata;
+    expect(metadata.page_count).toBe(3);
+    expect(metadata.billing?.total_credits).toBe(3);
+    // The URL itself stays on the untyped envelope.
+    expect(job.raw['output_url']).toBe('https://example.com/out.json');
+  });
+
+  test('extractJobs.get surfaces the delivered-result metadata receipt', async () => {
+    const { client } = stubClient(() =>
+      jsonResponse({
+        job_id: 'ej-10',
+        status: 'completed',
+        output_url: 'https://example.com/out.json',
+        metadata: { job_id: 'ej-10', duration_ms: 7, billing: { total_credits: 2 } },
+      }),
+    );
+    const job = await client.v2.extractJobs.get('ej-10');
+    expect(job.result).toBeNull();
+    expect(job.metadata).toMatchObject({ job_id: 'ej-10', billing: { total_credits: 2 } });
+  });
+
+  test('an inline job reports a null metadata receipt (it lives on the result)', async () => {
+    const { client } = stubClient(() =>
+      jsonResponse({
+        job_id: 'ej-11',
+        status: 'completed',
+        result: {
+          extraction: {},
+          extraction_metadata: {},
+          markdown: '',
+          metadata: { job_id: 'ej-11', version: 'v', duration_ms: 1 },
+        },
+      }),
+    );
+    const job = await client.v2.extractJobs.get('ej-11');
+    expect(job.metadata).toBeNull();
+    expect((job.result as LandingAIADE.V2ExtractResult).metadata.job_id).toBe('ej-11');
+  });
+
   test('parseJobs.get maps a failed job error object', async () => {
     const { client } = stubClient(() =>
       jsonResponse({ job_id: 'pj-f', status: 'failed', error: { code: 'bad', message: 'nope' } }),

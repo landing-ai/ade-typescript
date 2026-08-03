@@ -37,9 +37,27 @@ export interface Job {
 
   completed_at: Date | null;
 
+  /**
+   * Estimated completion as a decimal from 0 to 1 while `processing` — an
+   * estimate, not a measurement: it typically advances between polls, may jump
+   * forward when the service reports a real milestone (e.g. parsed pages), and
+   * approaches but never reaches 1 (long-running jobs plateau near 0.98).
+   * Completion is signalled by `status`, and a job may complete from any
+   * progress value.
+   */
   progress: number | null;
 
   result: V2ParseResponse | V2ExtractResult | V2BuildSchemaResult | V2GroundResult | V2WorkflowResult | null;
+
+  /**
+   * The result's metadata block (billing included), present alongside
+   * `raw.output_url` once a job created with `output_save_url` has `completed`
+   * — the delivery moves the content, not the receipt. Parse jobs carry a
+   * `V2ParseMetadata`; extract jobs carry an untyped block of the same shape as
+   * their inline `result.metadata`. `null` for inline jobs, which carry their
+   * metadata inside `result` instead.
+   */
+  metadata?: V2ParseMetadata | Record<string, unknown> | null;
 
   error: JobError | null;
 

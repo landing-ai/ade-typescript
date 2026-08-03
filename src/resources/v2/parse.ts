@@ -37,7 +37,9 @@ export interface V2ParseParams {
 export interface V2ParseJobCreateParams extends V2ParseParams {
   /**
    * If zero data retention (ZDR) is enabled, a URL the parsed output should be
-   * saved to instead of being returned in the job result.
+   * saved to instead of being returned in the job result. The completed job
+   * then reports `output_url` (in `Job.raw`) instead of an inline `result`, and
+   * the parse metadata receipt (billing included) on `Job.metadata`.
    */
   output_save_url?: string | null;
 
