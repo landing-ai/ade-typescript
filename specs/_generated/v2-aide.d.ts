@@ -24,70 +24,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v2/extract/build-schema": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * ADE Extract
-         * @description Generate or edit a JSON Schema for extraction from one or more source Markdown documents and/or a natural-language prompt. Runs synchronously and returns the result inline.
-         */
-        post: operations["v2-build-schema_run_sync"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v2/extract/build-schema/jobs": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * ADE List Extract Jobs
-         * @description List your Extract jobs, newest first.
-         */
-        get: operations["v2-build-schema_list_jobs"];
-        put?: never;
-        /**
-         * ADE Extract Jobs
-         * @description Generate or edit a JSON Schema for extraction from one or more source Markdown documents and/or a natural-language prompt. Runs asynchronously and returns a job ID; use it to poll for status and retrieve the result once processing completes.
-         */
-        post: operations["v2-build-schema_create_job"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v2/extract/build-schema/jobs/{job_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * ADE Get Extract Jobs
-         * @description Get the status of an async Extract job, including its result once the job has completed.
-         */
-        get: operations["v2-build-schema_get_job"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/v2/extract/jobs": {
         parameters: {
             query?: never;
@@ -1046,301 +982,6 @@ export interface operations {
             };
         };
     };
-    "v2-build-schema_run_sync": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    /**
-                     * Markdown Urls
-                     * @description URLs to Markdown files to analyze for schema generation.
-                     * @default null
-                     */
-                    markdown_urls?: string[] | null;
-                    /**
-                     * Markdowns
-                     * @description Markdown files or inline content strings to analyze for schema generation. Multiple documents can be provided for better schema coverage.
-                     * @default null
-                     */
-                    markdowns?: string[] | null;
-                    /**
-                     * Prompt
-                     * @description Instructions for how to generate or modify the schema.
-                     * @default null
-                     */
-                    prompt?: string | null;
-                    /**
-                     * Schema
-                     * @description Existing JSON schema to iterate on or refine.
-                     * @default null
-                     */
-                    schema?: string | null;
-                };
-                "multipart/form-data": {
-                    /**
-                     * Markdown Urls
-                     * @description URLs to Markdown files to analyze for schema generation. JSON-serialized string in form data.
-                     * @default null
-                     */
-                    markdown_urls?: string[] | null;
-                    /** @description Repeat the field for each file upload. */
-                    markdowns?: (string)[];
-                    /**
-                     * Prompt
-                     * @description Instructions for how to generate or modify the schema. JSON-serialized string in form data.
-                     * @default null
-                     */
-                    prompt?: string | null;
-                    /**
-                     * Schema
-                     * @description Existing JSON schema to iterate on or refine. JSON-serialized string in form data.
-                     * @default null
-                     */
-                    schema?: string | null;
-                };
-            };
-        };
-        responses: {
-            /** @description v2-build-schema result */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * Extraction Schema
-                         * @description The generated JSON schema as a string.
-                         */
-                        extraction_schema: string;
-                        /** @description The metadata for the schema generation process. */
-                        metadata: components["schemas"]["V2BuildSchemaMetadata"];
-                    };
-                };
-            };
-            /** @description Request validation failed. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    "v2-build-schema_list_jobs": {
-        parameters: {
-            query?: {
-                /** @description Page number (0-indexed). */
-                page?: number;
-                /** @description Number of items per page. */
-                page_size?: number;
-                /** @description Filter by job status. */
-                status?: string | null;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The caller's jobs, newest first */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        has_more?: boolean;
-                        jobs?: {
-                            completed_at?: string | null;
-                            created_at?: string | null;
-                            failure_reason?: string | null;
-                            /** @description The unique identifier for this v2-build-schema job. Format: ``extract-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
-                            job_id?: string;
-                            model_version?: string | null;
-                            /** @enum {string} */
-                            status?: "pending" | "processing" | "completed" | "failed";
-                        }[];
-                        page?: number;
-                        page_size?: number;
-                    };
-                };
-            };
-            /** @description Request validation failed. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    "v2-build-schema_create_job": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    /**
-                     * Markdown Urls
-                     * @description URLs to Markdown files to analyze for schema generation.
-                     * @default null
-                     */
-                    markdown_urls?: string[] | null;
-                    /**
-                     * Markdowns
-                     * @description Markdown files or inline content strings to analyze for schema generation. Multiple documents can be provided for better schema coverage.
-                     * @default null
-                     */
-                    markdowns?: string[] | null;
-                    /**
-                     * Prompt
-                     * @description Instructions for how to generate or modify the schema.
-                     * @default null
-                     */
-                    prompt?: string | null;
-                    /**
-                     * Schema
-                     * @description Existing JSON schema to iterate on or refine.
-                     * @default null
-                     */
-                    schema?: string | null;
-                    /** @description Async service tier. ``priority`` runs in the fast lane at the sync billing rate; absent → ``standard``. */
-                    service_tier?: ("standard" | "priority") | null;
-                };
-                "multipart/form-data": {
-                    /**
-                     * Markdown Urls
-                     * @description URLs to Markdown files to analyze for schema generation. JSON-serialized string in form data.
-                     * @default null
-                     */
-                    markdown_urls?: string[] | null;
-                    /** @description Repeat the field for each file upload. */
-                    markdowns?: (string)[];
-                    /**
-                     * Prompt
-                     * @description Instructions for how to generate or modify the schema. JSON-serialized string in form data.
-                     * @default null
-                     */
-                    prompt?: string | null;
-                    /**
-                     * Schema
-                     * @description Existing JSON schema to iterate on or refine. JSON-serialized string in form data.
-                     * @default null
-                     */
-                    schema?: string | null;
-                    /** @description Async service tier. ``priority`` runs in the fast lane at the sync billing rate; absent → ``standard``. */
-                    service_tier?: ("standard" | "priority") | null;
-                };
-            };
-        };
-        responses: {
-            /** @description Job created */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        created_at?: string | null;
-                        /** @description The unique identifier for this v2-build-schema job. Format: ``extract-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
-                        job_id?: string;
-                        /** @enum {string} */
-                        status?: "pending" | "processing" | "completed" | "failed";
-                    };
-                };
-            };
-            /** @description Request validation failed. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    "v2-build-schema_get_job": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The identifier of the job to retrieve, as returned by the create-job request. */
-                job_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Job status / result */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Present once the job is terminal. */
-                        completed_at?: string;
-                        created_at?: string | null;
-                        /** @description Present once status is ``failed``. */
-                        error?: {
-                            /** @description Stable error code (``internal_error`` when unmapped). */
-                            code?: string;
-                            message?: string;
-                        };
-                        /** @description The unique identifier for this v2-build-schema job. Format: ``extract-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
-                        job_id?: string;
-                        /** @description Job completion as a decimal from 0 (not started) to 1 (complete). Present while ``processing``. */
-                        progress?: number;
-                        /** @description Present once status is ``completed``. */
-                        result?: {
-                            /**
-                             * Extraction Schema
-                             * @description The generated JSON schema as a string.
-                             */
-                            extraction_schema: string;
-                            /** @description The metadata for the schema generation process. */
-                            metadata: components["schemas"]["V2BuildSchemaMetadata"];
-                        } | null;
-                        /** @enum {string} */
-                        status?: "pending" | "processing" | "completed" | "failed";
-                    };
-                };
-            };
-            /** @description Not found (e.g. no such job). */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Request validation failed. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
     "v2-extract_list_jobs": {
         parameters: {
             query?: {
@@ -1560,9 +1201,11 @@ export interface operations {
                         };
                         /** @description The unique identifier for this v2-extract job. Format: ``extract-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
                         job_id?: string;
+                        /** @description The result's metadata block (billing included), present alongside ``output_url`` once a job with ``output_save_url`` has ``completed`` — the delivery moves the content, not the receipt. Same shape as the inline ``result``'s ``metadata``; inline jobs carry it there instead. */
+                        metadata?: Record<string, never> | null;
                         /** @description The URL the result was delivered to. Present once the job has ``completed`` and ``output_save_url`` was set, instead of inline ``result``. */
                         output_url?: string | null;
-                        /** @description Job completion as a decimal from 0 (not started) to 1 (complete). Present while ``processing``. */
+                        /** @description Estimated completion as a decimal from 0 to 1 — an estimate, not a measurement: it typically advances between polls while the job is ``processing``, may jump forward when the service reports a real milestone (e.g. parsed pages), and approaches but never reaches 1 (long-running jobs plateau near 0.98 — completion is signaled by ``status``, and a job may complete from any progress value). Present while ``processing``. */
                         progress?: number;
                         /** @description Present once status is ``completed`` and ``output_save_url`` was not set. When ``output_save_url`` was set, the result is delivered there and ``output_url`` is returned instead. */
                         result?: {
@@ -2008,6 +1651,8 @@ export interface operations {
                         };
                         /** @description The unique identifier for this parse job. Format: ``<service>-<26-character Crockford base32 ULID>`` matching ``^(parse|extract)-[0-9a-hjkmnp-tv-z]{26}$``. Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
                         job_id?: string;
+                        /** @description The parse metadata (billing included), present alongside ``output_url`` once a job with ``output_save_url`` has ``completed`` — the delivery moves the content, not the receipt. Inline jobs carry it inside ``result`` instead. */
+                        metadata?: components["schemas"]["ParseMetadata"] | null;
                         /** @description The URL the result was delivered to. Present once the job has ``completed`` and ``output_save_url`` was set, instead of inline ``result``. */
                         output_url?: string | null;
                         /** @description Job completion as a decimal from 0 (not started) to 1 (complete). Present while ``processing``. */
@@ -2386,7 +2031,7 @@ export interface operations {
                         };
                         /** @description The unique identifier for this v2-workflow job. Format: ``v2-workflow-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
                         job_id?: string;
-                        /** @description Job completion as a decimal from 0 (not started) to 1 (complete). Present while ``processing``. */
+                        /** @description Estimated completion as a decimal from 0 to 1 — an estimate, not a measurement: it typically advances between polls while the job is ``processing``, may jump forward when the service reports a real milestone (e.g. parsed pages), and approaches but never reaches 1 (long-running jobs plateau near 0.98 — completion is signaled by ``status``, and a job may complete from any progress value). Present while ``processing``. */
                         progress?: number;
                         /** @description Present once status is ``completed``. */
                         result?: {
