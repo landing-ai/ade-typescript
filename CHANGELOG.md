@@ -1,5 +1,28 @@
 # Changelog
 
+## 2.11.0 (2026-08-04)
+
+Full Changelog: [v2.10.0...v2.11.0](https://github.com/landing-ai/ade-typescript/compare/v2.10.0...v2.11.0)
+
+### Features
+
+* send structured User-Agent and X-Source: sdk on every request (#98) ([ae4ab0a](https://github.com/landing-ai/ade-typescript/commit/ae4ab0a396563a84d82479bc02249578ed92f057))
+
+### Bug Fixes
+
+* **spec-sync:** disable adaptive thinking so the LLM PR summary lands (#104) ([3750465](https://github.com/landing-ai/ade-typescript/commit/3750465a7061d8ccb0715955259b5c754122aee0))
+* **spec-sync:** update PR body via REST with an idempotent What-changed fence (#97) ([20abe6f](https://github.com/landing-ai/ade-typescript/commit/20abe6f92f2d768bdb1f30b4f71ae07f6fe678a4))
+* **spec-sync:** unstage AI edits so the product-code allowlist actually reverts them (#94) ([f9eebc1](https://github.com/landing-ai/ade-typescript/commit/f9eebc11810dc76dba84cd2e78ca2f11b73c7814))
+
+### Chores
+
+* hide the V2 build-schema surface from the SDK (#100) ([a4aab0d](https://github.com/landing-ai/ade-typescript/commit/a4aab0dfe121e64fdc5904ba36de94790e9cdf47))
+
+### Other Changes
+
+* spec-sync: track V2 spec drift (#103) ([66f1bf4](https://github.com/landing-ai/ade-typescript/commit/66f1bf4e6bb749b7ab3417c00b8b674b4e5d8d08))
+* spec-sync: track V2 spec drift (#93) ([25ff790](https://github.com/landing-ai/ade-typescript/commit/25ff790fb94c82fc2c6581f0ca0f92cbbd086e87))
+
 ## 2.10.0 (2026-07-22)
 
 Full Changelog: [v2.9.0...v2.10.0](https://github.com/landing-ai/ade-typescript/compare/v2.9.0...v2.10.0)
