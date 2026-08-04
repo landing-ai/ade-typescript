@@ -108,6 +108,8 @@ If some pages cannot be parsed, the request still succeeds (HTTP 206) and `metad
 
 The `document` parameter accepts an `fs.ReadStream`, a web `File`, a `fetch` `Response`, or the `toFile` helper; see [File Uploads](#file-uploads).
 
+The `model` parameter accepts a dated snapshot (`dpt-3-pro-20260710`), a `-latest` alias, or a bare family name (equivalent to that family's `-latest`). Two families are available: `dpt-3-pro` for highest quality, and `dpt-3-fast` for lower-latency parsing without vision-model captioning. It defaults to the latest DPT-3 Pro snapshot.
+
 ## Extract
 
 Use `client.v2.extract` to pull structured fields out of Markdown (typically from a parse response) using a schema. The `schema` parameter accepts a JSON Schema object or a JSON string. Provide exactly one Markdown source: `markdown` or `markdown_url`.
@@ -251,6 +253,8 @@ console.log(jobs.has_more);
 ```
 
 Extract jobs work the same way. The `create` method takes the same schema and Markdown arguments as `client.v2.extract`, plus `service_tier` and an optional `output_save_url` (a presigned URL the finished result is delivered to; the completed job then reports `output_url` in `Job.raw` instead of an inline `result`); it does not accept `saveTo`. The delivery moves the content, not the receipt: a completed job whose result went to an `output_save_url` still returns its metadata block — billing included — on `Job.metadata`, while an inline job leaves `Job.metadata` `null` and carries the same block inside `result.metadata`.
+
+A presigned `output_save_url` must stay valid until the job _completes_, not merely past submit. An already-expired URL — or one whose remaining validity is too short — is rejected at submit with a 422 that names the exact window required: at least 15 minutes for extract jobs, and for parse jobs 15 minutes plus 3 seconds per document page. Sign with credentials that outlive the expected job duration; a URL signed with temporary (assumed-role/session) credentials dies when that session expires, whatever its stated expiry.
 
 ```ts
 // A job whose result was delivered out-of-band still reports its metadata receipt
