@@ -21,7 +21,13 @@ export interface V2ParseParams {
   /** URL to the file to be parsed. Provide either this or `document`. */
   document_url?: string | null;
 
-  /** The version of the model to use for parsing. */
+  /**
+   * The DPT-3 model snapshot to use for parsing. Accepts a dated snapshot (for
+   * example, `dpt-3-pro-20260710`), a `-latest` alias, or a bare family name
+   * (equivalent to that family's `-latest`). Two families are available:
+   * `dpt-3-pro` for highest quality, and `dpt-3-fast` for lower-latency parsing
+   * without vision-model captioning. Defaults to the latest DPT-3 Pro snapshot.
+   */
   model?: string | null;
 
   /** Additional parsing options. Sent to the server as a JSON-encoded form field. */
@@ -40,6 +46,15 @@ export interface V2ParseJobCreateParams extends V2ParseParams {
    * saved to instead of being returned in the job result. The completed job
    * then reports `output_url` (in `Job.raw`) instead of an inline `result`, and
    * the parse metadata receipt (billing included) on `Job.metadata`.
+   *
+   * A presigned URL must stay valid until the job *completes*, not just past
+   * submit: an already-expired URL, or one whose remaining validity is too
+   * short for the document's page count, is rejected at submit (422). By
+   * default the URL must retain at least 15 minutes of validity at submit, plus
+   * 3 seconds per document page; the 422 message names the exact window
+   * required. Sign with credentials that outlive the expected job duration; a
+   * URL signed with temporary (assumed-role/session) credentials dies when that
+   * session expires, whatever its stated expiry.
    */
   output_save_url?: string | null;
 

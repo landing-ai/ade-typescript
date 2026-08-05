@@ -51,6 +51,13 @@ export interface V2ExtractJobCreateParams extends V2ExtractParams {
    * `result` — the metadata receipt (billing included) still comes back on
    * `Job.metadata`. Must be a public http(s) URL; private/loopback IPs are
    * rejected at submit time.
+   *
+   * A presigned URL must stay valid until the job *completes*, not just past
+   * submit: an already-expired presign, or one with less than 15 minutes of
+   * validity remaining (the default floor — the 422 names the exact window
+   * required), is rejected at submit. Sign with credentials that outlive the
+   * expected job duration; a URL signed with temporary (assumed-role/session)
+   * credentials dies when that session expires, whatever its stated expiry.
    */
   output_save_url?: string | null;
 }

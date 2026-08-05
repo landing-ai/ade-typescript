@@ -162,8 +162,9 @@ export interface paths {
          * Run v2-workflow (sync)
          * @description Run synchronously and return the result inline.
          *
-         *     Accepts ``application/json`` (the request fields as the body) or
-         *     ``multipart/form-data`` (file fields are staged automatically).
+         *     Accepts ``application/json`` (the request fields as the body),
+         *     ``multipart/form-data`` (file fields are staged automatically),
+         *     or ``application/x-www-form-urlencoded`` (text fields only).
          *
          *     Returns **504** if the work does not finish within the wait
          *     window — long-running work belongs on the async ``POST
@@ -1067,7 +1068,7 @@ export interface operations {
                     options?: components["schemas"]["V2ExtractOptions"] | null;
                     /**
                      * Output Save Url
-                     * @description URL to save the result to — e.g. a presigned S3 PUT URL. Async jobs only. When set, the finished result is delivered (HTTP PUT) to this URL and the completed job reports ``output_url`` instead of an inline ``result``. Must be a public http(s) URL; private/loopback IPs are rejected at submit time.
+                     * @description URL to save the result to — e.g. a presigned S3 PUT URL. Async jobs only. When set, the finished result is delivered (HTTP PUT) to this URL and the completed job reports ``output_url`` instead of an inline ``result``. Must be a public http(s) URL; private/loopback IPs are rejected at submit time. A presigned URL must stay valid until the job COMPLETES, not just past submit — an already-expired presign, or one with less than 15 minutes of validity remaining (the default floor; the 422 names the exact window required), is rejected at submit. Sign with credentials that outlive the expected job duration: a URL signed with temporary (assumed-role/session) credentials dies when that session expires, regardless of the URL's stated expiry.
                      * @default null
                      */
                     output_save_url?: string | null;
@@ -1115,7 +1116,7 @@ export interface operations {
                     options?: components["schemas"]["V2ExtractOptions"] | null;
                     /**
                      * Output Save Url
-                     * @description URL to save the result to — e.g. a presigned S3 PUT URL. Async jobs only. When set, the finished result is delivered (HTTP PUT) to this URL and the completed job reports ``output_url`` instead of an inline ``result``. Must be a public http(s) URL; private/loopback IPs are rejected at submit time. JSON-serialized string in form data.
+                     * @description URL to save the result to — e.g. a presigned S3 PUT URL. Async jobs only. When set, the finished result is delivered (HTTP PUT) to this URL and the completed job reports ``output_url`` instead of an inline ``result``. Must be a public http(s) URL; private/loopback IPs are rejected at submit time. A presigned URL must stay valid until the job COMPLETES, not just past submit — an already-expired presign, or one with less than 15 minutes of validity remaining (the default floor; the 422 names the exact window required), is rejected at submit. Sign with credentials that outlive the expected job duration: a URL signed with temporary (assumed-role/session) credentials dies when that session expires, regardless of the URL's stated expiry. JSON-serialized string in form data.
                      * @default null
                      */
                     output_save_url?: string | null;
@@ -1404,7 +1405,7 @@ export interface operations {
                     document?: string;
                     /** @description A publicly accessible URL to the file to parse. The file must be a PDF or image; see the list of [supported file types](https://docs.landing.ai/dpt3/file-types). Provide either `document` or `document_url`, not both. */
                     document_url?: string;
-                    /** @description The DPT-3 model snapshot to use for this request. Accepts a dated snapshot (for example, `dpt-3-pro-20260710`), the `dpt-3-pro-latest` alias, or the bare `dpt-3-pro` family name (equivalent to `dpt-3-pro-latest`). Defaults to the latest DPT-3 Pro snapshot. */
+                    /** @description The DPT-3 model snapshot to use for this request. Accepts a dated snapshot (for example, `dpt-3-pro-20260710`), a `-latest` alias, or a bare family name (equivalent to that family's `-latest`). Two families are available: `dpt-3-pro` for highest quality, and `dpt-3-fast` for lower-latency parsing without vision-model captioning. Defaults to the latest DPT-3 Pro snapshot. */
                     model?: string;
                     /**
                      * ParseOptions
@@ -1547,7 +1548,7 @@ export interface operations {
                     document?: string;
                     /** @description A publicly accessible URL to the file to parse. The file must be a PDF or image; see the list of [supported file types](https://docs.landing.ai/dpt3/file-types). Provide either `document` or `document_url`, not both. */
                     document_url?: string;
-                    /** @description The DPT-3 model snapshot to use for this request. Accepts a dated snapshot (for example, `dpt-3-pro-20260710`), the `dpt-3-pro-latest` alias, or the bare `dpt-3-pro` family name (equivalent to `dpt-3-pro-latest`). Defaults to the latest DPT-3 Pro snapshot. */
+                    /** @description The DPT-3 model snapshot to use for this request. Accepts a dated snapshot (for example, `dpt-3-pro-20260710`), a `-latest` alias, or a bare family name (equivalent to that family's `-latest`). Two families are available: `dpt-3-pro` for highest quality, and `dpt-3-fast` for lower-latency parsing without vision-model captioning. Defaults to the latest DPT-3 Pro snapshot. */
                     model?: string;
                     /**
                      * ParseOptions
@@ -1579,7 +1580,7 @@ export interface operations {
                          */
                         password?: string | null;
                     };
-                    /** @description Public URL the full response is delivered to; the API response then carries ``output_url`` instead of inline data. */
+                    /** @description Public URL the full response is delivered to; the API response then carries ``output_url`` instead of inline data. A presigned URL must stay valid until the job COMPLETES, not just past submit: an already-expired URL, or one whose remaining validity is too short for the document's page count, is rejected at submit (422). By default the URL must retain at least 15 minutes of validity at submit, plus 3 seconds per document page; the 422 message names the exact window required. Sign with credentials that outlive the expected job duration — a URL signed with temporary (assumed-role/session) credentials dies when that session expires, regardless of the URL's stated expiry. */
                     output_save_url?: string;
                     /**
                      * @description Async service tier (``POST /jobs`` only). ``priority`` runs in the fast lane at the sync billing rate; absent → ``standard``.
