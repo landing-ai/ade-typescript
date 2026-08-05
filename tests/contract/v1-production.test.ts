@@ -67,6 +67,25 @@ async function waitForJob<T extends { status: string }>(
   }
 }
 
+/**
+ * List jobs, retrying briefly until the page is non-empty. Each caller has just completed a
+ * job under this key, so the completed-jobs list must be non-empty; the retry only absorbs
+ * read-after-write lag in list indexing. Returns the last response either way, so the
+ * caller's non-empty assertion fails with context rather than the status loop passing
+ * vacuously on an empty page.
+ */
+async function listUntilNonEmpty<T extends { jobs: unknown[] }>(
+  list: () => Promise<T>,
+  { attempts = 4, delayMs = 3_000 }: { attempts?: number; delayMs?: number } = {},
+): Promise<T> {
+  let listed = await list();
+  for (let i = 1; i < attempts && listed.jobs.length === 0; i++) {
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+    listed = await list();
+  }
+  return listed;
+}
+
 describe('V1 e2e (production)', () => {
   // One real parse, shared by every markdown-consuming test below. `section` specifically
   // needs the anchor-annotated markdown a parse emits, and extract / split / build-schema
@@ -226,10 +245,15 @@ describe('V1 e2e (production)', () => {
         expect(job.data.chunks.length).toBeGreaterThan(0);
       }
 
-      // The `status` filter is applied server-side. Asserting the filter (rather than
-      // that our own job appears) keeps this stable on a busy production org.
-      const listed = await client.parseJobs.list({ page: 0, pageSize: 10, status: 'completed' });
-      expect(Array.isArray(listed.jobs)).toBe(true);
+      // Verify the `status` filter server-side. We just completed a parse job under this
+      // key, so the completed list must be non-empty — assert that (with a short retry for
+      // list-indexing lag) so a `list` regression that always returns `[]` can't pass this
+      // gate vacuously. We assert the filter holds rather than that our specific job is on
+      // page 0, which would be flaky on a busy production org.
+      const listed = await listUntilNonEmpty(() =>
+        client.parseJobs.list({ page: 0, pageSize: 10, status: 'completed' }),
+      );
+      expect(listed.jobs.length).toBeGreaterThan(0);
       for (const listedJob of listed.jobs) {
         expect(listedJob.job_id).toBeTruthy();
         expect(listedJob.status).toBe('completed');
@@ -261,8 +285,10 @@ describe('V1 e2e (production)', () => {
         expect(job.data.metadata.job_id).toBeTruthy();
       }
 
-      const listed = await client.extractJobs.list({ page: 0, pageSize: 10, status: 'completed' });
-      expect(Array.isArray(listed.jobs)).toBe(true);
+      const listed = await listUntilNonEmpty(() =>
+        client.extractJobs.list({ page: 0, pageSize: 10, status: 'completed' }),
+      );
+      expect(listed.jobs.length).toBeGreaterThan(0);
       for (const listedJob of listed.jobs) {
         expect(listedJob.job_id).toBeTruthy();
         expect(listedJob.status).toBe('completed');
