@@ -33,12 +33,13 @@ When performing a code review on these PRs:
 - Once the wiring commit is present, focus the review on whether the wired surface matches
   the spec diff: routes, parameter names, request/response fields, required-vs-optional,
   and sync/async (job) surface consistency.
-- Do **not** flag the prose inside the snapshot files (`specs/v2-aide.json`,
-  `specs/_generated/`) — `summary` / `description` / `title` wording and the like. Those files
-  are a verbatim mirror of the upstream OpenAPI spec (fetched live from staging on each sync) and are
-  regenerated on every sync, so they cannot be edited in this repo. Wording fixes — e.g. a
-  build-schema endpoint whose `summary` reads `"ADE Extract"`, or a build-schema jobs endpoint
-  described as an "Extract job" — must land upstream, not here.
+- Do **not** review the spec snapshot files at all — `specs/v2-aide.json`, `specs/v1-ade.json`,
+  and everything under `specs/_generated/` (e.g. `specs/_generated/v2-aide.d.ts`). Skip them
+  entirely and post **no** comments on their diffs: not on wording, structure, `$ref`s, missing or
+  updated schemas, typing, or anything else. They are a verbatim mirror of the upstream OpenAPI spec
+  (fetched live from staging and regenerated on every sync), so they cannot be edited in this repo —
+  any spec issue must be fixed upstream, not here. Review only the hand-maintained client code,
+  tests, and docs under `src/` / `tests/`.
 
 ## Known-intentional SDK conventions (do not report)
 
