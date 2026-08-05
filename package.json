@@ -26,7 +26,8 @@
     "lint": "./scripts/lint",
     "fix": "./scripts/format",
     "api-extractor": "api-extractor run --local && node scripts/spec-sync/strip-api-report.cjs",
-    "test:contract": "./scripts/test --config jest.contract.config.ts"
+    "test:contract": "./scripts/test --config jest.contract.config.ts",
+    "test:production": "./scripts/test --config jest.production.config.ts"
   },
   "dependencies": {},
   "devDependencies": {
