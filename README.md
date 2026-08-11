@@ -98,17 +98,39 @@ const fromUrl = await client.v2.parse({ document_url: 'https://example.com/file.
 
 The response is a `V2ParseResponse`:
 
-| Field       | Description                                                                                                                                                                                                                                                         |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `markdown`  | The full document as one Markdown string, in reading order.                                                                                                                                                                                                         |
-| `structure` | A typed tree (`document` → pages → elements). Each node carries a `grounding` object — its page, its `{ start, end }` range into `markdown`, and a bounding box in normalized (`0`–`1`) page coordinates; leaf elements also carry fine-grained `atomic_grounding`. |
-| `metadata`  | Processing details: `page_count`, `failed_pages`, `range_units` (offsets are Unicode code points), `duration_ms`, and `billing` (credits used).                                                                                                                     |
+| Field       | Description                                                                                                                                                                                                                                                                                                       |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `markdown`  | The full document as one Markdown string, in reading order.                                                                                                                                                                                                                                                       |
+| `structure` | A typed tree (`document` → pages → elements). Each node carries a `grounding` object — its page, its `{ start, end }` range into `markdown`, and a bounding box in normalized (`0`–`1`) page coordinates; leaf elements also carry fine-grained `atomic_grounding`, whose entries add a per-segment `confidence`. |
+| `metadata`  | Processing details: `page_count`, `failed_pages`, `range_units` (offsets are Unicode code points), `duration_ms`, and `billing` (credits used).                                                                                                                                                                   |
 
 If some pages cannot be parsed, the request still succeeds (HTTP 206) and `metadata.failed_pages` lists the pages that failed. If a synchronous parse times out, the client throws `V2SyncTimeoutError`; use [jobs](#process-large-documents-asynchronously-jobs) instead.
 
 The `document` parameter accepts an `fs.ReadStream`, a web `File`, a `fetch` `Response`, or the `toFile` helper; see [File Uploads](#file-uploads).
 
 The `model` parameter accepts a dated snapshot (`dpt-3-pro-20260710`), a `-latest` alias, or a bare family name (equivalent to that family's `-latest`). Two families are available: `dpt-3-pro` for highest quality, and `dpt-3-fast` for lower-latency parsing without vision-model captioning. It defaults to the latest DPT-3 Pro snapshot.
+
+### Grounding confidence
+
+`atomic_grounding` reports segments at whichever granularity the model reads at: one entry per visual line for `dpt-3-pro`, and one per **word** for `dpt-3-fast` (including the words inside table cells). Word entries also carry a `confidence` in `[0, 1]` — the lowest per-character OCR confidence in that word, so a word is only as trustworthy as its weakest character. It is `null` on node-level `grounding` and on line-granularity models.
+
+```ts
+const parsed = await client.v2.parse({
+  document: fs.createReadStream('path/to/file.pdf'),
+  model: 'dpt-3-fast',
+});
+
+// Flag the low-confidence words for human review.
+for (const page of parsed.structure?.children ?? []) {
+  for (const element of page.children ?? []) {
+    for (const word of element.atomic_grounding ?? []) {
+      if (word.confidence !== null && word.confidence < 0.5) {
+        console.log(`page ${word.page} @ ${word.range.start}-${word.range.end}: ${word.confidence}`);
+      }
+    }
+  }
+}
+```
 
 ## Extract
 

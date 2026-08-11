@@ -140,6 +140,82 @@ describe('client.v2 routing', () => {
     expect(res.metadata?.openapi_spec).toBe('https://example.com/spec.json');
   });
 
+  test('parse (sync) surfaces per-word atomic_grounding confidence', async () => {
+    const box = { xmin: 0, ymin: 0, xmax: 1, ymax: 1 };
+    // Word-granularity models (`dpt-3-fast`) emit one `atomic_grounding` entry
+    // per word, each carrying the lowest per-character OCR confidence in that
+    // word. Node-level grounding never carries one, so it arrives as `null`.
+    const { client } = stubClient(() =>
+      jsonResponse({
+        markdown: 'hi there',
+        structure: {
+          type: 'document',
+          children: [
+            {
+              type: 'page',
+              page: 1,
+              grounding: { page: 1, range: { start: 0, end: 8 }, box, confidence: null },
+              children: [
+                {
+                  type: 'text',
+                  id: 'text-0',
+                  grounding: { page: 1, range: { start: 0, end: 8 }, box, confidence: null },
+                  atomic_grounding: [
+                    { page: 1, range: { start: 0, end: 2 }, box, confidence: 0.98 },
+                    { page: 1, range: { start: 3, end: 8 }, box, confidence: 0.42 },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        metadata: { model_version: 'dpt-3-fast-20260710', duration_ms: 12 },
+      }),
+    );
+    const res = await client.v2.parse({
+      document: await toFile(Buffer.from('%PDF'), 'a.pdf'),
+      model: 'dpt-3-fast',
+    });
+    const el = res.structure?.children?.[0]?.children?.[0];
+    expect(el?.atomic_grounding?.map((g) => g.confidence)).toEqual([0.98, 0.42]);
+    // Node-level grounding carries no confidence — it arrives (and stays) `null`.
+    expect(el?.grounding?.confidence).toBeNull();
+    expect(res.structure?.children?.[0]?.grounding?.confidence).toBeNull();
+  });
+
+  test('parseJobs.get carries atomic_grounding confidence through the normalizer', async () => {
+    const box = { xmin: 0.1, ymin: 0.1, xmax: 0.2, ymax: 0.2 };
+    const { client } = stubClient(() =>
+      jsonResponse({
+        job_id: 'pj-conf',
+        status: 'completed',
+        result: {
+          markdown: 'hi',
+          structure: {
+            type: 'document',
+            children: [
+              {
+                type: 'page',
+                page: 1,
+                children: [
+                  {
+                    type: 'text',
+                    id: 'text-0',
+                    atomic_grounding: [{ page: 1, range: { start: 0, end: 2 }, box, confidence: 0.77 }],
+                  },
+                ],
+              },
+            ],
+          },
+          metadata: { duration_ms: 3 },
+        },
+      }),
+    );
+    const job = await client.v2.parseJobs.get('pj-conf');
+    const result = job.result as LandingAIADE.V2ParseResponse;
+    expect(result.structure?.children?.[0]?.children?.[0]?.atomic_grounding?.[0]?.confidence).toBe(0.77);
+  });
+
   test('extract (sync) surfaces model_version, output_ref, and billing counts', async () => {
     const { client } = stubClient(() =>
       jsonResponse({

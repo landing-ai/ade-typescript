@@ -94,8 +94,8 @@ describe('V2 e2e (production)', () => {
     async () => {
       const client = newClient();
       // Complete a real parse job first so the list assertion below is non-vacuous: an empty page
-      // would let a broken list/normalizer pass this release gate. This also gives the suite its
-      // only real parse (the staging smoke never parses a document).
+      // would let a broken list/normalizer pass this release gate. This is also the suite's only
+      // real parse (the staging smoke parses only for the atomic_grounding confidence check).
       const created = await client.v2.parseJobs.create({
         document: await toFile(pdfBytes, 'sample.pdf', { type: 'application/pdf' }),
       });
