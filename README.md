@@ -117,9 +117,9 @@ const parsed = await client.v2.parse({
 for (const page of parsed.structure?.children ?? []) {
   for (const element of page.children ?? []) {
     for (const word of element.atomic_grounding ?? []) {
-      // `confidence` is null on node-level `grounding` and on line-granularity
+      // `confidence` is absent on node-level `grounding` and on line-granularity
       // models (`dpt-3-pro`), so check before comparing.
-      if (word.confidence !== null && word.confidence < 0.5) {
+      if (word.confidence != null && word.confidence < 0.5) {
         console.log(`low confidence on page ${word.page}`, word.range, word.box);
       }
     }

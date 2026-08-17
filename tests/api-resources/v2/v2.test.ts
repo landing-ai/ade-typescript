@@ -143,7 +143,9 @@ describe('client.v2 routing', () => {
   test('parse (sync) surfaces per-word atomic_grounding confidence', async () => {
     // `dpt-3-fast` grounds at word granularity and carries a `confidence` on
     // each `atomic_grounding` entry (the lowest per-character OCR confidence in
-    // the word). Node-level grounding has no confidence and reports `null`.
+    // the word). Node-level grounding has no confidence: the gateway normally
+    // omits the key (the page node below), but tolerate an explicit `null` too
+    // (the element node below) — hence `== null` at the call site, never `=== null`.
     const box = { xmin: 0, ymin: 0, xmax: 1, ymax: 1 };
     const { client } = stubClient(() =>
       jsonResponse({
@@ -153,7 +155,7 @@ describe('client.v2 routing', () => {
           children: [
             {
               type: 'page',
-              grounding: { page: 1, range: { start: 0, end: 13 }, box, confidence: null },
+              grounding: { page: 1, range: { start: 0, end: 13 }, box },
               children: [
                 {
                   type: 'text',
@@ -178,8 +180,9 @@ describe('client.v2 routing', () => {
     const el = res.structure?.children?.[0]?.children?.[0];
     expect(el?.atomic_grounding?.map((g) => g.confidence)).toEqual([0.98, 0.42]);
     // Node-level grounding grounds the whole element, not a word: no confidence.
+    // Explicit `null` on the wire stays `null`; an omitted key reads `undefined`.
     expect(el?.grounding?.confidence).toBeNull();
-    expect(res.structure?.children?.[0]?.grounding?.confidence).toBeNull();
+    expect(res.structure?.children?.[0]?.grounding?.confidence).toBeUndefined();
   });
 
   test('extract (sync) surfaces model_version, output_ref, and billing counts', async () => {

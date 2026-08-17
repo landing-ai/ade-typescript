@@ -178,11 +178,13 @@ export interface V2Grounding {
    * How sure the model is of the text in this segment, in `[0, 1]`. Populated
    * only on word-granularity `atomic_grounding` entries (`dpt-3-fast`), where it
    * is the lowest per-character OCR confidence in the word — so a word is only
-   * as trustworthy as its weakest character. `null` on node-level `grounding`
-   * and on models that ground at line granularity (`dpt-3-pro`). Required per
-   * spec; the value may be `null`.
+   * as trustworthy as its weakest character. Optional per spec (it is not in
+   * `Grounding.required`): the gateway *omits* the key entirely on node-level
+   * `grounding` and on models that ground at line granularity (`dpt-3-pro`), so
+   * it reads back as `undefined` there, not `null`. Test with `== null` to cover
+   * both.
    */
-  confidence: number | null;
+  confidence?: number | null;
 }
 
 export type V2ElementType =
