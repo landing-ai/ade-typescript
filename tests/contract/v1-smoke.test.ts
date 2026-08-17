@@ -12,10 +12,18 @@ describe('V1 contract (staging)', () => {
     'parseJobs.list is reachable on staging (auth + routing sanity)',
     async () => {
       // `environment: 'staging'` selects the V1 host https://api.va.staging.landing.ai.
-      const client = new LandingAIADE({ apikey: apiKey!, environment: 'staging' });
+      // Capped at 45s with no retries so a live gate fails fast and the error names the route
+      // instead of surfacing as an opaque jest timeout; see the REQUEST_TIMEOUT rationale in
+      // v2-smoke.test.ts.
+      const client = new LandingAIADE({
+        apikey: apiKey!,
+        environment: 'staging',
+        timeout: 45_000,
+        maxRetries: 0,
+      });
       const result = await client.parseJobs.list({ page: 0, pageSize: 1 });
       expect(Array.isArray(result.jobs)).toBe(true);
     },
-    30_000,
+    60_000,
   );
 });

@@ -492,8 +492,27 @@ jobs:
             - Build request URLs via the V2 base-URL routing the neighbours use (never hardcode a
               host — the SDK calls api.ade.[env], never aide; routing is automatic via v2BaseURL).
 
+            Optionality comes from the schema, never from the prose: a response property is optional
+            iff it is absent from that schema's `required` array. A property can be described as
+            "always present for model X" and still be optional — read `required`, not the
+            `description`. Declare an optional property `name?: T | null` (never `name: T | null`,
+            which claims the key is always there), and compare with `== null` / `!= null` so a
+            missing key and an explicit null are treated alike — the gateway omits optional fields
+            rather than sending null, so a `=== null` check silently misses the common case. Say
+            "omitted"/"absent", not "null", in the doc comment for such a field.
+
             Add a live check to tests/contract/v2-smoke.test.ts and unit tests under
-            tests/api-resources/v2/. Update api.md and the README examples.
+            tests/api-resources/v2/. The contract file hits LIVE staging, so it must assert only
+            what staging is guaranteed to return: NEVER pin `model:` there (a model family the spec
+            documents may be unserved on staging — `dpt-3-fast` is accepted but never answered, and
+            a test pinning it hangs until the gate times out), and for an optional property assert
+            absent-or-valid ("if present, it is in range"), never that it is populated. Assertions
+            on a specific value belong in the mocked unit tests under tests/api-resources/v2/, where
+            you control the response body — put them there instead. Build the client with the
+            file's existing `stagingClient()` helper rather than calling `new LandingAIADE(...)`
+            yourself, and give the test a per-test timeout consistent with its neighbours.
+
+            Update api.md and the README examples.
 
             You may only edit product code: src/, tests/, api.md, and README.md. Do NOT edit scripts/,
             .github/, specs/, etc/, or any dotfile or config.
@@ -520,10 +539,97 @@ jobs:
           ./scripts/build
           yarn api-extractor
 
+      # ---------------------------------------------------------------------------------------
+      # Verify the AI wiring, then give it ONE chance to fix itself.
+      #
+      # The wiring step has no shell, so nothing has type-checked its output: the step above only
+      # formats and rebuilds. Historically that meant every AI mistake `./scripts/lint` can see
+      # (eslint/prettier violations, a tsc error, a wrong type declaration) landed as a red `lint`
+      # job on a PR that otherwise looked review-ready. So run the real lint HERE, in a trusted
+      # step, and hand its output back to a second shell-less Claude pass.
+      #
+      # This closes the loop WITHOUT granting the AI a shell: it still cannot execute anything with
+      # the checkout's push credentials, and its edits are still funnelled through the product-code
+      # allowlist below before they can reach a commit. The lint log it reads is eslint/tsc output
+      # quoting the AI's own just-written code — no new trust boundary is crossed by feeding it back.
+      #
+      # Safe to run after the build above: eslint ignores `dist/` (eslint.config.mjs), so the
+      # freshly built output is not linted.
+      - name: Lint the AI wiring
+        id: ai_lint
+        if: steps.drift.outputs.code == '10' && steps.existing.outputs.open != 'true'
+        # A lint failure here is the normal case this loop exists to handle, not a run failure.
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          ./scripts/lint 2>&1 | tee .spec-sync-lint.log
+
+      - name: AI lint repair (edits only)
+        id: ai_lint_fix
+        if: steps.drift.outputs.code == '10' && steps.existing.outputs.open != 'true' && steps.ai_lint.outcome == 'failure'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.SPEC_SYNC_TOKEN }}
+          prompt: |
+            `./scripts/lint` failed on the client.v2 wiring you just wrote. Read
+            .spec-sync-lint.log in the repo root — it is the captured output of that run (eslint
+            with prettier, then a build, then `tsc`, then attw/publint) — and fix every error it
+            reports.
+
+            Fix the CAUSE, not the symptom. Specifically, do NOT silence anything: no
+            `@ts-ignore` / `@ts-expect-error`, no `eslint-disable`, no `as any` / `as unknown as X`
+            to force a type through, no widening a declared type to `any`, and no deleting the
+            assertion or test that tripped the error. If a type is wrong, correct the declaration
+            in src/resources/v2/types.ts to match the spec snapshot (checking the schema's
+            `required` array for whether a property is optional). Keep the behavior the wiring was
+            written to have.
+
+            You may only edit src/, tests/, api.md, and README.md — the same allowlist as before.
+            Do NOT edit scripts/, .github/, specs/, etc/, package.json, or any dotfile or config
+            (including .spec-sync-lint.log itself: it is an input, and it is deleted before
+            anything is committed). `git diff` (read-only) is fine; do NOT stage, commit, push, or
+            run any other git command.
+          claude_args: |
+            --max-turns 60
+            --allowedTools "Edit,Write,Read,Glob,Grep,Bash(git diff:*)"
+
+      # The repair pass is exactly as untrusted as the wiring pass, so re-apply the allowlist before
+      # formatting or committing, and refresh the API report in case the repair changed a public
+      # type. This also deletes .spec-sync-lint.log (untracked, not in the `git clean` exclusions),
+      # so the log never reaches the commit.
+      - name: Re-restrict AI edits to product code, then format + refresh the API report
+        if: steps.drift.outputs.code == '10' && steps.existing.outputs.open != 'true' && steps.ai_lint.outcome == 'failure'
+        run: |
+          git reset -q # unstage the action's edits so the allowlist revert + clean below actually apply
+          git checkout -- . ':(exclude)src' ':(exclude)tests' ':(exclude)api.md' ':(exclude)README.md'
+          git clean -fd -e /src -e /tests
+          ./scripts/format
+          ./scripts/build
+          yarn api-extractor
+
+      # Record whether the repair actually worked, so the Slack reply and the PR say so honestly
+      # instead of implying the wiring is clean when CI is about to go red.
+      - name: Re-lint after repair
+        id: ai_lint_final
+        if: steps.drift.outputs.code == '10' && steps.existing.outputs.open != 'true' && steps.ai_lint.outcome == 'failure'
+        continue-on-error: true
+        run: ./scripts/lint
+
       - name: Commit + push AI wiring
         id: ai_push
         if: steps.drift.outputs.code == '10' && steps.existing.outputs.open != 'true'
+        env:
+          LINT_FIRST: ${{ steps.ai_lint.outcome }}
+          LINT_FINAL: ${{ steps.ai_lint_final.outcome }}   # 'skipped' when the first lint passed
         run: |
+          if [ "$LINT_FIRST" = 'success' ]; then
+            lint_note='Lint clean.'
+          elif [ "$LINT_FINAL" = 'success' ]; then
+            lint_note='Lint failed on the first pass; the AI repair pass fixed it.'
+          else
+            lint_note='LINT STILL FAILS after the AI repair pass — the CI lint job will be red and needs a manual fix.'
+          fi
           git add -A
           if git diff --cached --quiet; then
             echo "AI step produced no changes."
@@ -531,7 +637,7 @@ jobs:
           else
             git commit -m "feat(spec-sync): wire client.v2 to spec diff (AI)"
             git push origin HEAD:"$SYNC_BRANCH"
-            echo "summary=Mechanical snapshot + AI wiring committed (a draft a human finishes). Gates must pass; human review required before merge." >> "$GITHUB_OUTPUT"
+            echo "summary=Mechanical snapshot + AI wiring committed (a draft a human finishes). ${lint_note} Gates must pass; human review required before merge." >> "$GITHUB_OUTPUT"
           fi
 
       # Rewrite the PR description: keep the static process/safety preamble from "Open sync PR" and
