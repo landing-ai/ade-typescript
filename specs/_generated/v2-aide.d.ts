@@ -4,6 +4,134 @@
  */
 
 export interface paths {
+    "/v1/extract": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * ADE Extract
+         * @description Extract structured data from a Markdown document using a JSON Schema. v1-compatible wire, running the same extraction engine as `/v2/extract`. Runs synchronously and returns the result inline.
+         */
+        post: operations["v1-extract_run_sync"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/extract/build-schema": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * ADE Extract
+         * @description Generate or edit a JSON Schema for extraction from one or more source Markdown documents and/or a natural-language prompt. v1-compatible wire, running the same schema-build engine as `/v2/extract/build-schema`. The one difference: this route accepts `model` and echoes it back as `metadata.version`. Schema generation is version-free, so `model` does NOT select a model and does not change the generated schema. Runs synchronously and returns the result inline.
+         */
+        post: operations["v1-build-schema_run_sync"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/extract/build-schema/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * ADE List Extract Jobs
+         * @description List your Extract jobs, newest first.
+         */
+        get: operations["v1-build-schema_list_jobs"];
+        put?: never;
+        /**
+         * ADE Extract Jobs
+         * @description Generate or edit a JSON Schema for extraction from one or more source Markdown documents and/or a natural-language prompt. v1-compatible wire, running the same schema-build engine as `/v2/extract/build-schema`. The one difference: this route accepts `model` and echoes it back as `metadata.version`. Schema generation is version-free, so `model` does NOT select a model and does not change the generated schema. Runs asynchronously and returns a job ID; use it to poll for status and retrieve the result once processing completes.
+         */
+        post: operations["v1-build-schema_create_job"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/extract/build-schema/jobs/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * ADE Get Extract Jobs
+         * @description Get the status of an async Extract job, including its result once the job has completed.
+         */
+        get: operations["v1-build-schema_get_job"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/extract/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * ADE List Extract Jobs
+         * @description List your Extract jobs, newest first.
+         */
+        get: operations["v1-extract_list_jobs"];
+        put?: never;
+        /**
+         * ADE Extract Jobs
+         * @description Extract structured data from a Markdown document using a JSON Schema. v1-compatible wire, running the same extraction engine as `/v2/extract`. Runs asynchronously and returns a job ID; use it to poll for status and retrieve the result once processing completes.
+         */
+        post: operations["v1-extract_create_job"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/extract/jobs/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * ADE Get Extract Jobs
+         * @description Get the status of an async Extract job, including its result once the job has completed.
+         */
+        get: operations["v1-extract_get_job"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v2/extract": {
         parameters: {
             query?: never;
@@ -327,7 +455,7 @@ export interface components {
         Element: {
             /**
              * Atomic Grounding
-             * @description Fine-grained grounding segments at the model's current granularity (visual lines today; finer in future versions, same schema). Present only on leaf elements — every type except `table`. `[]` only when segments are structurally impossible: `table_cell` (a cell has no finer granularity than itself) and elements whose markdown is suppressed via `blocks.<type>.markdown=false`. Any other leaf the model could not segment finer carries a single entry covering the element's full range and box. Omitted entirely when `options.atomic_grounding` is `false`.
+             * @description Fine-grained grounding segments, at whichever granularity the model reads at: one entry per visual line for `dpt-3-pro`, one per **word** — each with its `confidence` — for `dpt-3-fast`, including the words inside table cells. Present only on leaf elements — every type except `table`. `[]` in three cases: an element whose markdown is suppressed via `blocks.<type>.markdown=false`; a `table_cell` on a line-granularity model (a cell has no finer granularity than itself there); and a `table_cell` on a word-granularity model whose words cannot be located in the rendered cell text — a `|` escaped on the way into a pipe table, or a character escaped on the way into an HTML table — where the segments are dropped rather than risk reporting offsets that point at the wrong characters. Any other leaf the model could not segment finer carries a single entry covering the element's full range and box. Omitted entirely when `options.atomic_grounding` is `false`.
              * @default null
              */
             atomic_grounding: components["schemas"]["Grounding"][] | null;
@@ -407,6 +535,12 @@ export interface components {
         Grounding: {
             /** @description Bounding box in normalized page coordinates (`0`–`1` fractions of page width/height, at most 8 decimal places). A page node's box is always the full page `{0, 0, 1, 1}`. */
             box: components["schemas"]["Box"];
+            /**
+             * Confidence
+             * @description How sure the model is of the text in this segment, in `[0, 1]`. Present only on word-granularity `atomic_grounding` entries (`dpt-3-fast`), where it is the lowest per-character OCR confidence in the word — so a word is only as trustworthy as its weakest character. Omitted on node-level grounding and on models that ground at line granularity.
+             * @default null
+             */
+            confidence: number | null;
             /**
              * Page
              * @description 1-indexed page number this grounding is on. On a page node, the page's own number.
@@ -608,6 +742,121 @@ export interface components {
             markdown: boolean;
         };
         /**
+         * V1BuildSchemaMetadata
+         * @description Response metadata for a **v1** build-schema call — VTRA's
+         *     ``BuildSchemaMetadata``.
+         *
+         *     The FIELDS are identical to v2's; this type exists so ``/v1`` gets its OWN
+         *     OpenAPI component. The two routes place credits differently (``/v1`` publishes
+         *     ``metadata.credit_usage``, VTRA's shape, via ``JobContract.vtra_metadata_shape``;
+         *     ``/v2`` relocates it to ``metadata.billing.total_credits``), and a SHARED
+         *     component cannot describe both — documenting ``credit_usage`` on a shared
+         *     component made the spec claim ``/v2`` publishes a field its render fold pops.
+         *     Separate components let each spec tell the truth about its own wire.
+         */
+        V1BuildSchemaMetadata: {
+            /**
+             * Credit Usage
+             * @description Credits billed for this request.
+             * @default 0
+             */
+            credit_usage: number;
+            /**
+             * Duration Ms
+             * @description End-to-end request duration in milliseconds.
+             * @default 0
+             */
+            duration_ms: number;
+            /**
+             * Filename
+             * @description Name of the first source document. Retained for v1 compatibility but NOT populated in this version — always null (the source is staged as an opaque ref, so the original name isn't carried through). Do not depend on it.
+             * @default null
+             */
+            filename: string | null;
+            /**
+             * Job Id
+             * @description Gateway job id (workflow id). Matches the billing row id in vision-agent.
+             * @default
+             */
+            job_id: string;
+            /** @description URL of the OpenAPI spec covering this API, for inspection and client generation. */
+            openapi_spec: string;
+            /**
+             * Org Id
+             * @description Organization ID.
+             * @default null
+             */
+            org_id: string | null;
+            /**
+             * Version
+             * @description Model version used for generation. build-schema is version-free (no ``model``/``version`` input), so this is always null. Retained for v1 response-shape compatibility.
+             * @default null
+             */
+            version: string | null;
+            /**
+             * Warnings
+             * @description Structured warnings from the schema-generation process. Each is a ``{code, msg}`` object (e.g. code ``nonconformant_schema``).
+             */
+            warnings?: components["schemas"]["BuildSchemaWarning"][];
+        };
+        /**
+         * V1ExtractMetadata
+         * @description VTRA's ``ExtractMetadata`` — the ``metadata`` block of a v1 extract response.
+         *
+         *     Its OWN type (shared with no v2 metadata) so ``/v1`` owns its OpenAPI component:
+         *     this contract publishes ``credit_usage`` here (``JobContract.vtra_metadata_shape``)
+         *     while the v2 routes relocate credits into ``metadata.billing``, and one shared
+         *     component cannot describe both truthfully.
+         */
+        V1ExtractMetadata: {
+            /**
+             * Credit Usage
+             * @default 0
+             */
+            credit_usage: number;
+            /**
+             * Duration Ms
+             * @default 0
+             */
+            duration_ms: number;
+            /**
+             * Fallback Model Version
+             * @default null
+             */
+            fallback_model_version: string | null;
+            /**
+             * Filename
+             * @default null
+             */
+            filename: string | null;
+            /**
+             * Job Id
+             * @default
+             */
+            job_id: string;
+            /** @description URL of the OpenAPI spec covering this API, for inspection and client generation. */
+            openapi_spec: string;
+            /**
+             * Org Id
+             * @default null
+             */
+            org_id: string | null;
+            /**
+             * Schema Violation Error
+             * @default null
+             */
+            schema_violation_error: string | null;
+            /**
+             * Version
+             * @default null
+             */
+            version: string | null;
+            /** Warnings */
+            warnings?: {
+                [key: string]: unknown;
+            }[];
+        };
+        /**
          * V2Billing
          * @description Billing summary: the service tier the request ran in and the credits
          *     charged.
@@ -724,7 +973,7 @@ export interface components {
         };
         /**
          * V2ExtractOptions
-         * @description Extraction options (``docs/extract-v2-proposal.md`` → Options).
+         * @description Extraction options (``docs/extract-v2-contract.md`` → Options).
          */
         V2ExtractOptions: {
             /**
@@ -757,7 +1006,7 @@ export interface components {
         /**
          * V2WorkflowMetadata
          * @description Response metadata for a v2 workflow call
-         *     (``docs/pipeline-v2-proposal.md`` → Top-level metadata).
+         *     (``docs/pipeline-v2-contract.md`` → Top-level metadata).
          */
         V2WorkflowMetadata: {
             /** @description Billing summary: the service tier the request ran in and the credits charged. */
@@ -831,6 +1080,644 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    "v1-extract_run_sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /**
+                     * Markdown
+                     * @default null
+                     */
+                    markdown?: string | null;
+                    /**
+                     * Markdown Url
+                     * @default null
+                     */
+                    markdown_url?: string | null;
+                    /**
+                     * Model
+                     * @default null
+                     */
+                    model?: string | null;
+                    /**
+                     * Schema
+                     * @default null
+                     */
+                    schema?: string | null;
+                    /**
+                     * Strict
+                     * @default false
+                     */
+                    strict?: boolean;
+                };
+                "multipart/form-data": {
+                    /**
+                     * Format: binary
+                     * @description File upload.
+                     */
+                    markdown?: string;
+                    /**
+                     * Markdown Url
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    markdown_url?: string | null;
+                    /**
+                     * Model
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    model?: string | null;
+                    /**
+                     * Schema
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    schema?: string | null;
+                    /**
+                     * Strict
+                     * @description JSON-serialized string in form data.
+                     * @default false
+                     */
+                    strict?: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description v1-extract result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Extraction */
+                        extraction?: {
+                            [key: string]: unknown;
+                        };
+                        /** Extraction Metadata */
+                        extraction_metadata?: {
+                            [key: string]: unknown;
+                        };
+                        metadata?: components["schemas"]["V1ExtractMetadata"];
+                    };
+                };
+            };
+            /** @description Request validation failed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    "v1-build-schema_run_sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /**
+                     * Markdown Urls
+                     * @description URLs to Markdown files to analyze for schema generation.
+                     * @default null
+                     */
+                    markdown_urls?: string[] | null;
+                    /**
+                     * Markdowns
+                     * @description Markdown files or inline content strings to analyze for schema generation. Multiple documents can be provided for better schema coverage.
+                     * @default null
+                     */
+                    markdowns?: string[] | null;
+                    /**
+                     * Model
+                     * @description Accepted for v1 wire compatibility and echoed back as `metadata.version`. Schema generation is version-free — this value does NOT select a model and does not change the generated schema. Blank values are treated as absent.
+                     * @default null
+                     */
+                    model?: string | null;
+                    /**
+                     * Prompt
+                     * @description Instructions for how to generate or modify the schema.
+                     * @default null
+                     */
+                    prompt?: string | null;
+                    /**
+                     * Schema
+                     * @description Existing JSON schema to iterate on or refine.
+                     * @default null
+                     */
+                    schema?: string | null;
+                };
+                "multipart/form-data": {
+                    /**
+                     * Markdown Urls
+                     * @description URLs to Markdown files to analyze for schema generation. JSON-serialized string in form data.
+                     * @default null
+                     */
+                    markdown_urls?: string[] | null;
+                    /** @description Repeat the field for each file upload. */
+                    markdowns?: (string)[];
+                    /**
+                     * Model
+                     * @description Accepted for v1 wire compatibility and echoed back as `metadata.version`. Schema generation is version-free — this value does NOT select a model and does not change the generated schema. Blank values are treated as absent. JSON-serialized string in form data.
+                     * @default null
+                     */
+                    model?: string | null;
+                    /**
+                     * Prompt
+                     * @description Instructions for how to generate or modify the schema. JSON-serialized string in form data.
+                     * @default null
+                     */
+                    prompt?: string | null;
+                    /**
+                     * Schema
+                     * @description Existing JSON schema to iterate on or refine. JSON-serialized string in form data.
+                     * @default null
+                     */
+                    schema?: string | null;
+                };
+            };
+        };
+        responses: {
+            /** @description v1-build-schema result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * Extraction Schema
+                         * @description The generated JSON schema as a string.
+                         */
+                        extraction_schema: string;
+                        /** @description The metadata for the schema generation process. */
+                        metadata: components["schemas"]["V1BuildSchemaMetadata"];
+                    };
+                };
+            };
+            /** @description Request validation failed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    "v1-build-schema_list_jobs": {
+        parameters: {
+            query?: {
+                /** @description Page number (0-indexed). */
+                page?: number;
+                /** @description Number of items per page. */
+                page_size?: number;
+                /** @description Filter by job status. */
+                status?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The caller's jobs, newest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        has_more?: boolean;
+                        jobs?: {
+                            completed_at?: string | null;
+                            created_at?: string | null;
+                            failure_reason?: string | null;
+                            /** @description The unique identifier for this v1-build-schema job. Format: ``extract-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
+                            job_id?: string;
+                            model_version?: string | null;
+                            /** @enum {string} */
+                            status?: "pending" | "processing" | "completed" | "failed";
+                        }[];
+                        page?: number;
+                        page_size?: number;
+                    };
+                };
+            };
+            /** @description Request validation failed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    "v1-build-schema_create_job": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /**
+                     * Markdown Urls
+                     * @description URLs to Markdown files to analyze for schema generation.
+                     * @default null
+                     */
+                    markdown_urls?: string[] | null;
+                    /**
+                     * Markdowns
+                     * @description Markdown files or inline content strings to analyze for schema generation. Multiple documents can be provided for better schema coverage.
+                     * @default null
+                     */
+                    markdowns?: string[] | null;
+                    /**
+                     * Model
+                     * @description Accepted for v1 wire compatibility and echoed back as `metadata.version`. Schema generation is version-free — this value does NOT select a model and does not change the generated schema. Blank values are treated as absent.
+                     * @default null
+                     */
+                    model?: string | null;
+                    /**
+                     * Prompt
+                     * @description Instructions for how to generate or modify the schema.
+                     * @default null
+                     */
+                    prompt?: string | null;
+                    /**
+                     * Schema
+                     * @description Existing JSON schema to iterate on or refine.
+                     * @default null
+                     */
+                    schema?: string | null;
+                    /** @description Async service tier. ``priority`` runs in the fast lane at the sync billing rate; absent → ``standard``. */
+                    service_tier?: ("standard" | "priority") | null;
+                };
+                "multipart/form-data": {
+                    /**
+                     * Markdown Urls
+                     * @description URLs to Markdown files to analyze for schema generation. JSON-serialized string in form data.
+                     * @default null
+                     */
+                    markdown_urls?: string[] | null;
+                    /** @description Repeat the field for each file upload. */
+                    markdowns?: (string)[];
+                    /**
+                     * Model
+                     * @description Accepted for v1 wire compatibility and echoed back as `metadata.version`. Schema generation is version-free — this value does NOT select a model and does not change the generated schema. Blank values are treated as absent. JSON-serialized string in form data.
+                     * @default null
+                     */
+                    model?: string | null;
+                    /**
+                     * Prompt
+                     * @description Instructions for how to generate or modify the schema. JSON-serialized string in form data.
+                     * @default null
+                     */
+                    prompt?: string | null;
+                    /**
+                     * Schema
+                     * @description Existing JSON schema to iterate on or refine. JSON-serialized string in form data.
+                     * @default null
+                     */
+                    schema?: string | null;
+                    /** @description Async service tier. ``priority`` runs in the fast lane at the sync billing rate; absent → ``standard``. */
+                    service_tier?: ("standard" | "priority") | null;
+                };
+            };
+        };
+        responses: {
+            /** @description Job created */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        created_at?: string | null;
+                        /** @description The unique identifier for this v1-build-schema job. Format: ``extract-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
+                        job_id?: string;
+                        /** @enum {string} */
+                        status?: "pending" | "processing" | "completed" | "failed";
+                    };
+                };
+            };
+            /** @description Request validation failed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    "v1-build-schema_get_job": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The identifier of the job to retrieve, as returned by the create-job request. */
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Job status / result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Present once the job is terminal. */
+                        completed_at?: string;
+                        created_at?: string | null;
+                        /** @description Present once status is ``failed``. */
+                        error?: {
+                            /** @description Stable error code (``internal_error`` when unmapped). */
+                            code?: string;
+                            message?: string;
+                        };
+                        /** @description The unique identifier for this v1-build-schema job. Format: ``extract-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
+                        job_id?: string;
+                        /** @description Estimated completion as a decimal from 0 to 1 — an estimate, not a measurement: it typically advances between polls while the job is ``processing``, may jump forward when the service reports a real milestone (e.g. parsed pages), and approaches but never reaches 1 (long-running jobs plateau near 0.98 — completion is signaled by ``status``, and a job may complete from any progress value). Present while ``processing``. */
+                        progress?: number;
+                        /** @description Present once status is ``completed``. */
+                        result?: {
+                            /**
+                             * Extraction Schema
+                             * @description The generated JSON schema as a string.
+                             */
+                            extraction_schema: string;
+                            /** @description The metadata for the schema generation process. */
+                            metadata: components["schemas"]["V1BuildSchemaMetadata"];
+                        } | null;
+                        /** @enum {string} */
+                        status?: "pending" | "processing" | "completed" | "failed";
+                    };
+                };
+            };
+            /** @description Not found (e.g. no such job). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request validation failed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    "v1-extract_list_jobs": {
+        parameters: {
+            query?: {
+                /** @description Page number (0-indexed). */
+                page?: number;
+                /** @description Number of items per page. */
+                page_size?: number;
+                /** @description Filter by job status. */
+                status?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The caller's jobs, newest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        has_more?: boolean;
+                        jobs?: {
+                            completed_at?: string | null;
+                            created_at?: string | null;
+                            failure_reason?: string | null;
+                            /** @description The unique identifier for this v1-extract job. Format: ``extract-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
+                            job_id?: string;
+                            model_version?: string | null;
+                            /** @enum {string} */
+                            status?: "pending" | "processing" | "completed" | "failed";
+                        }[];
+                        page?: number;
+                        page_size?: number;
+                    };
+                };
+            };
+            /** @description Request validation failed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    "v1-extract_create_job": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /**
+                     * Markdown
+                     * @default null
+                     */
+                    markdown?: string | null;
+                    /**
+                     * Markdown Url
+                     * @default null
+                     */
+                    markdown_url?: string | null;
+                    /**
+                     * Model
+                     * @default null
+                     */
+                    model?: string | null;
+                    /**
+                     * Schema
+                     * @default null
+                     */
+                    schema?: string | null;
+                    /** @description Async service tier. ``priority`` runs in the fast lane at the sync billing rate; absent → ``standard``. */
+                    service_tier?: ("standard" | "priority") | null;
+                    /**
+                     * Strict
+                     * @default false
+                     */
+                    strict?: boolean;
+                };
+                "multipart/form-data": {
+                    /**
+                     * Format: binary
+                     * @description File upload.
+                     */
+                    markdown?: string;
+                    /**
+                     * Markdown Url
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    markdown_url?: string | null;
+                    /**
+                     * Model
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    model?: string | null;
+                    /**
+                     * Schema
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    schema?: string | null;
+                    /** @description Async service tier. ``priority`` runs in the fast lane at the sync billing rate; absent → ``standard``. */
+                    service_tier?: ("standard" | "priority") | null;
+                    /**
+                     * Strict
+                     * @description JSON-serialized string in form data.
+                     * @default false
+                     */
+                    strict?: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description Job created */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        created_at?: string | null;
+                        /** @description The unique identifier for this v1-extract job. Format: ``extract-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
+                        job_id?: string;
+                        /** @enum {string} */
+                        status?: "pending" | "processing" | "completed" | "failed";
+                    };
+                };
+            };
+            /** @description Request validation failed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    "v1-extract_get_job": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The identifier of the job to retrieve, as returned by the create-job request. */
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Job status / result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Present once the job is terminal. */
+                        completed_at?: string;
+                        created_at?: string | null;
+                        /** @description Present once status is ``failed``. */
+                        error?: {
+                            /** @description Stable error code (``internal_error`` when unmapped). */
+                            code?: string;
+                            message?: string;
+                        };
+                        /** @description The unique identifier for this v1-extract job. Format: ``extract-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
+                        job_id?: string;
+                        /** @description Estimated completion as a decimal from 0 to 1 — an estimate, not a measurement: it typically advances between polls while the job is ``processing``, may jump forward when the service reports a real milestone (e.g. parsed pages), and approaches but never reaches 1 (long-running jobs plateau near 0.98 — completion is signaled by ``status``, and a job may complete from any progress value). Present while ``processing``. */
+                        progress?: number;
+                        /** @description Present once status is ``completed``. */
+                        result?: {
+                            /** Extraction */
+                            extraction?: {
+                                [key: string]: unknown;
+                            };
+                            /** Extraction Metadata */
+                            extraction_metadata?: {
+                                [key: string]: unknown;
+                            };
+                            metadata?: components["schemas"]["V1ExtractMetadata"];
+                        } | null;
+                        /** @enum {string} */
+                        status?: "pending" | "processing" | "completed" | "failed";
+                    };
+                };
+            };
+            /** @description Not found (e.g. no such job). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request validation failed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     "v2-extract_run_sync": {
         parameters: {
             query?: never;

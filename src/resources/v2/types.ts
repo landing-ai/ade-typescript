@@ -173,6 +173,18 @@ export interface V2Grounding {
   range: V2Range;
 
   box: V2GroundingBox;
+
+  /**
+   * How sure the model is of the text in this segment, in `[0, 1]`. Populated
+   * only on word-granularity `atomic_grounding` entries (`dpt-3-fast`), where it
+   * is the lowest per-character OCR confidence in the word — so a word is only
+   * as trustworthy as its weakest character. Optional per spec (it is not in
+   * `Grounding.required`): the gateway *omits* the key entirely on node-level
+   * `grounding` and on models that ground at line granularity (`dpt-3-pro`), so
+   * it reads back as `undefined` there, not `null`. Test with `== null` to cover
+   * both.
+   */
+  confidence?: number | null;
 }
 
 export type V2ElementType =
@@ -201,8 +213,11 @@ export interface V2ParseElement {
   grounding?: V2Grounding;
 
   /**
-   * Fine-grained grounding segments (visual lines today). Present only on leaf
-   * elements; omitted entirely when `options.atomic_grounding` is `false`.
+   * Fine-grained grounding segments, at whichever granularity the model reads
+   * at: one entry per visual line for `dpt-3-pro`, one per word — each with its
+   * `confidence` — for `dpt-3-fast`, including the words inside table cells.
+   * Present only on leaf elements; omitted entirely when
+   * `options.atomic_grounding` is `false`.
    */
   atomic_grounding?: Array<V2Grounding> | null;
 

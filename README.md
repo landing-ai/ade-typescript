@@ -106,6 +106,27 @@ The response is a `V2ParseResponse`:
 
 If some pages cannot be parsed, the request still succeeds (HTTP 206) and `metadata.failed_pages` lists the pages that failed. If a synchronous parse times out, the client throws `V2SyncTimeoutError`; use [jobs](#process-large-documents-asynchronously-jobs) instead.
 
+`atomic_grounding` segments a leaf element at whichever granularity the model reads at: one entry per visual line for `dpt-3-pro`, and one entry per **word** for `dpt-3-fast` — each with a `confidence` in `[0, 1]`, the lowest per-character OCR confidence in that word, so a word is only as trustworthy as its weakest character. Use it to flag low-confidence text for review:
+
+```ts
+const parsed = await client.v2.parse({
+  document: fs.createReadStream('scan.pdf'),
+  model: 'dpt-3-fast', // word-granularity grounding, with per-word confidence
+});
+
+for (const page of parsed.structure?.children ?? []) {
+  for (const element of page.children ?? []) {
+    for (const word of element.atomic_grounding ?? []) {
+      // `confidence` is absent on node-level `grounding` and on line-granularity
+      // models (`dpt-3-pro`), so check before comparing.
+      if (word.confidence != null && word.confidence < 0.5) {
+        console.log(`low confidence on page ${word.page}`, word.range, word.box);
+      }
+    }
+  }
+}
+```
+
 The `document` parameter accepts an `fs.ReadStream`, a web `File`, a `fetch` `Response`, or the `toFile` helper; see [File Uploads](#file-uploads).
 
 The `model` parameter accepts a dated snapshot (`dpt-3-pro-20260710`), a `-latest` alias, or a bare family name (equivalent to that family's `-latest`). Two families are available: `dpt-3-pro` for highest quality, and `dpt-3-fast` for lower-latency parsing without vision-model captioning. It defaults to the latest DPT-3 Pro snapshot.

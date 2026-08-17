@@ -1,4 +1,6 @@
-import LandingAIADE from 'landingai-ade';
+import LandingAIADE, { toFile } from 'landingai-ade';
+import fs from 'fs';
+import path from 'path';
 
 // V2 (`client.v2`) contract smoke test. Like the V1 one, it hits the LIVE staging API — gated on a
 // real key, excluded from the default `./scripts/test` run, and required only on `spec-sync/*`
@@ -10,6 +12,7 @@ const apiKey = process.env['LANDINGAI_ADE_STAGING_APIKEY'];
 const runIf = apiKey ? test : test.skip;
 
 const SAMPLE_MARKDOWN = '# Acme Inc. — Q1 Report\n\nTotal revenue for the quarter was **$1,250,000**.\n';
+const SAMPLE_PDF = path.join(__dirname, 'sample.pdf');
 
 describe('V2 contract (staging)', () => {
   runIf(
@@ -88,6 +91,43 @@ describe('V2 contract (staging)', () => {
       }
     },
     180_000,
+  );
+
+  runIf(
+    'parse (sync) exposes the optional atomic_grounding confidence as a probability',
+    async () => {
+      const client = new LandingAIADE({ apikey: apiKey!, environment: 'staging' });
+      // Wired by the V2 spec-sync: `Grounding.confidence`. Deliberately does NOT
+      // pin `model` — `confidence` is only populated at word granularity
+      // (`dpt-3-fast`), and a smoke test must not depend on one model family being
+      // served: staging currently accepts `dpt-3-fast` but never answers, which is
+      // exactly how this test used to burn its whole timeout. So assert the field's
+      // contract against whatever model the gateway defaults to — absent, or a
+      // probability in `[0, 1]` — and leave the populated-value assertions to the
+      // mocked test in tests/api-resources/v2/v2.test.ts.
+      const res = await client.v2.parse({
+        document: await toFile(fs.readFileSync(SAMPLE_PDF), 'sample.pdf', { type: 'application/pdf' }),
+        options: { atomic_grounding: true },
+      });
+      const pages = res.structure?.children ?? [];
+      expect(pages.length).toBeGreaterThan(0);
+      const segments = pages.flatMap((page) =>
+        (page.children ?? []).flatMap((el) => el.atomic_grounding ?? []),
+      );
+      expect(segments.length).toBeGreaterThan(0);
+      for (const segment of segments) {
+        // `== null` covers both absent (line-granularity models omit the key) and
+        // an explicit `null`.
+        expect(segment.confidence == null || typeof segment.confidence === 'number').toBe(true);
+        if (segment.confidence != null) {
+          expect(segment.confidence).toBeGreaterThanOrEqual(0);
+          expect(segment.confidence).toBeLessThanOrEqual(1);
+        }
+      }
+      // Node-level grounding is never a word, so it never carries a confidence.
+      expect(pages[0]!.grounding?.confidence ?? null).toBeNull();
+    },
+    120_000,
   );
 
   runIf(
