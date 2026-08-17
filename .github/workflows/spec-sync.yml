@@ -492,14 +492,24 @@ jobs:
             - Build request URLs via the V2 base-URL routing the neighbours use (never hardcode a
               host — the SDK calls api.ade.[env], never aide; routing is automatic via v2BaseURL).
 
-            Optionality comes from the schema, never from the prose: a response property is optional
-            iff it is absent from that schema's `required` array. A property can be described as
-            "always present for model X" and still be optional — read `required`, not the
-            `description`. Declare an optional property `name?: T | null` (never `name: T | null`,
-            which claims the key is always there), and compare with `== null` / `!= null` so a
-            missing key and an explicit null are treated alike — the gateway omits optional fields
-            rather than sending null, so a `=== null` check silently misses the common case. Say
-            "omitted"/"absent", not "null", in the doc comment for such a field.
+            Read a property's shape from the schema, never from the prose, and derive its two
+            dimensions INDEPENDENTLY:
+            (a) Optional (may the key be absent?) — yes iff the property is absent from that
+                schema's `required` array. Optional means `name?: T`; required means `name: T`.
+                A property can be described as "always present for model X" and still be optional;
+                trust `required`, not the `description`.
+            (b) Nullable (may the value be null?) — yes ONLY if that property's own schema says so
+                (`type: [..., 'null']`, an `anyOf` branch with `type: 'null'`, or `nullable: true`).
+                Do NOT infer nullability from being absent from `required` — the two are unrelated,
+                and adding a spurious `| null` widens the public type for every caller. Existing
+                optional-but-not-nullable examples to match: `range_units?: 'unicode_codepoints'`
+                and `openapi_spec?: string`.
+            So: optional and nullable is `name?: T | null`; optional only is `name?: T`; required and
+            nullable is `name: T | null`. Whatever the declaration, compare with `== null` / `!= null`
+            rather than `=== null`, so an absent key and an explicit null are handled alike — the
+            gateway omits optional fields rather than sending null, and a `=== null` check silently
+            misses that, the common case. In the doc comment for an optional field say
+            "omitted"/"absent" rather than "null" unless the schema really does allow null.
 
             Add a live check to tests/contract/v2-smoke.test.ts and unit tests under
             tests/api-resources/v2/. The contract file hits LIVE staging, so it must assert only
@@ -548,13 +558,29 @@ jobs:
       # job on a PR that otherwise looked review-ready. So run the real lint HERE, in a trusted
       # step, and hand its output back to a second shell-less Claude pass.
       #
-      # This closes the loop WITHOUT granting the AI a shell: it still cannot execute anything with
-      # the checkout's push credentials, and its edits are still funnelled through the product-code
-      # allowlist below before they can reach a commit. The lint log it reads is eslint/tsc output
-      # quoting the AI's own just-written code — no new trust boundary is crossed by feeding it back.
+      # This closes the loop WITHOUT granting the AI a shell: its edits are still funnelled through
+      # the product-code allowlist below before they can reach a commit, and the lint log it reads is
+      # eslint/tsc output quoting its own just-written code — no new trust boundary is crossed by
+      # feeding it back.
       #
-      # Safe to run after the build above: eslint ignores `dist/` (eslint.config.mjs), so the
-      # freshly built output is not linted.
+      # Deliberately a STATIC SUBSET, not `./scripts/lint`: that script calls `./scripts/build`, which
+      # ends in `node -e 'require("landingai-ade")'` / `import(...)` smoke probes — i.e. it EXECUTES
+      # the AI's freshly written src/ in a trusted step still holding the checkout's SPEC_SYNC_TOKEN.
+      # (That execution is pre-existing: the restrict+build step above already does it, so this is not
+      # a boundary this loop introduces — but there is no reason to repeat it.) eslint and `tsc
+      # --noEmit` only ever READ the source, and between them they cover every class of mistake the
+      # wiring pass can make in src/ tests/. The rest of `./scripts/lint` (attw, publint) validates
+      # packaging config the AI is not allowed to touch, and CI's own `lint` job still runs the whole
+      # script on the PR with no push credentials.
+      #
+      # eslint is scoped to `src tests`, not `.`, because this runs AFTER the build above: a bare
+      # `eslint .` also walks the freshly generated `dist/` (the flat config's `dist/` entry sits on a
+      # config object, so it does not ignore those files globally) and reports ~20
+      # no-restricted-imports errors in build output on EVERY run — which would fail the loop, burn a
+      # pointless repair pass, and mark every PR "lint still fails" over generated code the allowlist
+      # forbids the AI from touching. `src tests` is exactly the TypeScript the wiring pass may edit.
+      # CI's own `lint` job is unaffected: there eslint runs before the build, so no dist exists yet.
+      # `tsc --noEmit` needs no scoping — tsconfig.json already excludes dist.
       - name: Lint the AI wiring
         id: ai_lint
         if: steps.drift.outputs.code == '10' && steps.existing.outputs.open != 'true'
@@ -562,7 +588,11 @@ jobs:
         continue-on-error: true
         run: |
           set -o pipefail
-          ./scripts/lint 2>&1 | tee .spec-sync-lint.log
+          # Run both even if the first fails, so the repair pass sees every error at once.
+          status=0
+          ./node_modules/.bin/eslint src tests 2>&1 | tee .spec-sync-lint.log || status=1
+          ./node_modules/typescript/bin/tsc --noEmit 2>&1 | tee -a .spec-sync-lint.log || status=1
+          exit $status
 
       - name: AI lint repair (edits only)
         id: ai_lint_fix
@@ -614,7 +644,12 @@ jobs:
         id: ai_lint_final
         if: steps.drift.outputs.code == '10' && steps.existing.outputs.open != 'true' && steps.ai_lint.outcome == 'failure'
         continue-on-error: true
-        run: ./scripts/lint
+        # Same static subset as the first pass — see there for why the full script is not used.
+        run: |
+          status=0
+          ./node_modules/.bin/eslint src tests || status=1
+          ./node_modules/typescript/bin/tsc --noEmit || status=1
+          exit $status
 
       - name: Commit + push AI wiring
         id: ai_push
@@ -630,6 +665,11 @@ jobs:
           else
             lint_note='LINT STILL FAILS after the AI repair pass — the CI lint job will be red and needs a manual fix.'
           fi
+          # Unconditionally, BEFORE `git add -A`: the log is untracked and not gitignored, and the
+          # re-restrict step that would have cleaned it only runs on the repair path. On the common
+          # clean-lint path it would otherwise be committed — and on a no-op wiring run it would be
+          # the ONLY staged change, turning "the AI changed nothing" into a bogus wiring commit.
+          rm -f .spec-sync-lint.log
           git add -A
           if git diff --cached --quiet; then
             echo "AI step produced no changes."
