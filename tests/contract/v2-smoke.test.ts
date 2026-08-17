@@ -1,4 +1,6 @@
-import LandingAIADE from 'landingai-ade';
+import LandingAIADE, { toFile } from 'landingai-ade';
+import fs from 'fs';
+import path from 'path';
 
 // V2 (`client.v2`) contract smoke test. Like the V1 one, it hits the LIVE staging API — gated on a
 // real key, excluded from the default `./scripts/test` run, and required only on `spec-sync/*`
@@ -10,6 +12,7 @@ const apiKey = process.env['LANDINGAI_ADE_STAGING_APIKEY'];
 const runIf = apiKey ? test : test.skip;
 
 const SAMPLE_MARKDOWN = '# Acme Inc. — Q1 Report\n\nTotal revenue for the quarter was **$1,250,000**.\n';
+const SAMPLE_PDF = path.join(__dirname, 'sample.pdf');
 
 describe('V2 contract (staging)', () => {
   runIf(
@@ -86,6 +89,40 @@ describe('V2 contract (staging)', () => {
         const result = done.result as LandingAIADE.V2ExtractResult;
         expect(typeof result.metadata.duration_ms).toBe('number');
       }
+    },
+    180_000,
+  );
+
+  runIf(
+    'parse (sync) grounds at word granularity with a confidence on each atomic segment',
+    async () => {
+      const client = new LandingAIADE({ apikey: apiKey!, environment: 'staging' });
+      // Wired by the V2 spec-sync: `Grounding.confidence`. `dpt-3-fast` reads at
+      // word granularity, so every `atomic_grounding` entry is one word carrying
+      // the lowest per-character OCR confidence in it; node-level `grounding`
+      // isn't a word and reports `null`.
+      const res = await client.v2.parse({
+        document: await toFile(fs.readFileSync(SAMPLE_PDF), 'sample.pdf', { type: 'application/pdf' }),
+        model: 'dpt-3-fast',
+        options: { atomic_grounding: true },
+      });
+      const pages = res.structure?.children ?? [];
+      expect(pages.length).toBeGreaterThan(0);
+      const segments = pages.flatMap((page) =>
+        (page.children ?? []).flatMap((el) => el.atomic_grounding ?? []),
+      );
+      expect(segments.length).toBeGreaterThan(0);
+      for (const segment of segments) {
+        expect(segment.confidence === null || typeof segment.confidence === 'number').toBe(true);
+        if (segment.confidence !== null) {
+          expect(segment.confidence).toBeGreaterThanOrEqual(0);
+          expect(segment.confidence).toBeLessThanOrEqual(1);
+        }
+      }
+      // A word-granularity model scores at least one of them.
+      expect(segments.some((segment) => typeof segment.confidence === 'number')).toBe(true);
+      // Node-level grounding carries no confidence.
+      expect(pages[0]!.grounding?.confidence ?? null).toBeNull();
     },
     180_000,
   );
