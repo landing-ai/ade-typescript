@@ -478,7 +478,13 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          github_token: ${{ secrets.SPEC_SYNC_TOKEN }}
+          # NOT SPEC_SYNC_TOKEN. claude-code-action exports the token it is given into the agent's
+          # environment (and configures `origin` with it), so handing it the write PAT would put a
+          # push-capable credential inside the step that processes the untrusted spec — where the
+          # agent's own Read tool could recover it and Write it into an allowlisted file that the
+          # trusted push then publishes. `github.token` is read-only here (see `permissions:` at
+          # the top of this file); SPEC_SYNC_TOKEN is reserved for the trusted push step.
+          github_token: ${{ github.token }}
           prompt: |
             The previous commit updated specs/v2-aide.json and regenerated reference types in
             specs/_generated/v2-aide.d.ts. Wire the client.v2 SDK to match the spec diff. This is the
@@ -672,7 +678,13 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          github_token: ${{ secrets.SPEC_SYNC_TOKEN }}
+          # NOT SPEC_SYNC_TOKEN. claude-code-action exports the token it is given into the agent's
+          # environment (and configures `origin` with it), so handing it the write PAT would put a
+          # push-capable credential inside the step that processes the untrusted spec — where the
+          # agent's own Read tool could recover it and Write it into an allowlisted file that the
+          # trusted push then publishes. `github.token` is read-only here (see `permissions:` at
+          # the top of this file); SPEC_SYNC_TOKEN is reserved for the trusted push step.
+          github_token: ${{ github.token }}
           prompt: |
             `./scripts/lint` failed on the client.v2 wiring you just wrote. Read
             .spec-sync-lint.log in the repo root — it is the captured output of that run (eslint
@@ -736,6 +748,29 @@ jobs:
           ./node_modules/.bin/eslint src tests || status=1
           ./node_modules/typescript/bin/tsc --noEmit || status=1
           exit $status
+
+      # LAST line of defence, and it must come after the last step that executes anything.
+      # `./scripts/format`, `./scripts/build`, `yarn api-extractor` and the linters all run binaries
+      # out of the gitignored node_modules, which the allowlist cannot clean — and the build's
+      # `node -e 'require(...)'` probes execute the AI's own src/ by design. Any of them could have
+      # written outside the allowlist, or recreated git config/hooks, AFTER the earlier restore ran.
+      # Without this, `git add -A` below would stage those post-allowlist edits and the trusted push
+      # would publish them.
+      #
+      # Runs unconditionally (not just on the repair path) because the plain path executes the
+      # formatter, build and linters too. Nothing after this point executes AI-authored content: the
+      # only remaining steps are `git add`/`git commit` and the push itself. Re-running the allowlist
+      # is safe and idempotent — src/ tests/ api.md README.md are excluded, so every legitimate AI
+      # edit, formatter result and refreshed API report is preserved.
+      - name: Final restore + allowlist before staging
+        if: steps.drift.outputs.code == '10' && steps.existing.outputs.open != 'true'
+        run: |
+          cp "$RUNNER_TEMP/git-config.trusted" .git/config
+          rm -rf .git/hooks .git/info
+          git reset -q
+          git checkout -- . ':(exclude)src' ':(exclude)tests' ':(exclude)api.md' ':(exclude)README.md'
+          git clean -fd -e /src -e /tests
+          find src tests -name .gitattributes -delete 2>/dev/null || true
 
       # Commit and push are SEPARATE steps, and the token appears only in the push step's env.
       # `git add` runs content filters (`filter.<driver>.clean`), which an AI pass can install via
