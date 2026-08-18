@@ -128,14 +128,15 @@ describe('V2 contract (staging)', () => {
     'parse (sync) exposes the optional atomic_grounding confidence as a probability',
     async () => {
       const client = stagingClient();
-      // Wired by the V2 spec-sync: `Grounding.confidence`. Deliberately does NOT
-      // pin `model` — `confidence` is only populated at word granularity
-      // (`dpt-3-fast`), and a smoke test must not depend on one model family being
-      // served: staging currently accepts `dpt-3-fast` but never answers, which is
-      // exactly how this test used to burn its whole timeout. So assert the field's
-      // contract against whatever model the gateway defaults to — absent, or a
-      // probability in `[0, 1]` — and leave the populated-value assertions to the
-      // mocked test in tests/api-resources/v2/v2.test.ts.
+      // Wired by the V2 spec-sync: `Grounding.confidence`. Deliberately does NOT pin
+      // `model` — `confidence` is only populated at word granularity (`dpt-3-fast`),
+      // and whether a given family is servable depends on how the staging cluster was
+      // booked (`dpt-3-fast` needs a GPU-backed booking; against one without it the
+      // request hangs until the test times out). That is an environment property, not
+      // an SDK contract, so this asserts the field's contract against whatever model
+      // the gateway defaults to — absent, or a probability in `[0, 1]` — and leaves
+      // the populated-value assertions to the mocked test in
+      // tests/api-resources/v2/v2.test.ts, which controls the response body.
       const res = await client.v2.parse({
         document: await toFile(fs.readFileSync(SAMPLE_PDF), 'sample.pdf', { type: 'application/pdf' }),
         options: { atomic_grounding: true },
