@@ -440,6 +440,42 @@ jobs:
           GH_TOKEN: ${{ secrets.SPEC_SYNC_TOKEN }}
         run: ./scripts/spec-sync/thread-ts.sh set "${{ steps.open_pr.outputs.url }}" "${{ steps.root.outputs.ts }}"
 
+      # ---- Everything the AI pass may see or reach is decided HERE, in a trusted step --------
+      #
+      # 1. Precompute the mechanical diff. The agent needs it, but must not run `git diff` to get
+      #    it: git honours `diff.external` / textconv drivers from .git/config, so an agent that
+      #    can write .git/config turns a "read-only" git diff into arbitrary execution INSIDE its
+      #    own step — before any allowlist or hardening runs. Handing it a plain file keeps the
+      #    input and removes the primitive. (Untracked and not in the `git clean` exclusions, so
+      #    the allowlist step deletes it before anything is committed.)
+      #
+      # 2. Take the push credential away BEFORE the agent runs, not after. actions/checkout
+      #    persists it in .git/config; nothing between here and the explicit push needs it, so
+      #    even a successful in-step escape has no token to reach. Snapshot the now-clean config
+      #    so each post-AI restore can put it back wholesale, rather than unsetting known-bad keys
+      #    one at a time — an agent can add `filter.*.clean`, `diff.external`, aliases, and any
+      #    enumeration of those will be incomplete.
+      #
+      # 3. Drop .git/hooks and .git/info. Neither is a worktree path, so neither `git checkout`
+      #    nor `git clean` restores them: a planted pre-commit hook runs on our own `git commit`,
+      #    and one line in .git/info/exclude makes `git clean -fd` skip the agent's own file —
+      #    walking it straight past the product-code allowlist.
+      - name: Precompute the spec diff and harden the checkout
+        id: harden
+        if: steps.drift.outputs.code == '10' && steps.existing.outputs.open != 'true'
+        run: |
+          git diff HEAD~1..HEAD > .spec-sync-diff.txt
+          git config --local --unset-all 'http.https://github.com/.extraheader' || true
+          git config --local --unset-all core.hooksPath || true
+          rm -rf .git/hooks .git/info
+          # The snapshot is a step OUTPUT, not a file. Every path on disk — $RUNNER_TEMP included —
+          # is writable by the AI-authored code that ./scripts/build executes below, so a file
+          # snapshot could be overwritten between being taken and being restored, and would then
+          # reinstall an attacker-controlled core.hooksPath right before the credentialed push.
+          # Step outputs are captured by the runner when this step ends and injected as expressions
+          # afterwards, so nothing running later in the job can alter this value.
+          echo "gitconfig=$(base64 -w0 < .git/config)" >> "$GITHUB_OUTPUT"
+
       # ---- Phase 2: AI wiring — edits ONLY (no shell/git-push; a later step commits). ----
       - name: AI wiring (edits only)
         id: ai_wiring
@@ -447,7 +483,13 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          github_token: ${{ secrets.SPEC_SYNC_TOKEN }}
+          # NOT SPEC_SYNC_TOKEN. claude-code-action exports the token it is given into the agent's
+          # environment (and configures `origin` with it), so handing it the write PAT would put a
+          # push-capable credential inside the step that processes the untrusted spec — where the
+          # agent's own Read tool could recover it and Write it into an allowlisted file that the
+          # trusted push then publishes. `github.token` is read-only here (see `permissions:` at
+          # the top of this file); SPEC_SYNC_TOKEN is reserved for the trusted push step.
+          github_token: ${{ github.token }}
           prompt: |
             The previous commit updated specs/v2-aide.json and regenerated reference types in
             specs/_generated/v2-aide.d.ts. Wire the client.v2 SDK to match the spec diff. This is the
@@ -459,7 +501,9 @@ jobs:
             spec drift by hand. Skip it entirely even though it appears in the spec and reference
             types. If the spec diff touches only workflow, make no changes.
 
-            First inspect the ENTIRE mechanical commit diff (`git diff HEAD~1..HEAD`) — the
+            First read the ENTIRE mechanical commit diff, which a trusted step has already written
+            to `.spec-sync-diff.txt` in the repo root (you have no shell — use Read, do not try to
+            run git) — the
             operation/path hunks AND changed entries under `components.schemas`. A response-field
             addition often changes ONLY a component schema (e.g. /v2/parse references ParseResponse)
             and its generated type, not the operation hunk, so for every changed schema trace its
@@ -492,8 +536,39 @@ jobs:
             - Build request URLs via the V2 base-URL routing the neighbours use (never hardcode a
               host — the SDK calls api.ade.[env], never aide; routing is automatic via v2BaseURL).
 
+            Read a property's shape from the schema, never from the prose, and derive its two
+            dimensions INDEPENDENTLY:
+            (a) Optional (may the key be absent?) — yes iff the property is absent from that
+                schema's `required` array. Optional means `name?: T`; required means `name: T`.
+                A property can be described as "always present for model X" and still be optional;
+                trust `required`, not the `description`.
+            (b) Nullable (may the value be null?) — yes ONLY if that property's own schema says so
+                (`type: [..., 'null']`, an `anyOf` branch with `type: 'null'`, or `nullable: true`).
+                Do NOT infer nullability from being absent from `required` — the two are unrelated,
+                and adding a spurious `| null` widens the public type for every caller. Existing
+                optional-but-not-nullable examples to match: `range_units?: 'unicode_codepoints'`
+                and `openapi_spec?: string`.
+            So: optional and nullable is `name?: T | null`; optional only is `name?: T`; required and
+            nullable is `name: T | null`. Whatever the declaration, compare with `== null` / `!= null`
+            rather than `=== null`, so an absent key and an explicit null are handled alike — the
+            gateway omits optional fields rather than sending null, and a `=== null` check silently
+            misses that, the common case. In the doc comment for an optional field say
+            "omitted"/"absent" rather than "null" unless the schema really does allow null.
+
             Add a live check to tests/contract/v2-smoke.test.ts and unit tests under
-            tests/api-resources/v2/. Update api.md and the README examples.
+            tests/api-resources/v2/. The contract file hits LIVE staging, so it must assert only
+            what staging is guaranteed to return: NEVER pin `model:` there (a model family the spec
+            documents may not be servable in whatever way the staging cluster happens to be
+            provisioned — `dpt-3-fast` needs a GPU-backed booking, and against one without it the
+            request hangs until the gate times out; that is an environment property, not an SDK
+            contract, so no live test should depend on it), and for an optional property assert
+            absent-or-valid ("if present, it is in range"), never that it is populated. Assertions
+            on a specific value belong in the mocked unit tests under tests/api-resources/v2/, where
+            you control the response body — put them there instead. Build the client with the
+            file's existing `stagingClient()` helper rather than calling `new LandingAIADE(...)`
+            yourself, and give the test a per-test timeout consistent with its neighbours.
+
+            Update api.md and the README examples.
 
             You may only edit product code: src/, tests/, api.md, and README.md. Do NOT edit scripts/,
             .github/, specs/, etc/, or any dotfile or config.
@@ -501,11 +576,47 @@ jobs:
             Additive-changes rule: BACKWARD-COMPATIBLE ADDITIONS ONLY. You MAY add a new optional
             property to a params interface. You must NOT remove or rename a public symbol or property,
             change a type, or make an existing property required; surface-lock will fail the PR on any
-            of those. `git diff` (read-only, to inspect the change) is fine; do NOT stage, commit,
-            push, or run any other git command — a later workflow step commits and pushes your edits.
+            of those. You have NO shell and no git access at all; the diff you need is already in
+            `.spec-sync-diff.txt`. A later workflow step commits and pushes your edits.
+          # NO Bash tool. `Bash(git diff:*)` was allowed here so the agent could inspect the
+          # mechanical diff, but `git diff` is NOT inert: an agent that writes .git/config can point
+          # `diff.external` (or a textconv driver) at a script it also wrote, and the permitted
+          # `git diff` then EXECUTES it — inside the AI step, before any allowlist or hardening
+          # applies. A trusted step precomputes the diff into .spec-sync-diff.txt instead, so the
+          # agent keeps the input and loses the execution primitive.
           claude_args: |
             --max-turns 250
-            --allowedTools "Edit,Write,Read,Glob,Grep,Bash(git diff:*)"
+            --allowedTools "Edit,Write,Read,Glob,Grep"
+
+      # ---- Harden before running ANY trusted command over the AI's edits --------------------
+      #
+      # The AI step has no shell, so it cannot execute anything ITSELF. But the allowlist revert
+      # below is not a complete boundary: `git checkout` only restores TRACKED files and
+      # `git clean -fd` (no -x) only deletes untracked, non-ignored ones. Two repo-wide Write
+      # targets survive both — and the trusted steps that follow EXECUTE both:
+      #   * node_modules/** — gitignored, so never cleaned; eslint/tsc/tsc-multi and every
+      #                       scripts/utils/*.cjs helper run out of it.
+      #   * .git/**         — not a worktree path at all; `.git/hooks/pre-commit` would run on our
+      #                       own `git commit`, and `core.hooksPath` can redirect hooks anywhere.
+      # On top of that, `./scripts/build` in the next step ends with
+      # `node -e 'require("landingai-ade")'` smoke probes, so it executes the AI's own src/ by
+      # design. Either path turns "the AI wrote a file" into "code runs in a trusted step".
+      #
+      # So do two things first: drop the push credential actions/checkout persisted into
+      # .git/config (nothing executed downstream can reach a token that is not there — the
+      # AI-wiring push below re-supplies it explicitly for that one command), and neutralize the
+      # hook paths so our own git commands cannot run anything.
+      #
+      # This narrows the blast radius; it does not make executing AI-authored code safe. Full
+      # isolation — run the AI pass in a credential-free checkout and copy only the validated
+      # allowlist diff back — is the real fix and is deliberately NOT attempted here.
+      - name: Restore trusted git metadata after the AI pass
+        if: steps.drift.outputs.code == '10' && steps.existing.outputs.open != 'true'
+        env:
+          TRUSTED_GITCONFIG: ${{ steps.harden.outputs.gitconfig }}
+        run: |
+          printf '%s' "$TRUSTED_GITCONFIG" | base64 -d > .git/config
+          rm -rf .git/hooks .git/info
 
       # See the V1 job's copy of this step for why: the action stages its edits, so `git checkout`
       # (which restores from the index) is a no-op on them — unstage with `git reset -q` first so the
@@ -516,23 +627,213 @@ jobs:
           git reset -q # unstage the action's edits so the allowlist revert + clean below actually apply
           git checkout -- . ':(exclude)src' ':(exclude)tests' ':(exclude)api.md' ':(exclude)README.md'
           git clean -fd -e /src -e /tests
+          # A .gitattributes INSIDE the allowlist survives the two lines above and can bind content
+          # filters / diff drivers to paths. The config half of that attack is already gone (the
+          # restore step above replaces .git/config wholesale), but remove the file half too. This
+          # repo tracks no .gitattributes anywhere, so deleting any that appeared is always safe.
+          find src tests -name .gitattributes -delete 2>/dev/null || true
           ./scripts/format
           ./scripts/build
           yarn api-extractor
 
-      - name: Commit + push AI wiring
-        id: ai_push
+      # ---------------------------------------------------------------------------------------
+      # Verify the AI wiring, then give it ONE chance to fix itself.
+      #
+      # The wiring step has no shell, so nothing has type-checked its output: the step above only
+      # formats and rebuilds. Historically that meant every AI mistake `./scripts/lint` can see
+      # (eslint/prettier violations, a tsc error, a wrong type declaration) landed as a red `lint`
+      # job on a PR that otherwise looked review-ready. So run the real lint HERE, in a trusted
+      # step, and hand its output back to a second shell-less Claude pass.
+      #
+      # This closes the loop WITHOUT granting the AI a shell: its edits are still funnelled through
+      # the product-code allowlist below before they can reach a commit, and the lint log it reads is
+      # eslint/tsc output quoting its own just-written code — no new trust boundary is crossed by
+      # feeding it back.
+      #
+      # Deliberately a STATIC SUBSET, not `./scripts/lint`: that script calls `./scripts/build`, which
+      # ends in `node -e 'require("landingai-ade")'` / `import(...)` smoke probes — i.e. it EXECUTES
+      # the AI's freshly written src/ in a trusted step still holding the checkout's SPEC_SYNC_TOKEN.
+      # (That execution is pre-existing: the restrict+build step above already does it, so this is not
+      # a boundary this loop introduces — but there is no reason to repeat it.) eslint and `tsc
+      # --noEmit` only ever READ the source, and between them they cover every class of mistake the
+      # wiring pass can make in src/ tests/. The rest of `./scripts/lint` (attw, publint) validates
+      # packaging config the AI is not allowed to touch, and CI's own `lint` job still runs the whole
+      # script on the PR with no push credentials.
+      #
+      # eslint is scoped to `src tests`, not `.`, because this runs AFTER the build above: a bare
+      # `eslint .` also walks the freshly generated `dist/` (the flat config's `dist/` entry sits on a
+      # config object, so it does not ignore those files globally) and reports ~20
+      # no-restricted-imports errors in build output on EVERY run — which would fail the loop, burn a
+      # pointless repair pass, and mark every PR "lint still fails" over generated code the allowlist
+      # forbids the AI from touching. `src tests` is exactly the TypeScript the wiring pass may edit.
+      # CI's own `lint` job is unaffected: there eslint runs before the build, so no dist exists yet.
+      # `tsc --noEmit` needs no scoping — tsconfig.json already excludes dist.
+      - name: Lint the AI wiring
+        id: ai_lint
         if: steps.drift.outputs.code == '10' && steps.existing.outputs.open != 'true'
+        # A lint failure here is the normal case this loop exists to handle, not a run failure.
+        continue-on-error: true
         run: |
+          set -o pipefail
+          # Run both even if the first fails, so the repair pass sees every error at once.
+          status=0
+          ./node_modules/.bin/eslint src tests 2>&1 | tee .spec-sync-lint.log || status=1
+          ./node_modules/typescript/bin/tsc --noEmit 2>&1 | tee -a .spec-sync-lint.log || status=1
+          exit $status
+
+      - name: AI lint repair (edits only)
+        id: ai_lint_fix
+        if: steps.drift.outputs.code == '10' && steps.existing.outputs.open != 'true' && steps.ai_lint.outcome == 'failure'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # NOT SPEC_SYNC_TOKEN. claude-code-action exports the token it is given into the agent's
+          # environment (and configures `origin` with it), so handing it the write PAT would put a
+          # push-capable credential inside the step that processes the untrusted spec — where the
+          # agent's own Read tool could recover it and Write it into an allowlisted file that the
+          # trusted push then publishes. `github.token` is read-only here (see `permissions:` at
+          # the top of this file); SPEC_SYNC_TOKEN is reserved for the trusted push step.
+          github_token: ${{ github.token }}
+          prompt: |
+            `./scripts/lint` failed on the client.v2 wiring you just wrote. Read
+            .spec-sync-lint.log in the repo root — it is the captured output of that run (eslint
+            with prettier, then a build, then `tsc`, then attw/publint) — and fix every error it
+            reports.
+
+            Fix the CAUSE, not the symptom. Specifically, do NOT silence anything: no
+            `@ts-ignore` / `@ts-expect-error`, no `eslint-disable`, no `as any` / `as unknown as X`
+            to force a type through, no widening a declared type to `any`, and no deleting the
+            assertion or test that tripped the error. If a type is wrong, correct the declaration
+            in src/resources/v2/types.ts to match the spec snapshot (checking the schema's
+            `required` array for whether a property is optional). Keep the behavior the wiring was
+            written to have.
+
+            You may only edit src/, tests/, api.md, and README.md — the same allowlist as before.
+            Do NOT edit scripts/, .github/, specs/, etc/, package.json, or any dotfile or config
+            (including .spec-sync-lint.log itself: it is an input, and it is deleted before
+            anything is committed). You have NO shell and no git access at all.
+          # NO Bash tool — see the wiring step above for why `Bash(git diff:*)` was removed.
+          claude_args: |
+            --max-turns 60
+            --allowedTools "Edit,Write,Read,Glob,Grep"
+
+      # The repair pass is exactly as untrusted as the wiring pass, so repeat the hardening too: it
+      # could have written node_modules/** or .git/hooks/** just as the wiring pass could, and the
+      # format/build/re-lint/commit steps below execute both. (The credential unset is already done
+      # and idempotent; the hooks removal matters because a repair pass could recreate them.)
+      - name: Restore trusted git metadata after the repair pass
+        if: steps.drift.outputs.code == '10' && steps.existing.outputs.open != 'true' && steps.ai_lint.outcome == 'failure'
+        env:
+          TRUSTED_GITCONFIG: ${{ steps.harden.outputs.gitconfig }}
+        run: |
+          printf '%s' "$TRUSTED_GITCONFIG" | base64 -d > .git/config
+          rm -rf .git/hooks .git/info
+
+      # Re-apply the allowlist before formatting or committing, and refresh the API report in case
+      # the repair changed a public type. This also deletes .spec-sync-lint.log (untracked, not in
+      # the `git clean` exclusions), so the log never reaches the commit.
+      - name: Re-restrict AI edits to product code, then format + refresh the API report
+        if: steps.drift.outputs.code == '10' && steps.existing.outputs.open != 'true' && steps.ai_lint.outcome == 'failure'
+        run: |
+          git reset -q # unstage the action's edits so the allowlist revert + clean below actually apply
+          git checkout -- . ':(exclude)src' ':(exclude)tests' ':(exclude)api.md' ':(exclude)README.md'
+          git clean -fd -e /src -e /tests
+          # A .gitattributes INSIDE the allowlist survives the two lines above and can bind content
+          # filters / diff drivers to paths. The config half of that attack is already gone (the
+          # restore step above replaces .git/config wholesale), but remove the file half too. This
+          # repo tracks no .gitattributes anywhere, so deleting any that appeared is always safe.
+          find src tests -name .gitattributes -delete 2>/dev/null || true
+          ./scripts/format
+          ./scripts/build
+          yarn api-extractor
+
+      # Record whether the repair actually worked, so the Slack reply and the PR say so honestly
+      # instead of implying the wiring is clean when CI is about to go red.
+      - name: Re-lint after repair
+        id: ai_lint_final
+        if: steps.drift.outputs.code == '10' && steps.existing.outputs.open != 'true' && steps.ai_lint.outcome == 'failure'
+        continue-on-error: true
+        # Same static subset as the first pass — see there for why the full script is not used.
+        run: |
+          status=0
+          ./node_modules/.bin/eslint src tests || status=1
+          ./node_modules/typescript/bin/tsc --noEmit || status=1
+          exit $status
+
+      # LAST line of defence, and it must come after the last step that executes anything.
+      # `./scripts/format`, `./scripts/build`, `yarn api-extractor` and the linters all run binaries
+      # out of the gitignored node_modules, which the allowlist cannot clean — and the build's
+      # `node -e 'require(...)'` probes execute the AI's own src/ by design. Any of them could have
+      # written outside the allowlist, or recreated git config/hooks, AFTER the earlier restore ran.
+      # Without this, `git add -A` below would stage those post-allowlist edits and the trusted push
+      # would publish them.
+      #
+      # Runs unconditionally (not just on the repair path) because the plain path executes the
+      # formatter, build and linters too. Nothing after this point executes AI-authored content: the
+      # only remaining steps are `git add`/`git commit` and the push itself. Re-running the allowlist
+      # is safe and idempotent — src/ tests/ api.md README.md are excluded, so every legitimate AI
+      # edit, formatter result and refreshed API report is preserved.
+      - name: Final restore + allowlist before staging
+        if: steps.drift.outputs.code == '10' && steps.existing.outputs.open != 'true'
+        env:
+          TRUSTED_GITCONFIG: ${{ steps.harden.outputs.gitconfig }}
+        run: |
+          printf '%s' "$TRUSTED_GITCONFIG" | base64 -d > .git/config
+          rm -rf .git/hooks .git/info
+          git reset -q
+          git checkout -- . ':(exclude)src' ':(exclude)tests' ':(exclude)api.md' ':(exclude)README.md'
+          git clean -fd -e /src -e /tests
+          find src tests -name .gitattributes -delete 2>/dev/null || true
+
+      # Commit and push are SEPARATE steps, and the token appears only in the push step's env.
+      # `git add` runs content filters (`filter.<driver>.clean`), which an AI pass can install via
+      # .git/config plus a .gitattributes inside the allowlist — the restore step above removes the
+      # config half and the allowlist step the file half, and keeping the token out of this step's
+      # environment means even a filter that somehow survived both has nothing to read. By the time
+      # the push step runs, staging and committing are done and no AI-authored content executes again.
+      - name: Commit AI wiring
+        id: ai_commit
+        if: steps.drift.outputs.code == '10' && steps.existing.outputs.open != 'true'
+        env:
+          LINT_FIRST: ${{ steps.ai_lint.outcome }}
+          LINT_FINAL: ${{ steps.ai_lint_final.outcome }}   # 'skipped' when the first lint passed
+        run: |
+          if [ "$LINT_FIRST" = 'success' ]; then
+            lint_note='Lint clean.'
+          elif [ "$LINT_FINAL" = 'success' ]; then
+            lint_note='Lint failed on the first pass; the AI repair pass fixed it.'
+          else
+            lint_note='LINT STILL FAILS after the AI repair pass — the CI lint job will be red and needs a manual fix.'
+          fi
+          # Unconditionally, BEFORE `git add -A`: these are untracked and not gitignored, and the
+          # re-restrict step that would have cleaned them only runs on the repair path. On the
+          # common clean-lint path they would otherwise be committed — and on a no-op wiring run
+          # they would be the ONLY staged change, turning "the AI changed nothing" into a bogus
+          # wiring commit.
+          rm -f .spec-sync-lint.log .spec-sync-diff.txt
           git add -A
           if git diff --cached --quiet; then
             echo "AI step produced no changes."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "summary=Mechanical-only PR (AI wiring added no changes — e.g. workflow-only drift). Human review required before merge." >> "$GITHUB_OUTPUT"
           else
-            git commit -m "feat(spec-sync): wire client.v2 to spec diff (AI)"
-            git push origin HEAD:"$SYNC_BRANCH"
-            echo "summary=Mechanical snapshot + AI wiring committed (a draft a human finishes). Gates must pass; human review required before merge." >> "$GITHUB_OUTPUT"
+            # --no-verify belts-and-braces on top of removing .git/hooks above.
+            git commit --no-verify -m "feat(spec-sync): wire client.v2 to spec diff (AI)"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "summary=Mechanical snapshot + AI wiring committed (a draft a human finishes). ${lint_note} Gates must pass; human review required before merge." >> "$GITHUB_OUTPUT"
           fi
+
+      # The only step that sees the token, and it runs exactly one command over an already-built
+      # commit. The credential was stripped from .git/config before the AI ever ran, so it is
+      # supplied inline here rather than via the checkout's persisted config. GitHub masks it.
+      - name: Push AI wiring
+        id: ai_push
+        if: steps.drift.outputs.code == '10' && steps.existing.outputs.open != 'true' && steps.ai_commit.outputs.changed == 'true'
+        env:
+          GH_PUSH_TOKEN: ${{ secrets.SPEC_SYNC_TOKEN }}
+        # -c overrides any on-disk config, so even a tampered .git/config cannot point a pre-push
+        # hook at a surviving script in src/ and have it run in the one step that holds the token.
+        run: git -c core.hooksPath=/dev/null push "https://x-access-token:${GH_PUSH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:"$SYNC_BRANCH"
 
       # Rewrite the PR description: keep the static process/safety preamble from "Open sync PR" and
       # APPEND an LLM "## What changed" summary of the actual PR diff. Logic is shared by both jobs
@@ -561,7 +862,7 @@ jobs:
           webhook: ${{ secrets.SLACK_SPEC_SYNC_WEBHOOK }}
           status: info
           title: 'spec-sync ${{ env.SPEC_LABEL }}: AI wiring'
-          text: ${{ steps.ai_push.outputs.summary }}
+          text: ${{ steps.ai_commit.outputs.summary }}
           thread_ts: ${{ steps.root.outputs.ts }}
 
       # Catch-all failure alert for this job. An unavailable spec source (exit 20) is skipped earlier

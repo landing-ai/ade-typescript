@@ -14,11 +14,37 @@ const runIf = apiKey ? test : test.skip;
 const SAMPLE_MARKDOWN = '# Acme Inc. — Q1 Report\n\nTotal revenue for the quarter was **$1,250,000**.\n';
 const SAMPLE_PDF = path.join(__dirname, 'sample.pdf');
 
+// This file is a merge gate against a LIVE environment, so it has to fail fast and legibly. The
+// SDK ships an 8-minute timeout with 2 retries — right for a real caller parsing a 500-page scan,
+// wrong for a gate: a route staging accepts but never answers then outlives jest's per-test
+// timeout, and all you get is jest's own "Exceeded timeout of N ms" pointing at the `runIf` line,
+// with nothing about which request never came back. Cap one request at 45s so the failure comes
+// from the SDK instead, naming the route.
+//
+// Budgeting the per-test timeouts: `maxRetries: 0` holds for the job/list routes, but the V2 sync
+// methods (parse/extract/ground) pin `maxRetries: 1` per request in src/resources/v2/v2.ts, and a
+// per-request value beats the client default — so budget 2 x REQUEST_TIMEOUT (~91s) for a sync
+// call and 1 x for everything else. Every per-test timeout below stays above its own budget.
+//
+// Trade-off: a transient 429/5xx now fails the run instead of being retried away. That is the
+// intended bias for a gate — a retry cannot rescue a genuinely dead upstream, it only hides it —
+// and the whole suite is ~40s, so re-running the job is cheap.
+const REQUEST_TIMEOUT = 45_000;
+
+/** The client every test in this file must use; see REQUEST_TIMEOUT above for why it is configured. */
+const stagingClient = () =>
+  new LandingAIADE({
+    apikey: apiKey!,
+    environment: 'staging',
+    timeout: REQUEST_TIMEOUT,
+    maxRetries: 0,
+  });
+
 describe('V2 contract (staging)', () => {
   runIf(
     'extract (sync) returns a structured extraction with range_units metadata',
     async () => {
-      const client = new LandingAIADE({ apikey: apiKey!, environment: 'staging' });
+      const client = stagingClient();
       const res = await client.v2.extract({
         schema: { type: 'object', properties: { revenue: { type: 'string' } } },
         markdown: SAMPLE_MARKDOWN,
@@ -29,13 +55,13 @@ describe('V2 contract (staging)', () => {
       expect(res.metadata.range_units).toBe('unicode_codepoints');
       expect(typeof res.metadata.model_version).toBe('string');
     },
-    60_000,
+    120_000, // sync call: 2 x REQUEST_TIMEOUT
   );
 
   runIf(
     'ground (sync) resolves extracted fields to structure blocks',
     async () => {
-      const client = new LandingAIADE({ apikey: apiKey!, environment: 'staging' });
+      const client = stagingClient();
       // Ground is a pure, stateless join of an extraction's `{value, ranges}`
       // leaves against the `grounding.range` on each `structure` block, so a
       // self-consistent synthetic pair exercises the route without a full
@@ -66,18 +92,23 @@ describe('V2 contract (staging)', () => {
       expect(res.grounding['invoice_number']).toBeDefined();
       expect(typeof res.metadata.job_id).toBe('string');
     },
-    60_000,
+    120_000, // sync call: 2 x REQUEST_TIMEOUT
   );
 
   runIf(
     'extractJobs job envelope carries the metadata receipt field',
     async () => {
-      const client = new LandingAIADE({ apikey: apiKey!, environment: 'staging' });
+      const client = stagingClient();
       const created = await client.v2.extractJobs.create({
         schema: { type: 'object', properties: { revenue: { type: 'string' } } },
         markdown: SAMPLE_MARKDOWN,
       });
-      const done = await client.v2.extractJobs.wait(created.job_id, { timeout: 120_000 });
+      // `pollUntilTerminal` (src/resources/v2/_base.ts) awaits `getJob()` and only THEN checks the
+      // deadline, so a poll starting just under it still costs a full REQUEST_TIMEOUT on top. Worst
+      // case is therefore create (45s) + wait deadline (60s) + one in-flight poll (45s) = 150s,
+      // which stays under the 180s per-test timeout below. Raising this wait deadline without
+      // raising that timeout would reintroduce the opaque jest kill this file exists to avoid.
+      const done = await client.v2.extractJobs.wait(created.job_id, { timeout: 60_000 });
       expect(done.is_terminal).toBe(true);
       // Wired by the V2 spec-sync: the job envelope now carries a top-level
       // `metadata` receipt alongside `output_url` when the result was delivered
@@ -90,21 +121,22 @@ describe('V2 contract (staging)', () => {
         expect(typeof result.metadata.duration_ms).toBe('number');
       }
     },
-    180_000,
+    180_000, // create (1 x) + 60s wait deadline + one in-flight poll (1 x) = 150s worst case
   );
 
   runIf(
     'parse (sync) exposes the optional atomic_grounding confidence as a probability',
     async () => {
-      const client = new LandingAIADE({ apikey: apiKey!, environment: 'staging' });
-      // Wired by the V2 spec-sync: `Grounding.confidence`. Deliberately does NOT
-      // pin `model` — `confidence` is only populated at word granularity
-      // (`dpt-3-fast`), and a smoke test must not depend on one model family being
-      // served: staging currently accepts `dpt-3-fast` but never answers, which is
-      // exactly how this test used to burn its whole timeout. So assert the field's
-      // contract against whatever model the gateway defaults to — absent, or a
-      // probability in `[0, 1]` — and leave the populated-value assertions to the
-      // mocked test in tests/api-resources/v2/v2.test.ts.
+      const client = stagingClient();
+      // Wired by the V2 spec-sync: `Grounding.confidence`. Deliberately does NOT pin
+      // `model` — `confidence` is only populated at word granularity (`dpt-3-fast`),
+      // and whether a given family is servable depends on how the staging cluster was
+      // booked (`dpt-3-fast` needs a GPU-backed booking; against one without it the
+      // request hangs until the test times out). That is an environment property, not
+      // an SDK contract, so this asserts the field's contract against whatever model
+      // the gateway defaults to — absent, or a probability in `[0, 1]` — and leaves
+      // the populated-value assertions to the mocked test in
+      // tests/api-resources/v2/v2.test.ts, which controls the response body.
       const res = await client.v2.parse({
         document: await toFile(fs.readFileSync(SAMPLE_PDF), 'sample.pdf', { type: 'application/pdf' }),
         options: { atomic_grounding: true },
@@ -127,13 +159,13 @@ describe('V2 contract (staging)', () => {
       // Node-level grounding is never a word, so it never carries a confidence.
       expect(pages[0]!.grounding?.confidence ?? null).toBeNull();
     },
-    120_000,
+    120_000, // sync call: 2 x REQUEST_TIMEOUT
   );
 
   runIf(
     'parseJobs.list returns a normalized JobList against the new envelope',
     async () => {
-      const client = new LandingAIADE({ apikey: apiKey!, environment: 'staging' });
+      const client = stagingClient();
       const list = await client.v2.parseJobs.list({ page: 0, page_size: 1 });
       expect(Array.isArray(list.jobs)).toBe(true);
       for (const job of list.jobs) {
@@ -143,6 +175,6 @@ describe('V2 contract (staging)', () => {
         expect(job.created_at === null || job.created_at instanceof Date).toBe(true);
       }
     },
-    30_000,
+    60_000, // list route: 1 x REQUEST_TIMEOUT
   );
 });
