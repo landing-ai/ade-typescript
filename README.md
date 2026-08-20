@@ -106,19 +106,31 @@ The response is a `V2ParseResponse`:
 
 If some pages cannot be parsed, the request still succeeds (HTTP 206) and `metadata.failed_pages` lists the pages that failed. If a synchronous parse times out, the client throws `V2SyncTimeoutError`; use [jobs](#process-large-documents-asynchronously-jobs) instead.
 
-`atomic_grounding` segments a leaf element at whichever granularity the model reads at: one entry per visual line for `dpt-3-pro`, and one entry per **word** for `dpt-3-fast` — each with a `confidence` in `[0, 1]`, the lowest per-character OCR confidence in that word, so a word is only as trustworthy as its weakest character. Use it to flag low-confidence text for review:
+`atomic_grounding` segments a leaf element at whichever granularity the model reads at: one entry per visual line for `dpt-3-pro`, and one entry per **word** for `dpt-3-fast` — each with a `confidence` in `[0, 1]`, the lowest per-character OCR confidence in that word, so a word is only as trustworthy as its weakest character.
+
+Word-granularity models apply that same weakest-link rule all the way up the tree: every `grounding` — element, `table_cell`, `table`, page — carries the lowest confidence among the words below it, so you can flag a suspect region without walking down to individual words:
 
 ```ts
 const parsed = await client.v2.parse({
   document: fs.createReadStream('scan.pdf'),
-  model: 'dpt-3-fast', // word-granularity grounding, with per-word confidence
+  model: 'dpt-3-fast', // word-granularity grounding, with rolled-up confidence
 });
 
 for (const page of parsed.structure?.children ?? []) {
+  // `confidence` is omitted where no transcribed word carries a score — on
+  // line-granularity models (`dpt-3-pro`), on text the model wrote rather than
+  // read (captioned figures and similar), and with markdown suppressed — so
+  // check with `!= null` before comparing.
+  const pageConfidence = page.grounding?.confidence;
+  if (pageConfidence != null && pageConfidence < 0.5) {
+    console.log(`page ${page.page} has at least one weak word`);
+  }
+
   for (const element of page.children ?? []) {
+    if (element.grounding?.confidence != null && element.grounding.confidence >= 0.5) {
+      continue; // nothing weak under this element; no need to look at its words
+    }
     for (const word of element.atomic_grounding ?? []) {
-      // `confidence` is absent on node-level `grounding` and on line-granularity
-      // models (`dpt-3-pro`), so check before comparing.
       if (word.confidence != null && word.confidence < 0.5) {
         console.log(`low confidence on page ${word.page}`, word.range, word.box);
       }

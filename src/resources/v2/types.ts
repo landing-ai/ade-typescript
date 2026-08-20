@@ -175,14 +175,18 @@ export interface V2Grounding {
   box: V2GroundingBox;
 
   /**
-   * How sure the model is of the text in this segment, in `[0, 1]`. Populated
-   * only on word-granularity `atomic_grounding` entries (`dpt-3-fast`), where it
-   * is the lowest per-character OCR confidence in the word — so a word is only
-   * as trustworthy as its weakest character. Optional per spec (it is not in
-   * `Grounding.required`): the gateway *omits* the key entirely on node-level
-   * `grounding` and on models that ground at line granularity (`dpt-3-pro`), so
-   * it reads back as `undefined` there, not `null`. Test with `== null` to cover
-   * both.
+   * How sure the model is of the text in this grounding, in `[0, 1]`.
+   * Word-granularity models (`dpt-3-fast`) set it at every level of the tree
+   * with the same weakest-link rule: a word `atomic_grounding` entry carries the
+   * lowest per-character OCR confidence in the word, and each parent grounding
+   * (element, `table_cell`, `table`, page) carries the lowest confidence among
+   * its transcribed words — so a node is never more trustworthy than its worst
+   * word. Optional per spec (it is not in `Grounding.required`): the gateway
+   * *omits* the key wherever no transcribed word carries a score — models that
+   * ground at line granularity (`dpt-3-pro`), blocks whose text the model wrote
+   * rather than read (captioned figures and similar), and blocks with markdown
+   * suppressed — so it reads back as `undefined` there, not `null`. Test with
+   * `== null` to cover both.
    */
   confidence?: number | null;
 }
@@ -209,6 +213,9 @@ export interface V2ParseElement {
   /**
    * The element's spatial data: the page it appears on, its `[start, end)`
    * range in `markdown`, and its bounding box in normalized page coordinates.
+   * On word-granularity models its `confidence` rolls the words up — the lowest
+   * confidence among the words this element (or, for a `table`, this table's
+   * cells) transcribes.
    */
   grounding?: V2Grounding;
 
@@ -217,7 +224,8 @@ export interface V2ParseElement {
    * at: one entry per visual line for `dpt-3-pro`, one per word — each with its
    * `confidence` — for `dpt-3-fast`, including the words inside table cells.
    * Present only on leaf elements; omitted entirely when
-   * `options.atomic_grounding` is `false`.
+   * `options.atomic_grounding` is `false`. Reading `grounding.confidence`
+   * instead gives the same worst-word score already rolled up to this element.
    */
   atomic_grounding?: Array<V2Grounding> | null;
 
@@ -257,7 +265,8 @@ export interface V2ParsePage {
 
   /**
    * The page's spatial data: 1-indexed `page` number, `range` into `markdown`,
-   * and a full-page `box`.
+   * and a full-page `box`. On word-granularity models its `confidence` is the
+   * lowest confidence among every word transcribed on the page.
    */
   grounding?: V2Grounding;
 

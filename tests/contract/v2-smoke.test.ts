@@ -125,17 +125,19 @@ describe('V2 contract (staging)', () => {
   );
 
   runIf(
-    'parse (sync) exposes the optional atomic_grounding confidence as a probability',
+    'parse (sync) exposes the optional grounding confidence as a probability at every level',
     async () => {
       const client = stagingClient();
-      // Wired by the V2 spec-sync: `Grounding.confidence`. Deliberately does NOT pin
+      // Wired by the V2 spec-sync: `Grounding.confidence`, which the spec now
+      // documents at EVERY level of the tree (page and element groundings roll their
+      // words up, not just `atomic_grounding` entries). Deliberately does NOT pin
       // `model` — `confidence` is only populated at word granularity (`dpt-3-fast`),
       // and whether a given family is servable depends on how the staging cluster was
       // booked (`dpt-3-fast` needs a GPU-backed booking; against one without it the
       // request hangs until the test times out). That is an environment property, not
       // an SDK contract, so this asserts the field's contract against whatever model
       // the gateway defaults to — absent, or a probability in `[0, 1]` — and leaves
-      // the populated-value assertions to the mocked test in
+      // the populated-value and weakest-link assertions to the mocked test in
       // tests/api-resources/v2/v2.test.ts, which controls the response body.
       const res = await client.v2.parse({
         document: await toFile(fs.readFileSync(SAMPLE_PDF), 'sample.pdf', { type: 'application/pdf' }),
@@ -143,21 +145,30 @@ describe('V2 contract (staging)', () => {
       });
       const pages = res.structure?.children ?? [];
       expect(pages.length).toBeGreaterThan(0);
-      const segments = pages.flatMap((page) =>
-        (page.children ?? []).flatMap((el) => el.atomic_grounding ?? []),
+      // `table` elements nest their cells, and the words of a table live on the
+      // cells — so flatten one level down before collecting segments.
+      const elements = pages.flatMap((page) =>
+        (page.children ?? []).flatMap((el) => [el, ...(el.children ?? [])]),
       );
+      const segments = elements.flatMap((el) => el.atomic_grounding ?? []);
       expect(segments.length).toBeGreaterThan(0);
-      for (const segment of segments) {
-        // `== null` covers both absent (line-granularity models omit the key) and
-        // an explicit `null`.
-        expect(segment.confidence == null || typeof segment.confidence === 'number').toBe(true);
-        if (segment.confidence != null) {
-          expect(segment.confidence).toBeGreaterThanOrEqual(0);
-          expect(segment.confidence).toBeLessThanOrEqual(1);
+      // Every grounding in the response — page nodes, element and cell nodes, and
+      // the fine-grained segments — is held to the same contract.
+      const groundings = [
+        ...pages.map((page) => page.grounding),
+        ...elements.map((el) => el.grounding),
+        ...segments,
+      ];
+      for (const grounding of groundings) {
+        const confidence = grounding?.confidence;
+        // `== null` covers both absent (line-granularity models, and blocks with no
+        // transcribed word, omit the key) and an explicit `null`.
+        expect(confidence == null || typeof confidence === 'number').toBe(true);
+        if (confidence != null) {
+          expect(confidence).toBeGreaterThanOrEqual(0);
+          expect(confidence).toBeLessThanOrEqual(1);
         }
       }
-      // Node-level grounding is never a word, so it never carries a confidence.
-      expect(pages[0]!.grounding?.confidence ?? null).toBeNull();
     },
     120_000, // sync call: 2 x REQUEST_TIMEOUT
   );
