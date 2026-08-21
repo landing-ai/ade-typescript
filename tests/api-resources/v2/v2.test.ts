@@ -143,7 +143,7 @@ describe('client.v2 routing', () => {
   test('parse (sync) surfaces per-word atomic_grounding confidence', async () => {
     // `dpt-3-fast` grounds at word granularity and carries a `confidence` on
     // each `atomic_grounding` entry (the lowest per-character OCR confidence in
-    // the word). Node-level grounding has no confidence: the gateway normally
+    // the word). Where no transcribed word carries a score, the gateway normally
     // omits the key (the page node below), but tolerate an explicit `null` too
     // (the element node below) — hence `== null` at the call site, never `=== null`.
     const box = { xmin: 0, ymin: 0, xmax: 1, ymax: 1 };
@@ -179,10 +179,90 @@ describe('client.v2 routing', () => {
     });
     const el = res.structure?.children?.[0]?.children?.[0];
     expect(el?.atomic_grounding?.map((g) => g.confidence)).toEqual([0.98, 0.42]);
-    // Node-level grounding grounds the whole element, not a word: no confidence.
-    // Explicit `null` on the wire stays `null`; an omitted key reads `undefined`.
+    // A block with no transcribed word to score carries no confidence: explicit
+    // `null` on the wire stays `null`; an omitted key reads `undefined`. Both
+    // must be reachable through the same optional-and-nullable declaration.
     expect(el?.grounding?.confidence).toBeNull();
     expect(res.structure?.children?.[0]?.grounding?.confidence).toBeUndefined();
+  });
+
+  test('parse (sync) surfaces the weakest-link confidence rolled up to parent groundings', async () => {
+    // Word-granularity models (`dpt-3-fast`) now score EVERY level, not just
+    // `atomic_grounding`: each parent grounding — `table_cell`, `table`, element,
+    // page — carries the lowest confidence among the words below it. The fixture
+    // encodes exactly that: cells at 0.91 and 0.37, so the table and the page
+    // both read 0.37, while a sibling text element keeps its own 0.88.
+    const box = { xmin: 0, ymin: 0, xmax: 1, ymax: 1 };
+    const grounding = (start: number, end: number, confidence: number) => ({
+      page: 1,
+      range: { start, end },
+      box,
+      confidence,
+    });
+    const { client } = stubClient(() =>
+      jsonResponse({
+        markdown: 'Revenue 1,250,000 Notes',
+        structure: {
+          type: 'document',
+          children: [
+            {
+              type: 'page',
+              grounding: grounding(0, 23, 0.37),
+              children: [
+                {
+                  type: 'table',
+                  id: 'table-0',
+                  grounding: grounding(0, 17, 0.37),
+                  children: [
+                    {
+                      type: 'table_cell',
+                      id: 'cell-0',
+                      row: 0,
+                      col: 0,
+                      grounding: grounding(0, 7, 0.91),
+                      atomic_grounding: [grounding(0, 7, 0.91)],
+                    },
+                    {
+                      type: 'table_cell',
+                      id: 'cell-1',
+                      row: 0,
+                      col: 1,
+                      grounding: grounding(8, 17, 0.37),
+                      atomic_grounding: [grounding(8, 17, 0.37)],
+                    },
+                  ],
+                },
+                {
+                  type: 'text',
+                  id: 'text-0',
+                  grounding: grounding(18, 23, 0.88),
+                  atomic_grounding: [grounding(18, 23, 0.88)],
+                },
+              ],
+            },
+          ],
+        },
+        metadata: { model_version: 'dpt-3-fast-20260710' },
+      }),
+    );
+    const res = await client.v2.parse({
+      document: await toFile(Buffer.from('%PDF'), 'a.pdf'),
+      model: 'dpt-3-fast',
+    });
+    const page = res.structure?.children?.[0];
+    const [table, text] = page?.children ?? [];
+    expect(table?.children?.map((cell) => cell.grounding?.confidence)).toEqual([0.91, 0.37]);
+    // The table is only as trustworthy as its weakest cell, and the page as its
+    // weakest word anywhere on it — including inside the table.
+    expect(table?.grounding?.confidence).toBe(0.37);
+    expect(page?.grounding?.confidence).toBe(0.37);
+    expect(text?.grounding?.confidence).toBe(0.88);
+    // Flagging low-confidence regions is a plain filter over node groundings now,
+    // with no need to walk down to `atomic_grounding` first.
+    const suspect = (page?.children ?? []).filter(
+      (el) => el.grounding?.confidence != null && el.grounding.confidence < 0.5,
+    );
+    expect(suspect.map((el) => el.id)).toEqual(['table-0']);
   });
 
   test('extract (sync) surfaces model_version, output_ref, and billing counts', async () => {
