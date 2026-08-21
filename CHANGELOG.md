@@ -1,5 +1,21 @@
 # Changelog
 
+## 2.12.0 (2026-08-21)
+
+Full Changelog: [v2.11.0...v2.12.0](https://github.com/landing-ai/ade-typescript/compare/v2.11.0...v2.12.0)
+
+### Features
+
+* add V2 production e2e to the release gate (#108) ([195fa3f](https://github.com/landing-ai/ade-typescript/commit/195fa3f4ab06cb62f15102ab9fe2ae7dc19c6c86))
+* add V1 production e2e tests and release gate (#107) ([d0ab539](https://github.com/landing-ai/ade-typescript/commit/d0ab539b74f85c5f0f287b3f67fba576212facd2))
+* **spec-sync:** concise PR overview, generated title, skip specs in Copilot review (#106) ([284e9b8](https://github.com/landing-ai/ade-typescript/commit/284e9b8cefc0642d81217c1bf179f199774e737c))
+
+### Other Changes
+
+* spec-sync(v2): roll up word-level confidence to parent groundings (#112) ([b7839c9](https://github.com/landing-ai/ade-typescript/commit/b7839c9735204d91d91a6ca5a49acccc1344917b))
+* spec-sync(v2): add per-word confidence to atomic_grounding (#110) ([43ea4e6](https://github.com/landing-ai/ade-typescript/commit/43ea4e60cbf2afec389e1d055e40684bdbd744e8))
+* spec-sync: track V2 spec drift (#105) ([38acf27](https://github.com/landing-ai/ade-typescript/commit/38acf277e2182da9dba62359619bc3104946c98c))
+
 ## 2.11.0 (2026-08-04)
 
 Full Changelog: [v2.10.0...v2.11.0](https://github.com/landing-ai/ade-typescript/compare/v2.10.0...v2.11.0)
