@@ -31,6 +31,22 @@ const SAMPLE_PDF = path.join(__dirname, 'sample.pdf');
 // and the whole suite is ~40s, so re-running the job is cheap.
 const REQUEST_TIMEOUT = 45_000;
 
+/**
+ * Whether `value` survives a round-trip through `places` decimal places.
+ *
+ * Counting the digits in `String(value)` would be the obvious check and the
+ * wrong one: the wire values are binary floats, so a number the gateway
+ * serialized with 2 decimals (`0.42`) scales to `42.000000000000006`, and only
+ * a tolerance comparison reads that back as "2 decimal places". `1e-6` sits
+ * well above that representation noise (~1e-11 here) and well below the `0.1`
+ * an extra decimal place would contribute, so a genuinely over-precise number
+ * (`0.4237` → `42.37`) still fails.
+ */
+const roundsTo = (value: number, places: number) => {
+  const scaled = value * 10 ** places;
+  return Math.abs(scaled - Math.round(scaled)) < 1e-6;
+};
+
 /** The client every test in this file must use; see REQUEST_TIMEOUT above for why it is configured. */
 const stagingClient = () =>
   new LandingAIADE({
@@ -167,6 +183,62 @@ describe('V2 contract (staging)', () => {
         if (confidence != null) {
           expect(confidence).toBeGreaterThanOrEqual(0);
           expect(confidence).toBeLessThanOrEqual(1);
+        }
+      }
+    },
+    120_000, // sync call: 2 x REQUEST_TIMEOUT
+  );
+
+  runIf(
+    'parse (sync) returns grounding coordinates and confidence at the documented precision',
+    async () => {
+      const client = stagingClient();
+      // Wired by the V2 spec-sync: the spec now pins how precise both grounding
+      // numbers are on the wire — `Box` coordinates carry at most 5 decimal places
+      // and `Grounding.confidence` at most 2. The gateway clamps and rounds before
+      // serializing, so what a caller reads back IS the stored value; a finer number
+      // arriving here would mean the SDK is handing out digits the contract never
+      // promised. Deliberately does NOT pin `model`, for the same reason as the
+      // confidence test above: which model families a staging cluster can serve
+      // depends on how it was booked, not on the SDK. So `confidence` is asserted
+      // absent-or-valid, and the exact-value assertions live in the mocked test in
+      // tests/api-resources/v2/v2.test.ts, which controls the response body.
+      const res = await client.v2.parse({
+        document: await toFile(fs.readFileSync(SAMPLE_PDF), 'sample.pdf', { type: 'application/pdf' }),
+        options: { atomic_grounding: true },
+      });
+      const pages = res.structure?.children ?? [];
+      expect(pages.length).toBeGreaterThan(0);
+      // Table cells hold a table's words, so flatten one level down as above.
+      const elements = pages.flatMap((page) =>
+        (page.children ?? []).flatMap((el) => [el, ...(el.children ?? [])]),
+      );
+      const groundings = [
+        ...pages.map((page) => page.grounding),
+        ...elements.map((el) => el.grounding),
+        ...elements.flatMap((el) => el.atomic_grounding ?? []),
+      ];
+      expect(groundings.filter((grounding) => grounding != null).length).toBeGreaterThan(0);
+      for (const grounding of groundings) {
+        if (grounding == null) continue;
+        // `box` is required on `Grounding`, so check it before dereferencing —
+        // a missing one is a contract failure, and this reports it as one
+        // rather than as a TypeError three lines down.
+        expect(grounding.box).toBeDefined();
+        for (const coordinate of [
+          grounding.box.xmin,
+          grounding.box.ymin,
+          grounding.box.xmax,
+          grounding.box.ymax,
+        ]) {
+          expect(coordinate).toBeGreaterThanOrEqual(0);
+          expect(coordinate).toBeLessThanOrEqual(1);
+          expect(roundsTo(coordinate, 5)).toBe(true);
+        }
+        // `== null` covers both an omitted key and an explicit `null`; `confidence`
+        // is optional, so absent is as valid an answer as a scored one.
+        if (grounding.confidence != null) {
+          expect(roundsTo(grounding.confidence, 2)).toBe(true);
         }
       }
     },

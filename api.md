@@ -59,6 +59,8 @@ The `client.v2` sub-client targets LandingAI's next-generation ADE gateway on it
 
 Every node in a parse `structure` tree carries a <a href="./src/resources/v2/types.ts">`V2Grounding`</a> (`{ page, range, box }`, plus an optional `confidence`). Word-granularity models (`dpt-3-fast`) populate `confidence` at every level with one weakest-link rule: a word `atomic_grounding` entry carries the lowest per-character OCR confidence in that word, and each parent grounding (element, `table_cell`, `table`, page) carries the lowest confidence among the words below it. It is omitted wherever no transcribed word carries a score — line-granularity models (`dpt-3-pro`), blocks whose text the model wrote rather than read (captioned figures and similar), and blocks with markdown suppressed — so test it with `== null`.
 
+Both grounding numbers arrive at a fixed precision: a <a href="./src/resources/v2/types.ts">`V2GroundingBox`</a> coordinate carries at most 5 decimal places and `confidence` at most 2. The gateway clamps and rounds before serializing, so these are the stored values, not a truncation of something finer.
+
 `client.v2.parseJobs` and `client.v2.extractJobs` both return a single, unified <a href="./src/resources/v2/types.ts">`Job`</a> shape even though the underlying parse/extract job envelopes differ upstream — `Job.raw` retains the full original envelope as an escape hatch. `Job.metadata` carries the envelope's top-level metadata receipt (a <a href="./src/resources/v2/types.ts">`V2ParseMetadata`</a> for parse jobs), returned alongside `raw.output_url` when a job created with `output_save_url` completes; it is `null` for inline jobs, whose metadata lives on `Job.result`.
 
 Types:
