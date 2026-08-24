@@ -35,12 +35,14 @@ const REQUEST_TIMEOUT = 45_000;
  * Whether `value` survives a round-trip through `places` decimal places.
  *
  * Counting the digits in `String(value)` would be the obvious check and the
- * wrong one: the wire values are binary floats, so a number the gateway
- * serialized with 2 decimals (`0.42`) scales to `42.000000000000006`, and only
- * a tolerance comparison reads that back as "2 decimal places". `1e-6` sits
- * well above that representation noise (~1e-11 here) and well below the `0.1`
- * an extra decimal place would contribute, so a genuinely over-precise number
- * (`0.4237` → `42.37`) still fails.
+ * wrong one: the wire values are binary floats, so scaling one by a power of ten
+ * does not always land on an integer. Real cases from this suite's own range: a
+ * box coordinate of `0.31641` scales to `31641.000000000004`, and a confidence
+ * of `0.29` to `28.999999999999996`. Only a tolerance comparison reads those
+ * back as 5 and 2 decimal places. `1e-6` sits far above that representation
+ * noise (worst case ~7e-12 at five places, ~7e-15 at two) and far below the
+ * `0.1` an extra decimal place would contribute, so a genuinely over-precise
+ * number (`0.4237` → `42.37`) still fails.
  */
 const roundsTo = (value: number, places: number) => {
   const scaled = value * 10 ** places;

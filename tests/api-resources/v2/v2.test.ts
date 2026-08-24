@@ -189,10 +189,12 @@ describe('client.v2 routing', () => {
   test('parse (sync) preserves the documented grounding precision exactly', async () => {
     // The spec pins how precise the two grounding numbers are on the wire: `Box`
     // coordinates to at most 5 decimal places, `Grounding.confidence` to at most
-    // 2. The SDK's job is to hand those through untouched, so the fixture uses
-    // values at exactly that precision — including a trailing-zero confidence
-    // (`0.4`, not `0.40`) and the clamped page box — and asserts they read back
-    // identically, with no re-rounding and no float drift introduced in between.
+    // 2. The SDK's job is to hand those through untouched, so the fixture spans
+    // that range — confidence at one decimal (`0.4`) and at two (`0.97`), box
+    // coordinates at a full five, and the clamped `0`/`1` page box — and asserts
+    // each reads back identically, with no re-rounding and no float drift in
+    // between. Decimal *spelling* is deliberately not asserted, and could not be:
+    // `0.40` and `0.4` parse to the same JavaScript number.
     const box = { xmin: 0.10938, ymin: 0.24219, xmax: 0.87891, ymax: 0.31641 };
     const pageBox = { xmin: 0, ymin: 0, xmax: 1, ymax: 1 };
     const { client } = stubClient(() =>
