@@ -149,7 +149,10 @@ export interface V2Range {
 /**
  * Axis-aligned bounding box in normalized page coordinates: each value is a
  * fraction of the page width (`xmin`/`xmax`) or height (`ymin`/`ymax`) in
- * `[0, 1]`.
+ * `[0, 1]`, carried to at most 5 decimal places. To convert to pixels,
+ * multiply by the dimensions of whatever raster of the page you are drawing
+ * on. The gateway clamps and rounds before serializing, so the value read
+ * back here is exactly the stored one — there is nothing finer behind it.
  */
 export interface V2GroundingBox {
   xmin: number;
@@ -172,10 +175,19 @@ export interface V2Grounding {
 
   range: V2Range;
 
+  /**
+   * Bounding box in normalized page coordinates (`0`–`1` fractions of page
+   * width/height, at most 5 decimal places). A page node's box is always the
+   * full page `{ xmin: 0, ymin: 0, xmax: 1, ymax: 1 }`.
+   */
   box: V2GroundingBox;
 
   /**
-   * How sure the model is of the text in this grounding, in `[0, 1]`.
+   * How sure the model is of the text in this grounding, in `[0, 1]` and
+   * rounded to at most 2 decimal places — the wire carries `0.42`, never
+   * `0.4237`, so a threshold comparison is exact at that resolution and there
+   * is no finer score to recover.
+   *
    * Word-granularity models (`dpt-3-fast`) set it at every level of the tree
    * with the same weakest-link rule: a word `atomic_grounding` entry carries the
    * lowest per-character OCR confidence in the word, and each parent grounding

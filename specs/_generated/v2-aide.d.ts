@@ -4,6 +4,80 @@
  */
 
 export interface paths {
+    "/v1/ade/parse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * ADE Parse v1
+         * @description Run synchronously and return the result inline.
+         *
+         *     Accepts ``application/json`` (the request fields as the body),
+         *     ``multipart/form-data`` (file fields are staged automatically),
+         *     or ``application/x-www-form-urlencoded`` (text fields only).
+         *
+         *     Returns **504** if the work does not finish within the wait
+         *     window — long-running work belongs on the async ``POST
+         *     {path}/jobs`` route, which returns 202 immediately and is polled
+         *     via ``GET {path}/jobs/{job_id}``. On a 504 the workflow is
+         *     CANCELLED (a sync caller can never collect the result); a retry
+         *     starts the work over as a fresh job.
+         */
+        post: operations["v1-ade-parse_run_sync"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/ade/parse/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** ADE List Parse v1 Jobs */
+        get: operations["v1-ade-parse_list_jobs"];
+        put?: never;
+        /** ADE Parse v1 Jobs */
+        post: operations["v1-ade-parse_create_job"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/ade/parse/jobs/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * ADE Get Parse v1 Jobs
+         * @description Poll a job.
+         *
+         *     Returns ``{job_id, status, created_at}`` plus ``completed_at`` and
+         *     ``result`` (on ``completed``) or ``error: {code, message}`` (on
+         *     ``failed``). Statuses: ``pending`` → ``processing`` →
+         *     ``completed`` | ``failed``.
+         */
+        get: operations["v1-ade-parse_get_job"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/extract": {
         parameters: {
             query?: never;
@@ -124,6 +198,80 @@ export interface paths {
          * @description Get the status of an async Extract job, including its result once the job has completed.
          */
         get: operations["v1-extract_get_job"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/parse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * ADE Parse v1
+         * @description Run synchronously and return the result inline.
+         *
+         *     Accepts ``application/json`` (the request fields as the body),
+         *     ``multipart/form-data`` (file fields are staged automatically),
+         *     or ``application/x-www-form-urlencoded`` (text fields only).
+         *
+         *     Returns **504** if the work does not finish within the wait
+         *     window — long-running work belongs on the async ``POST
+         *     {path}/jobs`` route, which returns 202 immediately and is polled
+         *     via ``GET {path}/jobs/{job_id}``. On a 504 the workflow is
+         *     CANCELLED (a sync caller can never collect the result); a retry
+         *     starts the work over as a fresh job.
+         */
+        post: operations["parse2_run_sync"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/parse/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** ADE List Parse v1 Jobs */
+        get: operations["parse2_list_jobs"];
+        put?: never;
+        /** ADE Parse v1 Jobs */
+        post: operations["parse2_create_job"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/parse/jobs/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * ADE Get Parse v1 Jobs
+         * @description Poll a job.
+         *
+         *     Returns ``{job_id, status, created_at}`` plus ``completed_at`` and
+         *     ``result`` (on ``completed``) or ``error: {code, message}`` (on
+         *     ``failed``). Statuses: ``pending`` → ``processing`` →
+         *     ``completed`` | ``failed``.
+         */
+        get: operations["parse2_get_job"];
         put?: never;
         post?: never;
         delete?: never;
@@ -379,7 +527,7 @@ export interface components {
          * @description Axis-aligned bounding box in normalized page coordinates.
          *
          *     Every value is a fraction of the page's width (`xmin`/`xmax`) or height
-         *     (`ymin`/`ymax`) in `[0, 1]`, with at most 8 decimal places. To convert to
+         *     (`ymin`/`ymax`) in `[0, 1]`, with at most 5 decimal places. To convert to
          *     pixels, multiply by the dimensions of whatever raster of the page you are
          *     drawing on. Coordinates are clamped and rounded at construction so the
          *     in-process value always equals the serialized one.
@@ -423,6 +571,43 @@ export interface components {
              * @description Human-readable description of the warning with more details.
              */
             msg: string;
+        };
+        /**
+         * CreditUsage
+         * @description The standard credit-usage shape a billable WORK result carries.
+         *
+         *     A billed passthrough operation's work result declares
+         *     ``credit_usage: CreditUsage`` and the gateway's default
+         *     ``build_success_record`` bills it verbatim — no per-op billing code
+         *     (operations/base.py requires it: a result carrying anything else raises).
+         *
+         *     Stdlib result modules embedding CreditUsage should follow the pdf.py posture
+         *     (no ``from __future__ import annotations``) or use pydantic dataclasses (the
+         *     extract_v2 posture).
+         */
+        CreditUsage: {
+            /**
+             * Breakdown
+             * @default null
+             */
+            breakdown: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Charge Unit
+             * @default 0
+             */
+            charge_unit: number;
+            /**
+             * Credits
+             * @default 0
+             */
+            credits: number;
+            /**
+             * Output Charge Unit
+             * @default null
+             */
+            output_charge_unit: number | null;
         };
         /** Document */
         Document: {
@@ -533,11 +718,11 @@ export interface components {
          *     can be lifted out of the tree and still locates its content.
          */
         Grounding: {
-            /** @description Bounding box in normalized page coordinates (`0`–`1` fractions of page width/height, at most 8 decimal places). A page node's box is always the full page `{0, 0, 1, 1}`. */
+            /** @description Bounding box in normalized page coordinates (`0`–`1` fractions of page width/height, at most 5 decimal places). A page node's box is always the full page `{0, 0, 1, 1}`. */
             box: components["schemas"]["Box"];
             /**
              * Confidence
-             * @description How sure the model is of the text in this grounding, in `[0, 1]`. Word-granularity models (`dpt-3-fast`) set it at every level with the same weakest-link rule: a word `atomic_grounding` entry carries the lowest per-character OCR confidence in the word, and each parent grounding (element, `table_cell`, `table`, page) carries the lowest confidence among its transcribed words. Omitted where no transcribed word carries a score: models that ground at line granularity (`dpt-3-pro`), blocks whose text the model wrote rather than read (captioned figures and similar), and blocks with markdown suppressed.
+             * @description How sure the model is of the text in this grounding, in `[0, 1]` with at most 2 decimal places. Word-granularity models (`dpt-3-fast`) set it at every level with the same weakest-link rule: a word `atomic_grounding` entry carries the lowest per-character OCR confidence in the word, and each parent grounding (element, `table_cell`, `table`, page) carries the lowest confidence among its transcribed words. Omitted where no transcribed word carries a score: models that ground at line granularity (`dpt-3-pro`), blocks whose text the model wrote rather than read (captioned figures and similar), and blocks with markdown suppressed.
              * @default null
              */
             confidence: number | null;
@@ -1080,6 +1265,598 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    "v1-ade-parse_run_sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Content Type */
+                    content_type: string;
+                    /**
+                     * Custom Prompts
+                     * @default null
+                     */
+                    custom_prompts?: {
+                        [key: string]: string;
+                    } | null;
+                    /** Document Ref */
+                    document_ref: string;
+                    /** Filename */
+                    filename: string;
+                    /**
+                     * Job Id
+                     * @default null
+                     */
+                    job_id?: string | null;
+                    /**
+                     * Model Versions
+                     * @default null
+                     */
+                    model_versions?: {
+                        [key: string]: string;
+                    } | null;
+                    /**
+                     * Password
+                     * @default null
+                     */
+                    password?: string | null;
+                    /**
+                     * Pricing Multiplier
+                     * @default 1
+                     */
+                    pricing_multiplier?: number;
+                    /**
+                     * Processing Mode
+                     * @default sync
+                     */
+                    processing_mode?: string;
+                    /**
+                     * Split
+                     * @default null
+                     */
+                    split?: string | null;
+                    /**
+                     * Version
+                     * @default null
+                     */
+                    version?: string | null;
+                    /**
+                     * X Request Id
+                     * @default null
+                     */
+                    x_request_id?: string | null;
+                };
+                "multipart/form-data": {
+                    /** Content Type */
+                    content_type: string;
+                    /**
+                     * Custom Prompts
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    custom_prompts?: {
+                        [key: string]: string;
+                    } | null;
+                    /**
+                     * Format: binary
+                     * @description File upload.
+                     */
+                    document_ref: string;
+                    /** Filename */
+                    filename: string;
+                    /**
+                     * Job Id
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    job_id?: string | null;
+                    /**
+                     * Model Versions
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    model_versions?: {
+                        [key: string]: string;
+                    } | null;
+                    /**
+                     * Password
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    password?: string | null;
+                    /**
+                     * Pricing Multiplier
+                     * @description JSON-serialized string in form data.
+                     * @default 1
+                     */
+                    pricing_multiplier?: number;
+                    /**
+                     * Processing Mode
+                     * @default sync
+                     */
+                    processing_mode?: string;
+                    /**
+                     * Split
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    split?: string | null;
+                    /**
+                     * Version
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    version?: string | null;
+                    /**
+                     * X Request Id
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    x_request_id?: string | null;
+                };
+            };
+        };
+        responses: {
+            /** @description v1-ade-parse result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * Base Credit
+                         * @default 0
+                         */
+                        base_credit: number;
+                        /**
+                         * Billable Pages
+                         * @default 0
+                         */
+                        billable_pages: number;
+                        /**
+                         * Completion Tokens
+                         * @default 0
+                         */
+                        completion_tokens: number;
+                        credit_usage?: components["schemas"]["CreditUsage"];
+                        /**
+                         * Duration Ms
+                         * @default 0
+                         */
+                        duration_ms: number;
+                        /** Failed Pages */
+                        failed_pages?: number[];
+                        /**
+                         * Model Family
+                         * @default null
+                         */
+                        model_family: string | null;
+                        /**
+                         * Output Ref
+                         * @default null
+                         */
+                        output_ref: string | null;
+                        /**
+                         * Page Count
+                         * @default 0
+                         */
+                        page_count: number;
+                        /**
+                         * Prompt Tokens
+                         * @default 0
+                         */
+                        prompt_tokens: number;
+                        /** Response */
+                        response: {
+                            [key: string]: unknown;
+                        };
+                        /**
+                         * Status Code
+                         * @default 200
+                         */
+                        status_code: number;
+                        /**
+                         * Token Steps
+                         * @default null
+                         */
+                        token_steps: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /**
+                         * Total Tokens
+                         * @default 0
+                         */
+                        total_tokens: number;
+                        /**
+                         * Usage
+                         * @default null
+                         */
+                        usage: {
+                            [key: string]: unknown;
+                        } | null;
+                    };
+                };
+            };
+            /** @description Request validation failed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    "v1-ade-parse_list_jobs": {
+        parameters: {
+            query?: {
+                /** @description Page number (0-indexed). */
+                page?: number;
+                /** @description Number of items per page. */
+                page_size?: number;
+                /** @description Filter by job status. */
+                status?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The caller's jobs, newest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        has_more?: boolean;
+                        jobs?: {
+                            completed_at?: string | null;
+                            created_at?: string | null;
+                            failure_reason?: string | null;
+                            /** @description The unique identifier for this v1-ade-parse job. Format: ``parse2-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
+                            job_id?: string;
+                            model_version?: string | null;
+                            /** @enum {string} */
+                            status?: "pending" | "processing" | "completed" | "failed";
+                        }[];
+                        page?: number;
+                        page_size?: number;
+                    };
+                };
+            };
+            /** @description Request validation failed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    "v1-ade-parse_create_job": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Content Type */
+                    content_type: string;
+                    /**
+                     * Custom Prompts
+                     * @default null
+                     */
+                    custom_prompts?: {
+                        [key: string]: string;
+                    } | null;
+                    /** Document Ref */
+                    document_ref: string;
+                    /** Filename */
+                    filename: string;
+                    /**
+                     * Job Id
+                     * @default null
+                     */
+                    job_id?: string | null;
+                    /**
+                     * Model Versions
+                     * @default null
+                     */
+                    model_versions?: {
+                        [key: string]: string;
+                    } | null;
+                    /**
+                     * Output Save Url
+                     * @default null
+                     */
+                    output_save_url?: string | null;
+                    /**
+                     * Password
+                     * @default null
+                     */
+                    password?: string | null;
+                    /**
+                     * Pricing Multiplier
+                     * @default 1
+                     */
+                    pricing_multiplier?: number;
+                    /**
+                     * Processing Mode
+                     * @default sync
+                     */
+                    processing_mode?: string;
+                    /** @description Async service tier. ``priority`` runs in the fast lane at the sync billing rate; absent → ``standard``. */
+                    service_tier?: ("standard" | "priority") | null;
+                    /**
+                     * Split
+                     * @default null
+                     */
+                    split?: string | null;
+                    /**
+                     * Version
+                     * @default null
+                     */
+                    version?: string | null;
+                    /**
+                     * X Request Id
+                     * @default null
+                     */
+                    x_request_id?: string | null;
+                };
+                "multipart/form-data": {
+                    /** Content Type */
+                    content_type: string;
+                    /**
+                     * Custom Prompts
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    custom_prompts?: {
+                        [key: string]: string;
+                    } | null;
+                    /**
+                     * Format: binary
+                     * @description File upload.
+                     */
+                    document_ref: string;
+                    /** Filename */
+                    filename: string;
+                    /**
+                     * Job Id
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    job_id?: string | null;
+                    /**
+                     * Model Versions
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    model_versions?: {
+                        [key: string]: string;
+                    } | null;
+                    /**
+                     * Output Save Url
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    output_save_url?: string | null;
+                    /**
+                     * Password
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    password?: string | null;
+                    /**
+                     * Pricing Multiplier
+                     * @description JSON-serialized string in form data.
+                     * @default 1
+                     */
+                    pricing_multiplier?: number;
+                    /**
+                     * Processing Mode
+                     * @default sync
+                     */
+                    processing_mode?: string;
+                    /** @description Async service tier. ``priority`` runs in the fast lane at the sync billing rate; absent → ``standard``. */
+                    service_tier?: ("standard" | "priority") | null;
+                    /**
+                     * Split
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    split?: string | null;
+                    /**
+                     * Version
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    version?: string | null;
+                    /**
+                     * X Request Id
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    x_request_id?: string | null;
+                };
+            };
+        };
+        responses: {
+            /** @description Job created */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        created_at?: string | null;
+                        /** @description The unique identifier for this v1-ade-parse job. Format: ``parse2-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
+                        job_id?: string;
+                        /** @enum {string} */
+                        status?: "pending" | "processing" | "completed" | "failed";
+                    };
+                };
+            };
+            /** @description Request validation failed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    "v1-ade-parse_get_job": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The identifier of the job to retrieve, as returned by the create-job request. */
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Job status / result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Present once the job is terminal. */
+                        completed_at?: string;
+                        created_at?: string | null;
+                        /** @description Present once status is ``failed``. */
+                        error?: {
+                            /** @description Stable error code (``internal_error`` when unmapped). */
+                            code?: string;
+                            message?: string;
+                        };
+                        /** @description The unique identifier for this v1-ade-parse job. Format: ``parse2-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
+                        job_id?: string;
+                        /** @description The result's metadata block (billing included), present alongside ``output_url`` once a job with ``output_save_url`` has ``completed`` — the delivery moves the content, not the receipt. Same shape as the inline ``result``'s ``metadata``; inline jobs carry it there instead. */
+                        metadata?: Record<string, never> | null;
+                        /** @description The URL the result was delivered to. Present once the job has ``completed`` and ``output_save_url`` was set, instead of inline ``result``. */
+                        output_url?: string | null;
+                        /** @description Estimated completion as a decimal from 0 to 1 — an estimate, not a measurement: it typically advances between polls while the job is ``processing``, may jump forward when the service reports a real milestone (e.g. parsed pages), and approaches but never reaches 1 (long-running jobs plateau near 0.98 — completion is signaled by ``status``, and a job may complete from any progress value). Present while ``processing``. */
+                        progress?: number;
+                        /** @description Present once status is ``completed`` and ``output_save_url`` was not set. When ``output_save_url`` was set, the result is delivered there and ``output_url`` is returned instead. */
+                        result?: {
+                            /**
+                             * Base Credit
+                             * @default 0
+                             */
+                            base_credit: number;
+                            /**
+                             * Billable Pages
+                             * @default 0
+                             */
+                            billable_pages: number;
+                            /**
+                             * Completion Tokens
+                             * @default 0
+                             */
+                            completion_tokens: number;
+                            credit_usage?: components["schemas"]["CreditUsage"];
+                            /**
+                             * Duration Ms
+                             * @default 0
+                             */
+                            duration_ms: number;
+                            /** Failed Pages */
+                            failed_pages?: number[];
+                            /**
+                             * Model Family
+                             * @default null
+                             */
+                            model_family: string | null;
+                            /**
+                             * Output Ref
+                             * @default null
+                             */
+                            output_ref: string | null;
+                            /**
+                             * Page Count
+                             * @default 0
+                             */
+                            page_count: number;
+                            /**
+                             * Prompt Tokens
+                             * @default 0
+                             */
+                            prompt_tokens: number;
+                            /** Response */
+                            response: {
+                                [key: string]: unknown;
+                            };
+                            /**
+                             * Status Code
+                             * @default 200
+                             */
+                            status_code: number;
+                            /**
+                             * Token Steps
+                             * @default null
+                             */
+                            token_steps: {
+                                [key: string]: unknown;
+                            }[] | null;
+                            /**
+                             * Total Tokens
+                             * @default 0
+                             */
+                            total_tokens: number;
+                            /**
+                             * Usage
+                             * @default null
+                             */
+                            usage: {
+                                [key: string]: unknown;
+                            } | null;
+                        } | null;
+                        /** @enum {string} */
+                        status?: "pending" | "processing" | "completed" | "failed";
+                    };
+                };
+            };
+            /** @description Not found (e.g. no such job). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request validation failed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     "v1-extract_run_sync": {
         parameters: {
             query?: never;
@@ -1692,6 +2469,598 @@ export interface operations {
                                 [key: string]: unknown;
                             };
                             metadata?: components["schemas"]["V1ExtractMetadata"];
+                        } | null;
+                        /** @enum {string} */
+                        status?: "pending" | "processing" | "completed" | "failed";
+                    };
+                };
+            };
+            /** @description Not found (e.g. no such job). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request validation failed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    parse2_run_sync: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Content Type */
+                    content_type: string;
+                    /**
+                     * Custom Prompts
+                     * @default null
+                     */
+                    custom_prompts?: {
+                        [key: string]: string;
+                    } | null;
+                    /** Document Ref */
+                    document_ref: string;
+                    /** Filename */
+                    filename: string;
+                    /**
+                     * Job Id
+                     * @default null
+                     */
+                    job_id?: string | null;
+                    /**
+                     * Model Versions
+                     * @default null
+                     */
+                    model_versions?: {
+                        [key: string]: string;
+                    } | null;
+                    /**
+                     * Password
+                     * @default null
+                     */
+                    password?: string | null;
+                    /**
+                     * Pricing Multiplier
+                     * @default 1
+                     */
+                    pricing_multiplier?: number;
+                    /**
+                     * Processing Mode
+                     * @default sync
+                     */
+                    processing_mode?: string;
+                    /**
+                     * Split
+                     * @default null
+                     */
+                    split?: string | null;
+                    /**
+                     * Version
+                     * @default null
+                     */
+                    version?: string | null;
+                    /**
+                     * X Request Id
+                     * @default null
+                     */
+                    x_request_id?: string | null;
+                };
+                "multipart/form-data": {
+                    /** Content Type */
+                    content_type: string;
+                    /**
+                     * Custom Prompts
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    custom_prompts?: {
+                        [key: string]: string;
+                    } | null;
+                    /**
+                     * Format: binary
+                     * @description File upload.
+                     */
+                    document_ref: string;
+                    /** Filename */
+                    filename: string;
+                    /**
+                     * Job Id
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    job_id?: string | null;
+                    /**
+                     * Model Versions
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    model_versions?: {
+                        [key: string]: string;
+                    } | null;
+                    /**
+                     * Password
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    password?: string | null;
+                    /**
+                     * Pricing Multiplier
+                     * @description JSON-serialized string in form data.
+                     * @default 1
+                     */
+                    pricing_multiplier?: number;
+                    /**
+                     * Processing Mode
+                     * @default sync
+                     */
+                    processing_mode?: string;
+                    /**
+                     * Split
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    split?: string | null;
+                    /**
+                     * Version
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    version?: string | null;
+                    /**
+                     * X Request Id
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    x_request_id?: string | null;
+                };
+            };
+        };
+        responses: {
+            /** @description parse2 result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * Base Credit
+                         * @default 0
+                         */
+                        base_credit: number;
+                        /**
+                         * Billable Pages
+                         * @default 0
+                         */
+                        billable_pages: number;
+                        /**
+                         * Completion Tokens
+                         * @default 0
+                         */
+                        completion_tokens: number;
+                        credit_usage?: components["schemas"]["CreditUsage"];
+                        /**
+                         * Duration Ms
+                         * @default 0
+                         */
+                        duration_ms: number;
+                        /** Failed Pages */
+                        failed_pages?: number[];
+                        /**
+                         * Model Family
+                         * @default null
+                         */
+                        model_family: string | null;
+                        /**
+                         * Output Ref
+                         * @default null
+                         */
+                        output_ref: string | null;
+                        /**
+                         * Page Count
+                         * @default 0
+                         */
+                        page_count: number;
+                        /**
+                         * Prompt Tokens
+                         * @default 0
+                         */
+                        prompt_tokens: number;
+                        /** Response */
+                        response: {
+                            [key: string]: unknown;
+                        };
+                        /**
+                         * Status Code
+                         * @default 200
+                         */
+                        status_code: number;
+                        /**
+                         * Token Steps
+                         * @default null
+                         */
+                        token_steps: {
+                            [key: string]: unknown;
+                        }[] | null;
+                        /**
+                         * Total Tokens
+                         * @default 0
+                         */
+                        total_tokens: number;
+                        /**
+                         * Usage
+                         * @default null
+                         */
+                        usage: {
+                            [key: string]: unknown;
+                        } | null;
+                    };
+                };
+            };
+            /** @description Request validation failed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    parse2_list_jobs: {
+        parameters: {
+            query?: {
+                /** @description Page number (0-indexed). */
+                page?: number;
+                /** @description Number of items per page. */
+                page_size?: number;
+                /** @description Filter by job status. */
+                status?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The caller's jobs, newest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        has_more?: boolean;
+                        jobs?: {
+                            completed_at?: string | null;
+                            created_at?: string | null;
+                            failure_reason?: string | null;
+                            /** @description The unique identifier for this parse2 job. Format: ``parse2-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
+                            job_id?: string;
+                            model_version?: string | null;
+                            /** @enum {string} */
+                            status?: "pending" | "processing" | "completed" | "failed";
+                        }[];
+                        page?: number;
+                        page_size?: number;
+                    };
+                };
+            };
+            /** @description Request validation failed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    parse2_create_job: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Content Type */
+                    content_type: string;
+                    /**
+                     * Custom Prompts
+                     * @default null
+                     */
+                    custom_prompts?: {
+                        [key: string]: string;
+                    } | null;
+                    /** Document Ref */
+                    document_ref: string;
+                    /** Filename */
+                    filename: string;
+                    /**
+                     * Job Id
+                     * @default null
+                     */
+                    job_id?: string | null;
+                    /**
+                     * Model Versions
+                     * @default null
+                     */
+                    model_versions?: {
+                        [key: string]: string;
+                    } | null;
+                    /**
+                     * Output Save Url
+                     * @default null
+                     */
+                    output_save_url?: string | null;
+                    /**
+                     * Password
+                     * @default null
+                     */
+                    password?: string | null;
+                    /**
+                     * Pricing Multiplier
+                     * @default 1
+                     */
+                    pricing_multiplier?: number;
+                    /**
+                     * Processing Mode
+                     * @default sync
+                     */
+                    processing_mode?: string;
+                    /** @description Async service tier. ``priority`` runs in the fast lane at the sync billing rate; absent → ``standard``. */
+                    service_tier?: ("standard" | "priority") | null;
+                    /**
+                     * Split
+                     * @default null
+                     */
+                    split?: string | null;
+                    /**
+                     * Version
+                     * @default null
+                     */
+                    version?: string | null;
+                    /**
+                     * X Request Id
+                     * @default null
+                     */
+                    x_request_id?: string | null;
+                };
+                "multipart/form-data": {
+                    /** Content Type */
+                    content_type: string;
+                    /**
+                     * Custom Prompts
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    custom_prompts?: {
+                        [key: string]: string;
+                    } | null;
+                    /**
+                     * Format: binary
+                     * @description File upload.
+                     */
+                    document_ref: string;
+                    /** Filename */
+                    filename: string;
+                    /**
+                     * Job Id
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    job_id?: string | null;
+                    /**
+                     * Model Versions
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    model_versions?: {
+                        [key: string]: string;
+                    } | null;
+                    /**
+                     * Output Save Url
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    output_save_url?: string | null;
+                    /**
+                     * Password
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    password?: string | null;
+                    /**
+                     * Pricing Multiplier
+                     * @description JSON-serialized string in form data.
+                     * @default 1
+                     */
+                    pricing_multiplier?: number;
+                    /**
+                     * Processing Mode
+                     * @default sync
+                     */
+                    processing_mode?: string;
+                    /** @description Async service tier. ``priority`` runs in the fast lane at the sync billing rate; absent → ``standard``. */
+                    service_tier?: ("standard" | "priority") | null;
+                    /**
+                     * Split
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    split?: string | null;
+                    /**
+                     * Version
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    version?: string | null;
+                    /**
+                     * X Request Id
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    x_request_id?: string | null;
+                };
+            };
+        };
+        responses: {
+            /** @description Job created */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        created_at?: string | null;
+                        /** @description The unique identifier for this parse2 job. Format: ``parse2-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
+                        job_id?: string;
+                        /** @enum {string} */
+                        status?: "pending" | "processing" | "completed" | "failed";
+                    };
+                };
+            };
+            /** @description Request validation failed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    parse2_get_job: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The identifier of the job to retrieve, as returned by the create-job request. */
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Job status / result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Present once the job is terminal. */
+                        completed_at?: string;
+                        created_at?: string | null;
+                        /** @description Present once status is ``failed``. */
+                        error?: {
+                            /** @description Stable error code (``internal_error`` when unmapped). */
+                            code?: string;
+                            message?: string;
+                        };
+                        /** @description The unique identifier for this parse2 job. Format: ``parse2-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
+                        job_id?: string;
+                        /** @description The result's metadata block (billing included), present alongside ``output_url`` once a job with ``output_save_url`` has ``completed`` — the delivery moves the content, not the receipt. Same shape as the inline ``result``'s ``metadata``; inline jobs carry it there instead. */
+                        metadata?: Record<string, never> | null;
+                        /** @description The URL the result was delivered to. Present once the job has ``completed`` and ``output_save_url`` was set, instead of inline ``result``. */
+                        output_url?: string | null;
+                        /** @description Estimated completion as a decimal from 0 to 1 — an estimate, not a measurement: it typically advances between polls while the job is ``processing``, may jump forward when the service reports a real milestone (e.g. parsed pages), and approaches but never reaches 1 (long-running jobs plateau near 0.98 — completion is signaled by ``status``, and a job may complete from any progress value). Present while ``processing``. */
+                        progress?: number;
+                        /** @description Present once status is ``completed`` and ``output_save_url`` was not set. When ``output_save_url`` was set, the result is delivered there and ``output_url`` is returned instead. */
+                        result?: {
+                            /**
+                             * Base Credit
+                             * @default 0
+                             */
+                            base_credit: number;
+                            /**
+                             * Billable Pages
+                             * @default 0
+                             */
+                            billable_pages: number;
+                            /**
+                             * Completion Tokens
+                             * @default 0
+                             */
+                            completion_tokens: number;
+                            credit_usage?: components["schemas"]["CreditUsage"];
+                            /**
+                             * Duration Ms
+                             * @default 0
+                             */
+                            duration_ms: number;
+                            /** Failed Pages */
+                            failed_pages?: number[];
+                            /**
+                             * Model Family
+                             * @default null
+                             */
+                            model_family: string | null;
+                            /**
+                             * Output Ref
+                             * @default null
+                             */
+                            output_ref: string | null;
+                            /**
+                             * Page Count
+                             * @default 0
+                             */
+                            page_count: number;
+                            /**
+                             * Prompt Tokens
+                             * @default 0
+                             */
+                            prompt_tokens: number;
+                            /** Response */
+                            response: {
+                                [key: string]: unknown;
+                            };
+                            /**
+                             * Status Code
+                             * @default 200
+                             */
+                            status_code: number;
+                            /**
+                             * Token Steps
+                             * @default null
+                             */
+                            token_steps: {
+                                [key: string]: unknown;
+                            }[] | null;
+                            /**
+                             * Total Tokens
+                             * @default 0
+                             */
+                            total_tokens: number;
+                            /**
+                             * Usage
+                             * @default null
+                             */
+                            usage: {
+                                [key: string]: unknown;
+                            } | null;
                         } | null;
                         /** @enum {string} */
                         status?: "pending" | "processing" | "completed" | "failed";

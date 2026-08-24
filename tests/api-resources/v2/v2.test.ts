@@ -186,6 +186,57 @@ describe('client.v2 routing', () => {
     expect(res.structure?.children?.[0]?.grounding?.confidence).toBeUndefined();
   });
 
+  test('parse (sync) preserves the documented grounding precision exactly', async () => {
+    // The spec pins how precise the two grounding numbers are on the wire: `Box`
+    // coordinates to at most 5 decimal places, `Grounding.confidence` to at most
+    // 2. The SDK's job is to hand those through untouched, so the fixture spans
+    // that range — confidence at one decimal (`0.4`) and at two (`0.97`), box
+    // coordinates at a full five, and the clamped `0`/`1` page box — and asserts
+    // each reads back identically, with no re-rounding and no float drift in
+    // between. Decimal *spelling* is deliberately not asserted, and could not be:
+    // `0.40` and `0.4` parse to the same JavaScript number.
+    const box = { xmin: 0.10938, ymin: 0.24219, xmax: 0.87891, ymax: 0.31641 };
+    const pageBox = { xmin: 0, ymin: 0, xmax: 1, ymax: 1 };
+    const { client } = stubClient(() =>
+      jsonResponse({
+        markdown: 'Total revenue',
+        structure: {
+          type: 'document',
+          children: [
+            {
+              type: 'page',
+              grounding: { page: 1, range: { start: 0, end: 13 }, box: pageBox, confidence: 0.4 },
+              children: [
+                {
+                  type: 'text',
+                  id: 'text-0',
+                  grounding: { page: 1, range: { start: 0, end: 13 }, box, confidence: 0.4 },
+                  atomic_grounding: [
+                    { page: 1, range: { start: 0, end: 5 }, box, confidence: 0.97 },
+                    { page: 1, range: { start: 6, end: 13 }, box, confidence: 0.4 },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        metadata: { model_version: 'dpt-3-fast-20260710' },
+      }),
+    );
+    const res = await client.v2.parse({ document: await toFile(Buffer.from('%PDF'), 'a.pdf') });
+    const page = res.structure?.children?.[0];
+    const el = page?.children?.[0];
+    // A page node's box is always the full page, per the spec's `box` note.
+    expect(page?.grounding?.box).toEqual(pageBox);
+    expect(el?.grounding?.box).toEqual(box);
+    expect(el?.grounding?.box.xmin).toBe(0.10938);
+    expect(el?.atomic_grounding?.map((g) => g.box)).toEqual([box, box]);
+    expect(el?.atomic_grounding?.map((g) => g.confidence)).toEqual([0.97, 0.4]);
+    // Rolled up to the parent groundings at the same 2-decimal resolution.
+    expect(el?.grounding?.confidence).toBe(0.4);
+    expect(page?.grounding?.confidence).toBe(0.4);
+  });
+
   test('parse (sync) surfaces the weakest-link confidence rolled up to parent groundings', async () => {
     // Word-granularity models (`dpt-3-fast`) now score EVERY level, not just
     // `atomic_grounding`: each parent grounding — `table_cell`, `table`, element,
