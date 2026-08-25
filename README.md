@@ -106,9 +106,9 @@ The response is a `V2ParseResponse`:
 
 If some pages cannot be parsed, the request still succeeds (HTTP 206) and `metadata.failed_pages` lists the pages that failed. If a synchronous parse times out, the client throws `V2SyncTimeoutError`; use [jobs](#process-large-documents-asynchronously-jobs) instead.
 
-`atomic_grounding` segments a leaf element at whichever granularity the model reads at: one entry per visual line for `dpt-3-pro`, and one entry per **word** for `dpt-3-fast` — each with a `confidence` in `[0, 1]`, the lowest per-character OCR confidence in that word, so a word is only as trustworthy as its weakest character. `confidence` arrives rounded to at most 2 decimal places (`0.42`, never `0.4237`), so pick a threshold at that resolution.
+`atomic_grounding` segments a leaf element at whichever granularity the model reads at: one entry per visual line for `dpt-3-pro`, and one entry per **word** for `dpt-3-fast` — each with a `min_ocr_confidence` in `[0, 1]`, the lowest per-character OCR confidence in that word, so a word is only as trustworthy as its weakest character. `min_ocr_confidence` arrives rounded to at most 2 decimal places (`0.42`, never `0.4237`), so pick a threshold at that resolution. (It was previously called `confidence`; that name is deprecated but still declared on the type.)
 
-Word-granularity models apply that same weakest-link rule all the way up the tree: every `grounding` — element, `table_cell`, `table`, page — carries the lowest confidence among the words below it, so you can flag a suspect region without walking down to individual words:
+Word-granularity models apply that same weakest-link rule all the way up the tree: every `grounding` — element, `table_cell`, `table`, page — carries a `min_ocr_confidence` equal to the lowest confidence among the words below it, so you can flag a suspect region without walking down to individual words:
 
 ```ts
 const parsed = await client.v2.parse({
@@ -117,21 +117,22 @@ const parsed = await client.v2.parse({
 });
 
 for (const page of parsed.structure?.children ?? []) {
-  // `confidence` is omitted where no transcribed word carries a score — on
-  // line-granularity models (`dpt-3-pro`), on text the model wrote rather than
-  // read (captioned figures and similar), and with markdown suppressed — so
-  // check with `!= null` before comparing.
-  const pageConfidence = page.grounding?.confidence;
+  // `min_ocr_confidence` is omitted where no transcribed word carries a score —
+  // on line-granularity models (`dpt-3-pro`), on text the model wrote rather
+  // than read (captioned figures and similar), and with markdown suppressed —
+  // so check with `!= null` before comparing.
+  const pageConfidence = page.grounding?.min_ocr_confidence;
   if (pageConfidence != null && pageConfidence < 0.5) {
     console.log(`page ${page.page} has at least one weak word`);
   }
 
   for (const element of page.children ?? []) {
-    if (element.grounding?.confidence != null && element.grounding.confidence >= 0.5) {
+    const elementConfidence = element.grounding?.min_ocr_confidence;
+    if (elementConfidence != null && elementConfidence >= 0.5) {
       continue; // nothing weak under this element; no need to look at its words
     }
     for (const word of element.atomic_grounding ?? []) {
-      if (word.confidence != null && word.confidence < 0.5) {
+      if (word.min_ocr_confidence != null && word.min_ocr_confidence < 0.5) {
         console.log(`low confidence on page ${word.page}`, word.range, word.box);
       }
     }

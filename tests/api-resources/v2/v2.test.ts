@@ -140,12 +140,13 @@ describe('client.v2 routing', () => {
     expect(res.metadata?.openapi_spec).toBe('https://example.com/spec.json');
   });
 
-  test('parse (sync) surfaces per-word atomic_grounding confidence', async () => {
-    // `dpt-3-fast` grounds at word granularity and carries a `confidence` on
-    // each `atomic_grounding` entry (the lowest per-character OCR confidence in
-    // the word). Where no transcribed word carries a score, the gateway normally
-    // omits the key (the page node below), but tolerate an explicit `null` too
-    // (the element node below) — hence `== null` at the call site, never `=== null`.
+  test('parse (sync) surfaces per-word atomic_grounding min_ocr_confidence', async () => {
+    // `dpt-3-fast` grounds at word granularity and carries a
+    // `min_ocr_confidence` on each `atomic_grounding` entry (the lowest
+    // per-character OCR confidence in the word). Where no transcribed word
+    // carries a score, the gateway normally omits the key (the page node below),
+    // but tolerate an explicit `null` too (the element node below) — hence
+    // `== null` at the call site, never `=== null`.
     const box = { xmin: 0, ymin: 0, xmax: 1, ymax: 1 };
     const { client } = stubClient(() =>
       jsonResponse({
@@ -160,7 +161,58 @@ describe('client.v2 routing', () => {
                 {
                   type: 'text',
                   id: 'text-0',
-                  grounding: { page: 1, range: { start: 0, end: 13 }, box, confidence: null },
+                  grounding: {
+                    page: 1,
+                    range: { start: 0, end: 13 },
+                    box,
+                    min_ocr_confidence: null,
+                  },
+                  atomic_grounding: [
+                    { page: 1, range: { start: 0, end: 5 }, box, min_ocr_confidence: 0.98 },
+                    { page: 1, range: { start: 6, end: 13 }, box, min_ocr_confidence: 0.42 },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        metadata: { model_version: 'dpt-3-fast-20260710' },
+      }),
+    );
+    const res = await client.v2.parse({
+      document: await toFile(Buffer.from('%PDF'), 'a.pdf'),
+      model: 'dpt-3-fast',
+    });
+    const el = res.structure?.children?.[0]?.children?.[0];
+    expect(el?.atomic_grounding?.map((g) => g.min_ocr_confidence)).toEqual([0.98, 0.42]);
+    // A block with no transcribed word to score carries no confidence: explicit
+    // `null` on the wire stays `null`; an omitted key reads `undefined`. Both
+    // must be reachable through the same optional-and-nullable declaration.
+    expect(el?.grounding?.min_ocr_confidence).toBeNull();
+    expect(res.structure?.children?.[0]?.grounding?.min_ocr_confidence).toBeUndefined();
+  });
+
+  test('parse (sync) still reads the deprecated grounding confidence field', async () => {
+    // `Grounding.confidence` was renamed to `min_ocr_confidence` in the spec, but
+    // the old property stays declared on `V2Grounding` so callers compiled
+    // against it keep working. A gateway that still spells it the old way must
+    // therefore read back under the old name, with `min_ocr_confidence` simply
+    // absent — nothing in the SDK rewrites one into the other.
+    const box = { xmin: 0, ymin: 0, xmax: 1, ymax: 1 };
+    const { client } = stubClient(() =>
+      jsonResponse({
+        markdown: 'Total revenue',
+        structure: {
+          type: 'document',
+          children: [
+            {
+              type: 'page',
+              grounding: { page: 1, range: { start: 0, end: 13 }, box, confidence: 0.42 },
+              children: [
+                {
+                  type: 'text',
+                  id: 'text-0',
+                  grounding: { page: 1, range: { start: 0, end: 13 }, box, confidence: 0.42 },
                   atomic_grounding: [
                     { page: 1, range: { start: 0, end: 5 }, box, confidence: 0.98 },
                     { page: 1, range: { start: 6, end: 13 }, box, confidence: 0.42 },
@@ -177,20 +229,18 @@ describe('client.v2 routing', () => {
       document: await toFile(Buffer.from('%PDF'), 'a.pdf'),
       model: 'dpt-3-fast',
     });
-    const el = res.structure?.children?.[0]?.children?.[0];
+    const page = res.structure?.children?.[0];
+    const el = page?.children?.[0];
+    expect(page?.grounding?.confidence).toBe(0.42);
     expect(el?.atomic_grounding?.map((g) => g.confidence)).toEqual([0.98, 0.42]);
-    // A block with no transcribed word to score carries no confidence: explicit
-    // `null` on the wire stays `null`; an omitted key reads `undefined`. Both
-    // must be reachable through the same optional-and-nullable declaration.
-    expect(el?.grounding?.confidence).toBeNull();
-    expect(res.structure?.children?.[0]?.grounding?.confidence).toBeUndefined();
+    expect(el?.grounding?.min_ocr_confidence).toBeUndefined();
   });
 
   test('parse (sync) preserves the documented grounding precision exactly', async () => {
     // The spec pins how precise the two grounding numbers are on the wire: `Box`
-    // coordinates to at most 5 decimal places, `Grounding.confidence` to at most
-    // 2. The SDK's job is to hand those through untouched, so the fixture spans
-    // that range — confidence at one decimal (`0.4`) and at two (`0.97`), box
+    // coordinates to at most 5 decimal places, `Grounding.min_ocr_confidence` to
+    // at most 2. The SDK's job is to hand those through untouched, so the fixture
+    // spans that range — confidence at one decimal (`0.4`) and at two (`0.97`), box
     // coordinates at a full five, and the clamped `0`/`1` page box — and asserts
     // each reads back identically, with no re-rounding and no float drift in
     // between. Decimal *spelling* is deliberately not asserted, and could not be:
@@ -205,15 +255,25 @@ describe('client.v2 routing', () => {
           children: [
             {
               type: 'page',
-              grounding: { page: 1, range: { start: 0, end: 13 }, box: pageBox, confidence: 0.4 },
+              grounding: {
+                page: 1,
+                range: { start: 0, end: 13 },
+                box: pageBox,
+                min_ocr_confidence: 0.4,
+              },
               children: [
                 {
                   type: 'text',
                   id: 'text-0',
-                  grounding: { page: 1, range: { start: 0, end: 13 }, box, confidence: 0.4 },
+                  grounding: {
+                    page: 1,
+                    range: { start: 0, end: 13 },
+                    box,
+                    min_ocr_confidence: 0.4,
+                  },
                   atomic_grounding: [
-                    { page: 1, range: { start: 0, end: 5 }, box, confidence: 0.97 },
-                    { page: 1, range: { start: 6, end: 13 }, box, confidence: 0.4 },
+                    { page: 1, range: { start: 0, end: 5 }, box, min_ocr_confidence: 0.97 },
+                    { page: 1, range: { start: 6, end: 13 }, box, min_ocr_confidence: 0.4 },
                   ],
                 },
               ],
@@ -231,24 +291,24 @@ describe('client.v2 routing', () => {
     expect(el?.grounding?.box).toEqual(box);
     expect(el?.grounding?.box.xmin).toBe(0.10938);
     expect(el?.atomic_grounding?.map((g) => g.box)).toEqual([box, box]);
-    expect(el?.atomic_grounding?.map((g) => g.confidence)).toEqual([0.97, 0.4]);
+    expect(el?.atomic_grounding?.map((g) => g.min_ocr_confidence)).toEqual([0.97, 0.4]);
     // Rolled up to the parent groundings at the same 2-decimal resolution.
-    expect(el?.grounding?.confidence).toBe(0.4);
-    expect(page?.grounding?.confidence).toBe(0.4);
+    expect(el?.grounding?.min_ocr_confidence).toBe(0.4);
+    expect(page?.grounding?.min_ocr_confidence).toBe(0.4);
   });
 
-  test('parse (sync) surfaces the weakest-link confidence rolled up to parent groundings', async () => {
+  test('parse (sync) surfaces the weakest-link min_ocr_confidence rolled up to parent groundings', async () => {
     // Word-granularity models (`dpt-3-fast`) now score EVERY level, not just
     // `atomic_grounding`: each parent grounding — `table_cell`, `table`, element,
     // page — carries the lowest confidence among the words below it. The fixture
     // encodes exactly that: cells at 0.91 and 0.37, so the table and the page
     // both read 0.37, while a sibling text element keeps its own 0.88.
     const box = { xmin: 0, ymin: 0, xmax: 1, ymax: 1 };
-    const grounding = (start: number, end: number, confidence: number) => ({
+    const grounding = (start: number, end: number, minOcrConfidence: number) => ({
       page: 1,
       range: { start, end },
       box,
-      confidence,
+      min_ocr_confidence: minOcrConfidence,
     });
     const { client } = stubClient(() =>
       jsonResponse({
@@ -302,16 +362,16 @@ describe('client.v2 routing', () => {
     });
     const page = res.structure?.children?.[0];
     const [table, text] = page?.children ?? [];
-    expect(table?.children?.map((cell) => cell.grounding?.confidence)).toEqual([0.91, 0.37]);
+    expect(table?.children?.map((cell) => cell.grounding?.min_ocr_confidence)).toEqual([0.91, 0.37]);
     // The table is only as trustworthy as its weakest cell, and the page as its
     // weakest word anywhere on it — including inside the table.
-    expect(table?.grounding?.confidence).toBe(0.37);
-    expect(page?.grounding?.confidence).toBe(0.37);
-    expect(text?.grounding?.confidence).toBe(0.88);
+    expect(table?.grounding?.min_ocr_confidence).toBe(0.37);
+    expect(page?.grounding?.min_ocr_confidence).toBe(0.37);
+    expect(text?.grounding?.min_ocr_confidence).toBe(0.88);
     // Flagging low-confidence regions is a plain filter over node groundings now,
     // with no need to walk down to `atomic_grounding` first.
     const suspect = (page?.children ?? []).filter(
-      (el) => el.grounding?.confidence != null && el.grounding.confidence < 0.5,
+      (el) => el.grounding?.min_ocr_confidence != null && el.grounding.min_ocr_confidence < 0.5,
     );
     expect(suspect.map((el) => el.id)).toEqual(['table-0']);
   });

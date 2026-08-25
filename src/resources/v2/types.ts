@@ -183,7 +183,7 @@ export interface V2Grounding {
   box: V2GroundingBox;
 
   /**
-   * How sure the model is of the text in this grounding, in `[0, 1]` and
+   * The lowest OCR confidence of the text in this grounding, in `[0, 1]` and
    * rounded to at most 2 decimal places — the wire carries `0.42`, never
    * `0.4237`, so a threshold comparison is exact at that resolution and there
    * is no finer score to recover.
@@ -199,6 +199,15 @@ export interface V2Grounding {
    * rather than read (captioned figures and similar), and blocks with markdown
    * suppressed — so it reads back as `undefined` there, not `null`. Test with
    * `== null` to cover both.
+   */
+  min_ocr_confidence?: number | null;
+
+  /**
+   * @deprecated Renamed to {@link V2Grounding.min_ocr_confidence} — the score
+   * was always the lowest per-character OCR confidence rather than a general
+   * model confidence, and the spec renamed the field to say so. Kept for
+   * backwards compatibility; current gateways send `min_ocr_confidence` and
+   * omit this key, so read `min_ocr_confidence` instead.
    */
   confidence?: number | null;
 }
@@ -225,19 +234,20 @@ export interface V2ParseElement {
   /**
    * The element's spatial data: the page it appears on, its `[start, end)`
    * range in `markdown`, and its bounding box in normalized page coordinates.
-   * On word-granularity models its `confidence` rolls the words up — the lowest
-   * confidence among the words this element (or, for a `table`, this table's
-   * cells) transcribes.
+   * On word-granularity models its `min_ocr_confidence` rolls the words up —
+   * the lowest confidence among the words this element (or, for a `table`, this
+   * table's cells) transcribes.
    */
   grounding?: V2Grounding;
 
   /**
    * Fine-grained grounding segments, at whichever granularity the model reads
    * at: one entry per visual line for `dpt-3-pro`, one per word — each with its
-   * `confidence` — for `dpt-3-fast`, including the words inside table cells.
-   * Present only on leaf elements; omitted entirely when
-   * `options.atomic_grounding` is `false`. Reading `grounding.confidence`
-   * instead gives the same worst-word score already rolled up to this element.
+   * `min_ocr_confidence` — for `dpt-3-fast`, including the words inside table
+   * cells. Present only on leaf elements; omitted entirely when
+   * `options.atomic_grounding` is `false`. Reading
+   * `grounding.min_ocr_confidence` instead gives the same worst-word score
+   * already rolled up to this element.
    */
   atomic_grounding?: Array<V2Grounding> | null;
 
@@ -277,8 +287,8 @@ export interface V2ParsePage {
 
   /**
    * The page's spatial data: 1-indexed `page` number, `range` into `markdown`,
-   * and a full-page `box`. On word-granularity models its `confidence` is the
-   * lowest confidence among every word transcribed on the page.
+   * and a full-page `box`. On word-granularity models its `min_ocr_confidence`
+   * is the lowest confidence among every word transcribed on the page.
    */
   grounding?: V2Grounding;
 

@@ -143,13 +143,14 @@ describe('V2 contract (staging)', () => {
   );
 
   runIf(
-    'parse (sync) exposes the optional grounding confidence as a probability at every level',
+    'parse (sync) exposes the optional grounding min_ocr_confidence as a probability at every level',
     async () => {
       const client = stagingClient();
-      // Wired by the V2 spec-sync: `Grounding.confidence`, which the spec now
-      // documents at EVERY level of the tree (page and element groundings roll their
-      // words up, not just `atomic_grounding` entries). Deliberately does NOT pin
-      // `model` — `confidence` is only populated at word granularity (`dpt-3-fast`),
+      // Wired by the V2 spec-sync: `Grounding.min_ocr_confidence` (renamed from
+      // `confidence`), which the spec documents at EVERY level of the tree (page and
+      // element groundings roll their words up, not just `atomic_grounding` entries).
+      // Deliberately does NOT pin `model` — the score is only populated at word
+      // granularity (`dpt-3-fast`),
       // and whether a given family is servable depends on how the staging cluster was
       // booked (`dpt-3-fast` needs a GPU-backed booking; against one without it the
       // request hangs until the test times out). That is an environment property, not
@@ -178,7 +179,7 @@ describe('V2 contract (staging)', () => {
         ...segments,
       ];
       for (const grounding of groundings) {
-        const confidence = grounding?.confidence;
+        const confidence = grounding?.min_ocr_confidence;
         // `== null` covers both absent (line-granularity models, and blocks with no
         // transcribed word, omit the key) and an explicit `null`.
         expect(confidence == null || typeof confidence === 'number').toBe(true);
@@ -192,12 +193,12 @@ describe('V2 contract (staging)', () => {
   );
 
   runIf(
-    'parse (sync) returns grounding coordinates and confidence at the documented precision',
+    'parse (sync) returns grounding coordinates and min_ocr_confidence at the documented precision',
     async () => {
       const client = stagingClient();
-      // Wired by the V2 spec-sync: the spec now pins how precise both grounding
+      // Wired by the V2 spec-sync: the spec pins how precise both grounding
       // numbers are on the wire — `Box` coordinates carry at most 5 decimal places
-      // and `Grounding.confidence` at most 2. The gateway clamps and rounds before
+      // and `Grounding.min_ocr_confidence` at most 2. The gateway clamps and rounds before
       // serializing, so what a caller reads back IS the stored value; a finer number
       // arriving here would mean the SDK is handing out digits the contract never
       // promised. Deliberately does NOT pin `model`, for the same reason as the
@@ -237,10 +238,59 @@ describe('V2 contract (staging)', () => {
           expect(coordinate).toBeLessThanOrEqual(1);
           expect(roundsTo(coordinate, 5)).toBe(true);
         }
-        // `== null` covers both an omitted key and an explicit `null`; `confidence`
-        // is optional, so absent is as valid an answer as a scored one.
-        if (grounding.confidence != null) {
-          expect(roundsTo(grounding.confidence, 2)).toBe(true);
+        // `== null` covers both an omitted key and an explicit `null`;
+        // `min_ocr_confidence` is optional, so absent is as valid an answer as a
+        // scored one.
+        if (grounding.min_ocr_confidence != null) {
+          expect(roundsTo(grounding.min_ocr_confidence, 2)).toBe(true);
+        }
+      }
+    },
+    120_000, // sync call: 2 x REQUEST_TIMEOUT
+  );
+
+  runIf(
+    'parse (sync) keeps the deprecated grounding confidence in step with min_ocr_confidence',
+    async () => {
+      const client = stagingClient();
+      // Wired by the V2 spec-sync: `Grounding.confidence` was RENAMED to
+      // `min_ocr_confidence`, so the deprecated property stays declared on
+      // `V2Grounding` and both names must address the same score. Whichever name a
+      // staging gateway spells it under, reading through the typed surface has to
+      // yield one probability, never two disagreeing ones. Deliberately does NOT pin
+      // `model`, for the same reason as the two tests above — the score is only
+      // populated at word granularity, and which families a staging cluster can
+      // serve depends on how it was booked, not on the SDK. So this asserts
+      // absent-or-consistent at every level and leaves the exact-value assertions to
+      // the mocked tests in tests/api-resources/v2/v2.test.ts.
+      const res = await client.v2.parse({
+        document: await toFile(fs.readFileSync(SAMPLE_PDF), 'sample.pdf', { type: 'application/pdf' }),
+        options: { atomic_grounding: true },
+      });
+      const pages = res.structure?.children ?? [];
+      expect(pages.length).toBeGreaterThan(0);
+      // Table cells hold a table's words, so flatten one level down as above.
+      const elements = pages.flatMap((page) =>
+        (page.children ?? []).flatMap((el) => [el, ...(el.children ?? [])]),
+      );
+      const groundings = [
+        ...pages.map((page) => page.grounding),
+        ...elements.map((el) => el.grounding),
+        ...elements.flatMap((el) => el.atomic_grounding ?? []),
+      ];
+      expect(groundings.filter((grounding) => grounding != null).length).toBeGreaterThan(0);
+      for (const grounding of groundings) {
+        if (grounding == null) continue;
+        // `== null` throughout: the gateway omits the name it does not use rather
+        // than sending an explicit `null`, and both readings are valid here.
+        const { min_ocr_confidence: renamed, confidence: deprecated } = grounding;
+        if (renamed != null && deprecated != null) {
+          expect(deprecated).toBe(renamed);
+        }
+        const score = renamed ?? deprecated;
+        if (score != null) {
+          expect(score).toBeGreaterThanOrEqual(0);
+          expect(score).toBeLessThanOrEqual(1);
         }
       }
     },
