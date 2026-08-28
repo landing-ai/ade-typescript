@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.12.1 (2026-08-28)
+
+Full Changelog: [v2.12.0...v2.12.1](https://github.com/landing-ai/ade-typescript/compare/v2.12.0...v2.12.1)
+
+### Other Changes
+
+* spec-sync(v2): rename dpt-3-fast model to dpt-3-verity and drop rolled-up confidence (#115) ([0190907](https://github.com/landing-ai/ade-typescript/commit/0190907f1128193fd8dbd072fcad9e9e3fd71e9b))
+* spec-sync(v2): parse response format: precision-aware grounding coordinates and confidence (#113) ([8292cf3](https://github.com/landing-ai/ade-typescript/commit/8292cf3cf389d48dc17c8fa1bbec1314b8f5b6da))
+
 ## 2.12.0 (2026-08-21)
 
 Full Changelog: [v2.11.0...v2.12.0](https://github.com/landing-ai/ade-typescript/compare/v2.11.0...v2.12.0)
