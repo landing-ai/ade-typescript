@@ -141,11 +141,11 @@ describe('client.v2 routing', () => {
   });
 
   test('parse (sync) surfaces per-word atomic_grounding confidence', async () => {
-    // `dpt-3-fast` grounds at word granularity and carries a `confidence` on
+    // `dpt-3-verity` grounds at word granularity and carries a `confidence` on
     // each `atomic_grounding` entry (the lowest per-character OCR confidence in
-    // the word). Where no transcribed word carries a score, the gateway normally
-    // omits the key (the page node below), but tolerate an explicit `null` too
-    // (the element node below) — hence `== null` at the call site, never `=== null`.
+    // the word). Node-level grounding is unscored: the gateway normally omits the
+    // key there (the page node below), but tolerate an explicit `null` too (the
+    // element node below) — hence `== null` at the call site, never `=== null`.
     const box = { xmin: 0, ymin: 0, xmax: 1, ymax: 1 };
     const { client } = stubClient(() =>
       jsonResponse({
@@ -170,31 +170,33 @@ describe('client.v2 routing', () => {
             },
           ],
         },
-        metadata: { model_version: 'dpt-3-fast-20260710' },
+        metadata: { model_version: 'dpt-3-verity-20260710' },
       }),
     );
     const res = await client.v2.parse({
       document: await toFile(Buffer.from('%PDF'), 'a.pdf'),
-      model: 'dpt-3-fast',
+      model: 'dpt-3-verity',
     });
     const el = res.structure?.children?.[0]?.children?.[0];
     expect(el?.atomic_grounding?.map((g) => g.confidence)).toEqual([0.98, 0.42]);
-    // A block with no transcribed word to score carries no confidence: explicit
-    // `null` on the wire stays `null`; an omitted key reads `undefined`. Both
-    // must be reachable through the same optional-and-nullable declaration.
+    // Node-level grounding carries no confidence: explicit `null` on the wire
+    // stays `null`; an omitted key reads `undefined`. Both must be reachable
+    // through the same optional-and-nullable declaration.
     expect(el?.grounding?.confidence).toBeNull();
     expect(res.structure?.children?.[0]?.grounding?.confidence).toBeUndefined();
   });
 
   test('parse (sync) preserves the documented grounding precision exactly', async () => {
-    // The spec pins how precise the two grounding numbers are on the wire: `Box`
-    // coordinates to at most 5 decimal places, `Grounding.confidence` to at most
-    // 2. The SDK's job is to hand those through untouched, so the fixture spans
-    // that range — confidence at one decimal (`0.4`) and at two (`0.97`), box
-    // coordinates at a full five, and the clamped `0`/`1` page box — and asserts
-    // each reads back identically, with no re-rounding and no float drift in
-    // between. Decimal *spelling* is deliberately not asserted, and could not be:
-    // `0.40` and `0.4` parse to the same JavaScript number.
+    // The spec pins how precise a `Box` coordinate is on the wire — at most 5
+    // decimal places — and pins nothing about `Grounding.confidence`, which now
+    // documents only a `[0, 1]` range. Either way the SDK's job is the same: hand
+    // the numbers through untouched. So the fixture spans the range — box
+    // coordinates at a full five places plus the clamped `0`/`1` page box, and
+    // segment confidences at two decimals (`0.97`) and at four (`0.4237`, legal
+    // now that no rounding is promised) — and asserts each reads back
+    // identically, with no re-rounding and no float drift in between. Decimal
+    // *spelling* is deliberately not asserted, and could not be: `0.40` and
+    // `0.4` parse to the same JavaScript number.
     const box = { xmin: 0.10938, ymin: 0.24219, xmax: 0.87891, ymax: 0.31641 };
     const pageBox = { xmin: 0, ymin: 0, xmax: 1, ymax: 1 };
     const { client } = stubClient(() =>
@@ -205,22 +207,22 @@ describe('client.v2 routing', () => {
           children: [
             {
               type: 'page',
-              grounding: { page: 1, range: { start: 0, end: 13 }, box: pageBox, confidence: 0.4 },
+              grounding: { page: 1, range: { start: 0, end: 13 }, box: pageBox },
               children: [
                 {
                   type: 'text',
                   id: 'text-0',
-                  grounding: { page: 1, range: { start: 0, end: 13 }, box, confidence: 0.4 },
+                  grounding: { page: 1, range: { start: 0, end: 13 }, box },
                   atomic_grounding: [
                     { page: 1, range: { start: 0, end: 5 }, box, confidence: 0.97 },
-                    { page: 1, range: { start: 6, end: 13 }, box, confidence: 0.4 },
+                    { page: 1, range: { start: 6, end: 13 }, box, confidence: 0.4237 },
                   ],
                 },
               ],
             },
           ],
         },
-        metadata: { model_version: 'dpt-3-fast-20260710' },
+        metadata: { model_version: 'dpt-3-verity-20260710' },
       }),
     );
     const res = await client.v2.parse({ document: await toFile(Buffer.from('%PDF'), 'a.pdf') });
@@ -231,24 +233,28 @@ describe('client.v2 routing', () => {
     expect(el?.grounding?.box).toEqual(box);
     expect(el?.grounding?.box.xmin).toBe(0.10938);
     expect(el?.atomic_grounding?.map((g) => g.box)).toEqual([box, box]);
-    expect(el?.atomic_grounding?.map((g) => g.confidence)).toEqual([0.97, 0.4]);
-    // Rolled up to the parent groundings at the same 2-decimal resolution.
-    expect(el?.grounding?.confidence).toBe(0.4);
-    expect(page?.grounding?.confidence).toBe(0.4);
+    // Handed through at whatever precision the wire used, including more than the
+    // two decimal places the spec used to promise and no longer does.
+    expect(el?.atomic_grounding?.map((g) => g.confidence)).toEqual([0.97, 0.4237]);
+    // Node-level grounding is unscored, so the key is simply absent there.
+    expect(el?.grounding?.confidence).toBeUndefined();
+    expect(page?.grounding?.confidence).toBeUndefined();
   });
 
-  test('parse (sync) surfaces the weakest-link confidence rolled up to parent groundings', async () => {
-    // Word-granularity models (`dpt-3-fast`) now score EVERY level, not just
-    // `atomic_grounding`: each parent grounding — `table_cell`, `table`, element,
-    // page — carries the lowest confidence among the words below it. The fixture
-    // encodes exactly that: cells at 0.91 and 0.37, so the table and the page
-    // both read 0.37, while a sibling text element keeps its own 0.88.
+  test('parse (sync) scores words only, leaving node groundings unscored', async () => {
+    // Word-granularity models (`dpt-3-verity`) score exactly one level: the
+    // per-word `atomic_grounding` entries. Node groundings — `table_cell`,
+    // `table`, element, page — carry no `confidence` at all, so a caller who
+    // wants a node-level score derives it by walking the words below (one level
+    // further down for a table, whose words live on its cells). The fixture
+    // encodes that: words at 0.91 and 0.37 inside the table's cells and 0.88 on a
+    // sibling text element, with every node grounding unscored.
     const box = { xmin: 0, ymin: 0, xmax: 1, ymax: 1 };
-    const grounding = (start: number, end: number, confidence: number) => ({
+    const grounding = (start: number, end: number, confidence?: number) => ({
       page: 1,
       range: { start, end },
       box,
-      confidence,
+      ...(confidence == null ? {} : { confidence }),
     });
     const { client } = stubClient(() =>
       jsonResponse({
@@ -258,19 +264,19 @@ describe('client.v2 routing', () => {
           children: [
             {
               type: 'page',
-              grounding: grounding(0, 23, 0.37),
+              grounding: grounding(0, 23),
               children: [
                 {
                   type: 'table',
                   id: 'table-0',
-                  grounding: grounding(0, 17, 0.37),
+                  grounding: grounding(0, 17),
                   children: [
                     {
                       type: 'table_cell',
                       id: 'cell-0',
                       row: 0,
                       col: 0,
-                      grounding: grounding(0, 7, 0.91),
+                      grounding: grounding(0, 7),
                       atomic_grounding: [grounding(0, 7, 0.91)],
                     },
                     {
@@ -278,7 +284,7 @@ describe('client.v2 routing', () => {
                       id: 'cell-1',
                       row: 0,
                       col: 1,
-                      grounding: grounding(8, 17, 0.37),
+                      grounding: grounding(8, 17),
                       atomic_grounding: [grounding(8, 17, 0.37)],
                     },
                   ],
@@ -286,33 +292,46 @@ describe('client.v2 routing', () => {
                 {
                   type: 'text',
                   id: 'text-0',
-                  grounding: grounding(18, 23, 0.88),
+                  grounding: grounding(18, 23),
                   atomic_grounding: [grounding(18, 23, 0.88)],
                 },
               ],
             },
           ],
         },
-        metadata: { model_version: 'dpt-3-fast-20260710' },
+        metadata: { model_version: 'dpt-3-verity-20260710' },
       }),
     );
     const res = await client.v2.parse({
       document: await toFile(Buffer.from('%PDF'), 'a.pdf'),
-      model: 'dpt-3-fast',
+      model: 'dpt-3-verity',
     });
     const page = res.structure?.children?.[0];
     const [table, text] = page?.children ?? [];
-    expect(table?.children?.map((cell) => cell.grounding?.confidence)).toEqual([0.91, 0.37]);
-    // The table is only as trustworthy as its weakest cell, and the page as its
-    // weakest word anywhere on it — including inside the table.
-    expect(table?.grounding?.confidence).toBe(0.37);
-    expect(page?.grounding?.confidence).toBe(0.37);
-    expect(text?.grounding?.confidence).toBe(0.88);
-    // Flagging low-confidence regions is a plain filter over node groundings now,
-    // with no need to walk down to `atomic_grounding` first.
-    const suspect = (page?.children ?? []).filter(
-      (el) => el.grounding?.confidence != null && el.grounding.confidence < 0.5,
-    );
+    // The words are scored...
+    const cellWords = table?.children?.flatMap((cell) => cell.atomic_grounding ?? []) ?? [];
+    expect(cellWords.map((word) => word.confidence)).toEqual([0.91, 0.37]);
+    // ...and nothing above them is. `undefined`, not `null`: the gateway omits
+    // the key on node grounding rather than sending an explicit null.
+    expect(table?.children?.map((cell) => cell.grounding?.confidence)).toEqual([undefined, undefined]);
+    expect(table?.grounding?.confidence).toBeUndefined();
+    expect(page?.grounding?.confidence).toBeUndefined();
+    expect(text?.grounding?.confidence).toBeUndefined();
+    // So flagging low-confidence regions means walking down to the words: an
+    // element's score is the minimum over its own segments and its children's.
+    const worstWord = (el: LandingAIADE.V2ParseElement) => {
+      const scores = [el, ...(el.children ?? [])]
+        .flatMap((node) => node.atomic_grounding ?? [])
+        .map((word) => word.confidence)
+        .filter((confidence): confidence is number => confidence != null);
+      return scores.length === 0 ? null : Math.min(...scores);
+    };
+    expect(worstWord(table!)).toBe(0.37);
+    expect(worstWord(text!)).toBe(0.88);
+    const suspect = (page?.children ?? []).filter((el) => {
+      const score = worstWord(el);
+      return score != null && score < 0.5;
+    });
     expect(suspect.map((el) => el.id)).toEqual(['table-0']);
   });
 
