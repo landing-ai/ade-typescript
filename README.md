@@ -106,33 +106,41 @@ The response is a `V2ParseResponse`:
 
 If some pages cannot be parsed, the request still succeeds (HTTP 206) and `metadata.failed_pages` lists the pages that failed. If a synchronous parse times out, the client throws `V2SyncTimeoutError`; use [jobs](#process-large-documents-asynchronously-jobs) instead.
 
-`atomic_grounding` segments a leaf element at whichever granularity the model reads at: one entry per visual line for `dpt-3-pro`, and one entry per **word** for `dpt-3-fast` — each with a `confidence` in `[0, 1]`, the lowest per-character OCR confidence in that word, so a word is only as trustworthy as its weakest character. `confidence` arrives rounded to at most 2 decimal places (`0.42`, never `0.4237`), so pick a threshold at that resolution.
+`atomic_grounding` segments a leaf element at whichever granularity the model reads at: one entry per visual line for `dpt-3-pro`, and one entry per **word** for `dpt-3-verity` — each with a `confidence` in `[0, 1]`, the lowest per-character OCR confidence in that word, so a word is only as trustworthy as its weakest character. No precision is promised, so compare against a threshold rather than expecting a fixed number of decimal places.
 
-Word-granularity models apply that same weakest-link rule all the way up the tree: every `grounding` — element, `table_cell`, `table`, page — carries the lowest confidence among the words below it, so you can flag a suspect region without walking down to individual words:
+Those per-word segments are the only place a `confidence` appears — node-level `grounding` (element, `table_cell`, `table`, page) is unscored — so scoring a region means walking down to its words:
 
 ```ts
 const parsed = await client.v2.parse({
   document: fs.createReadStream('scan.pdf'),
-  model: 'dpt-3-fast', // word-granularity grounding, with rolled-up confidence
+  model: 'dpt-3-verity', // word-granularity grounding, with a per-word confidence
 });
 
-for (const page of parsed.structure?.children ?? []) {
-  // `confidence` is omitted where no transcribed word carries a score — on
-  // line-granularity models (`dpt-3-pro`), on text the model wrote rather than
-  // read (captioned figures and similar), and with markdown suppressed — so
-  // check with `!= null` before comparing.
-  const pageConfidence = page.grounding?.confidence;
-  if (pageConfidence != null && pageConfidence < 0.5) {
-    console.log(`page ${page.page} has at least one weak word`);
-  }
+// The words under an element. A table holds its words on its `table_cell`
+// children, so look one level further down there too.
+const wordsUnder = (element: LandingAIADE.V2ParseElement) =>
+  [element, ...(element.children ?? [])].flatMap((node) => node.atomic_grounding ?? []);
 
+// `confidence` is omitted on line-granularity models (`dpt-3-pro`) and on text the
+// model wrote rather than read (captioned figures and similar), so check with
+// `!= null` before comparing — an omitted key and an explicit null read alike.
+const worstWord = (element: LandingAIADE.V2ParseElement) => {
+  const scores = wordsUnder(element)
+    .map((word) => word.confidence)
+    .filter((confidence): confidence is number => confidence != null);
+  return scores.length === 0 ? null : Math.min(...scores);
+};
+
+for (const page of parsed.structure?.children ?? []) {
   for (const element of page.children ?? []) {
-    if (element.grounding?.confidence != null && element.grounding.confidence >= 0.5) {
-      continue; // nothing weak under this element; no need to look at its words
+    const score = worstWord(element);
+    if (score == null || score >= 0.5) {
+      continue; // unscored, or nothing weak under this element
     }
-    for (const word of element.atomic_grounding ?? []) {
+    console.log(`weak ${element.type} on page ${page.page} (${score})`);
+    for (const word of wordsUnder(element)) {
       if (word.confidence != null && word.confidence < 0.5) {
-        console.log(`low confidence on page ${word.page}`, word.range, word.box);
+        console.log('  low confidence', word.range, word.box);
       }
     }
   }
@@ -141,7 +149,7 @@ for (const page of parsed.structure?.children ?? []) {
 
 The `document` parameter accepts an `fs.ReadStream`, a web `File`, a `fetch` `Response`, or the `toFile` helper; see [File Uploads](#file-uploads).
 
-The `model` parameter accepts a dated snapshot (`dpt-3-pro-20260710`), a `-latest` alias, or a bare family name (equivalent to that family's `-latest`). Two families are available: `dpt-3-pro` for highest quality, and `dpt-3-fast` for lower-latency parsing without vision-model captioning. It defaults to the latest DPT-3 Pro snapshot.
+The `model` parameter accepts a dated snapshot (`dpt-3-pro-20260710`), a `-latest` alias, or a bare family name (equivalent to that family's `-latest`). Two families are available: `dpt-3-pro` for highest quality, and `dpt-3-verity` for lower-latency parsing without vision-model captioning. It defaults to the latest DPT-3 Pro snapshot.
 
 ## Extract
 

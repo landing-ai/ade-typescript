@@ -640,7 +640,7 @@ export interface components {
         Element: {
             /**
              * Atomic Grounding
-             * @description Fine-grained grounding segments, at whichever granularity the model reads at: one entry per visual line for `dpt-3-pro`, one per **word** — each with its `confidence` — for `dpt-3-fast`, including the words inside table cells. Present only on leaf elements — every type except `table`. `[]` in three cases: an element whose markdown is suppressed via `blocks.<type>.markdown=false`; a `table_cell` on a line-granularity model (a cell has no finer granularity than itself there); and a `table_cell` on a word-granularity model whose words cannot be located in the rendered cell text — a `|` escaped on the way into a pipe table, or a character escaped on the way into an HTML table — where the segments are dropped rather than risk reporting offsets that point at the wrong characters. Any other leaf the model could not segment finer carries a single entry covering the element's full range and box. Omitted entirely when `options.atomic_grounding` is `false`.
+             * @description Fine-grained grounding segments, at whichever granularity the model reads at: one entry per visual line for `dpt-3-pro`, one per **word** — each with its `confidence` — for `dpt-3-verity`, including the words inside table cells. Present only on leaf elements — every type except `table`. `[]` in three cases: an element whose markdown is suppressed via `blocks.<type>.markdown=false`; a `table_cell` on a line-granularity model (a cell has no finer granularity than itself there); and a `table_cell` on a word-granularity model whose words cannot be located in the rendered cell text — a `|` escaped on the way into a pipe table, or a character escaped on the way into an HTML table — where the segments are dropped rather than risk reporting offsets that point at the wrong characters. Any other leaf the model could not segment finer carries a single entry covering the element's full range and box. Omitted entirely when `options.atomic_grounding` is `false`.
              * @default null
              */
             atomic_grounding: components["schemas"]["Grounding"][] | null;
@@ -722,7 +722,7 @@ export interface components {
             box: components["schemas"]["Box"];
             /**
              * Confidence
-             * @description How sure the model is of the text in this grounding, in `[0, 1]` with at most 2 decimal places. Word-granularity models (`dpt-3-fast`) set it at every level with the same weakest-link rule: a word `atomic_grounding` entry carries the lowest per-character OCR confidence in the word, and each parent grounding (element, `table_cell`, `table`, page) carries the lowest confidence among its transcribed words. Omitted where no transcribed word carries a score: models that ground at line granularity (`dpt-3-pro`), blocks whose text the model wrote rather than read (captioned figures and similar), and blocks with markdown suppressed.
+             * @description How sure the model is of the text in this segment, in `[0, 1]`. Present only on word-granularity `atomic_grounding` entries (`dpt-3-verity`), where it is the lowest per-character OCR confidence in the word — so a word is only as trustworthy as its weakest character. Omitted on node-level grounding and on models that ground at line granularity.
              * @default null
              */
             confidence: number | null;
@@ -3661,7 +3661,7 @@ export interface operations {
                     document?: string;
                     /** @description A publicly accessible URL to the file to parse. The file must be a PDF or image; see the list of [supported file types](https://docs.landing.ai/dpt3/file-types). Provide either `document` or `document_url`, not both. */
                     document_url?: string;
-                    /** @description The DPT-3 model snapshot to use for this request. Accepts a dated snapshot (for example, `dpt-3-pro-20260710`), a `-latest` alias, or a bare family name (equivalent to that family's `-latest`). Two families are available: `dpt-3-pro` for highest quality, and `dpt-3-fast` for lower-latency parsing without vision-model captioning. Defaults to the latest DPT-3 Pro snapshot. */
+                    /** @description The DPT-3 model snapshot to use for this request. Accepts a dated snapshot (for example, `dpt-3-pro-20260710`), a `-latest` alias, or a bare family name (equivalent to that family's `-latest`). Two families are available: `dpt-3-pro` for highest quality, and `dpt-3-verity` for lower-latency parsing without vision-model captioning. Defaults to the latest DPT-3 Pro snapshot. */
                     model?: string;
                     /**
                      * ParseOptions
@@ -3804,7 +3804,7 @@ export interface operations {
                     document?: string;
                     /** @description A publicly accessible URL to the file to parse. The file must be a PDF or image; see the list of [supported file types](https://docs.landing.ai/dpt3/file-types). Provide either `document` or `document_url`, not both. */
                     document_url?: string;
-                    /** @description The DPT-3 model snapshot to use for this request. Accepts a dated snapshot (for example, `dpt-3-pro-20260710`), a `-latest` alias, or a bare family name (equivalent to that family's `-latest`). Two families are available: `dpt-3-pro` for highest quality, and `dpt-3-fast` for lower-latency parsing without vision-model captioning. Defaults to the latest DPT-3 Pro snapshot. */
+                    /** @description The DPT-3 model snapshot to use for this request. Accepts a dated snapshot (for example, `dpt-3-pro-20260710`), a `-latest` alias, or a bare family name (equivalent to that family's `-latest`). Two families are available: `dpt-3-pro` for highest quality, and `dpt-3-verity` for lower-latency parsing without vision-model captioning. Defaults to the latest DPT-3 Pro snapshot. */
                     model?: string;
                     /**
                      * ParseOptions

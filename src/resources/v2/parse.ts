@@ -25,7 +25,7 @@ export interface V2ParseParams {
    * The DPT-3 model snapshot to use for parsing. Accepts a dated snapshot (for
    * example, `dpt-3-pro-20260710`), a `-latest` alias, or a bare family name
    * (equivalent to that family's `-latest`). Two families are available:
-   * `dpt-3-pro` for highest quality, and `dpt-3-fast` for lower-latency parsing
+   * `dpt-3-pro` for highest quality, and `dpt-3-verity` for lower-latency parsing
    * without vision-model captioning. Defaults to the latest DPT-3 Pro snapshot.
    */
   model?: string | null;

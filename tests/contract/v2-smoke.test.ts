@@ -36,9 +36,9 @@ const REQUEST_TIMEOUT = 45_000;
  *
  * Counting the digits in `String(value)` would be the obvious check and the
  * wrong one: the wire values are binary floats, so scaling one by a power of ten
- * does not always land on an integer. Real cases from this suite's own range: a
- * box coordinate of `0.31641` scales to `31641.000000000004`, and a confidence
- * of `0.29` to `28.999999999999996`. Only a tolerance comparison reads those
+ * does not always land on an integer. Real cases: a box coordinate of `0.31641`
+ * scales to `31641.000000000004`, and a two-place `0.29` to
+ * `28.999999999999996`. Only a tolerance comparison reads those
  * back as 5 and 2 decimal places. `1e-6` sits far above that representation
  * noise (worst case ~7e-12 at five places, ~7e-15 at two) and far below the
  * `0.1` an extra decimal place would contribute, so a genuinely over-precise
@@ -143,19 +143,22 @@ describe('V2 contract (staging)', () => {
   );
 
   runIf(
-    'parse (sync) exposes the optional grounding confidence as a probability at every level',
+    'parse (sync) exposes the optional grounding confidence as a probability wherever it appears',
     async () => {
       const client = stagingClient();
-      // Wired by the V2 spec-sync: `Grounding.confidence`, which the spec now
-      // documents at EVERY level of the tree (page and element groundings roll their
-      // words up, not just `atomic_grounding` entries). Deliberately does NOT pin
-      // `model` — `confidence` is only populated at word granularity (`dpt-3-fast`),
-      // and whether a given family is servable depends on how the staging cluster was
-      // booked (`dpt-3-fast` needs a GPU-backed booking; against one without it the
-      // request hangs until the test times out). That is an environment property, not
-      // an SDK contract, so this asserts the field's contract against whatever model
-      // the gateway defaults to — absent, or a probability in `[0, 1]` — and leaves
-      // the populated-value and weakest-link assertions to the mocked test in
+      // Wired by the V2 spec-sync: `Grounding.confidence`, which the spec now scopes
+      // to per-word `atomic_grounding` entries only — node groundings (page, element,
+      // `table_cell`, `table`) are documented as unscored, so the earlier rolled-up
+      // reading is gone. Deliberately does NOT pin `model` — `confidence` is only
+      // populated at word granularity (`dpt-3-verity`), and whether a given family is
+      // servable depends on how the staging cluster was booked (`dpt-3-verity` needs a
+      // GPU-backed booking; against one without it the request hangs until the test
+      // times out). That is an environment property, not an SDK contract, so this
+      // asserts the field's contract against whatever model the gateway defaults to,
+      // at every level it could surface on: absent, or a probability in `[0, 1]`.
+      // Node groundings are held to that same absent-or-valid bar rather than to
+      // "absent", so the gate does not turn on which reading a given deploy is on.
+      // The placement and value assertions live in the mocked test in
       // tests/api-resources/v2/v2.test.ts, which controls the response body.
       const res = await client.v2.parse({
         document: await toFile(fs.readFileSync(SAMPLE_PDF), 'sample.pdf', { type: 'application/pdf' }),
@@ -179,8 +182,8 @@ describe('V2 contract (staging)', () => {
       ];
       for (const grounding of groundings) {
         const confidence = grounding?.confidence;
-        // `== null` covers both absent (line-granularity models, and blocks with no
-        // transcribed word, omit the key) and an explicit `null`.
+        // `== null` covers both absent (node groundings, and line-granularity models,
+        // omit the key) and an explicit `null`.
         expect(confidence == null || typeof confidence === 'number').toBe(true);
         if (confidence != null) {
           expect(confidence).toBeGreaterThanOrEqual(0);
@@ -192,19 +195,19 @@ describe('V2 contract (staging)', () => {
   );
 
   runIf(
-    'parse (sync) returns grounding coordinates and confidence at the documented precision',
+    'parse (sync) returns grounding coordinates at the documented precision',
     async () => {
       const client = stagingClient();
-      // Wired by the V2 spec-sync: the spec now pins how precise both grounding
-      // numbers are on the wire — `Box` coordinates carry at most 5 decimal places
-      // and `Grounding.confidence` at most 2. The gateway clamps and rounds before
+      // Wired by the V2 spec-sync: the spec pins how precise a `Box` coordinate is on
+      // the wire — at most 5 decimal places. The gateway clamps and rounds before
       // serializing, so what a caller reads back IS the stored value; a finer number
       // arriving here would mean the SDK is handing out digits the contract never
-      // promised. Deliberately does NOT pin `model`, for the same reason as the
-      // confidence test above: which model families a staging cluster can serve
-      // depends on how it was booked, not on the SDK. So `confidence` is asserted
-      // absent-or-valid, and the exact-value assertions live in the mocked test in
-      // tests/api-resources/v2/v2.test.ts, which controls the response body.
+      // promised. `Grounding.confidence` used to be pinned to 2 decimal places and no
+      // longer is — the spec now documents only a `[0, 1]` range — so it is checked
+      // for range alone here; asserting a rounding the contract dropped would fail the
+      // gate on a legal response. Deliberately does NOT pin `model`, for the same
+      // reason as the confidence test above: which model families a staging cluster
+      // can serve depends on how it was booked, not on the SDK.
       const res = await client.v2.parse({
         document: await toFile(fs.readFileSync(SAMPLE_PDF), 'sample.pdf', { type: 'application/pdf' }),
         options: { atomic_grounding: true },
@@ -238,9 +241,56 @@ describe('V2 contract (staging)', () => {
           expect(roundsTo(coordinate, 5)).toBe(true);
         }
         // `== null` covers both an omitted key and an explicit `null`; `confidence`
-        // is optional, so absent is as valid an answer as a scored one.
+        // is optional, so absent is as valid an answer as a scored one. No decimal
+        // check: the spec pins its range, not its precision.
         if (grounding.confidence != null) {
-          expect(roundsTo(grounding.confidence, 2)).toBe(true);
+          expect(grounding.confidence).toBeGreaterThanOrEqual(0);
+          expect(grounding.confidence).toBeLessThanOrEqual(1);
+        }
+      }
+    },
+    120_000, // sync call: 2 x REQUEST_TIMEOUT
+  );
+
+  runIf(
+    'parse (sync) supports deriving a node-level confidence from atomic_grounding',
+    async () => {
+      const client = stagingClient();
+      // Wired by the V2 spec-sync: with `confidence` now scoped to per-word
+      // `atomic_grounding` entries, a caller who wants a score for an element or a
+      // page has to compute it from the words below — the gateway no longer rolls one
+      // up onto the parent. This checks that walk is expressible against the shipped
+      // types and holds together on a live response: the segments are reachable
+      // (including the ones on a table's cells, one level further down), and the
+      // minimum over whichever of them are scored is itself a probability. Does NOT
+      // pin `model`, so on the default line-granularity model every word is unscored
+      // and the derived value is legitimately `null` — the assertion is
+      // absent-or-valid, exactly like the field it is derived from. The populated case
+      // is pinned in the mocked test in tests/api-resources/v2/v2.test.ts.
+      const res = await client.v2.parse({
+        document: await toFile(fs.readFileSync(SAMPLE_PDF), 'sample.pdf', { type: 'application/pdf' }),
+        options: { atomic_grounding: true },
+      });
+      const pages = res.structure?.children ?? [];
+      expect(pages.length).toBeGreaterThan(0);
+      const worstWord = (el: LandingAIADE.V2ParseElement) => {
+        // A `table` holds its words on its `table_cell` children, so include those.
+        const scores = [el, ...(el.children ?? [])]
+          .flatMap((node) => node.atomic_grounding ?? [])
+          .map((word) => word.confidence)
+          .filter((confidence): confidence is number => confidence != null);
+        return scores.length === 0 ? null : Math.min(...scores);
+      };
+      const elements = pages.flatMap((page) => page.children ?? []);
+      expect(elements.length).toBeGreaterThan(0);
+      for (const element of elements) {
+        const score = worstWord(element);
+        // A minimum taken over a non-numeric confidence would surface as `NaN`
+        // rather than as a type error, so rule that out before the range check.
+        expect(score == null || Number.isFinite(score)).toBe(true);
+        if (score != null) {
+          expect(score).toBeGreaterThanOrEqual(0);
+          expect(score).toBeLessThanOrEqual(1);
         }
       }
     },
