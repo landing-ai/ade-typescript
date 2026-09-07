@@ -34,8 +34,12 @@ export interface V2ParseParams {
   options?: Record<string, unknown> | string | null;
 
   /**
-   * Encrypted PDFs are not currently supported: providing a password returns a
-   * 422. Decrypt the file before uploading. Sent within `options` on the wire.
+   * Password for an encrypted PDF. The document is decrypted once at the start
+   * of processing, and the password is not retained with the result. PDFs only —
+   * supplying one for an image or an Office document returns a 422
+   * (`password_unsupported_content_type`). A wrong password returns a 422
+   * (`encrypted_pdf_wrong_password`); omitting it for a locked PDF returns a 422
+   * (`encrypted_pdf_password_required`). Sent within `options` on the wire.
    */
   password?: string | null;
 }
@@ -85,9 +89,10 @@ export function buildParseForm(params: V2ParseJobCreateParams): Record<string, u
       body[key] = value;
     }
   }
-  // The parse request carries `password` inside `options` (encrypted PDFs are
-  // unsupported — any value returns 422). Fold the top-level convenience param
-  // into the options object, mirroring how `buildExtractBody` folds `strict`.
+  // The parse request carries `password` inside `options` — that is where the
+  // contract puts the key that unlocks an encrypted PDF. Fold the top-level
+  // convenience param into the options object, mirroring how `buildExtractBody`
+  // folds `strict`.
   let opts = options;
   if (password !== undefined && password !== null) {
     if (opts === undefined || opts === null) {

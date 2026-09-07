@@ -413,6 +413,63 @@ describe('client.v2 routing', () => {
     expect(form.get('password')).toBeNull(); // no longer sent as a top-level field
   });
 
+  test('parse sends the password as the sole option when no other options are given', async () => {
+    let sentBody: unknown;
+    const fetch: Fetch = async (input, init) => {
+      if (!String(input).startsWith('data:')) sentBody = init?.body;
+      return jsonResponse({ markdown: 'x', metadata: {} });
+    };
+    const client = new LandingAIADE({ apikey: 'k', environment: 'staging', maxRetries: 0, fetch });
+    await client.v2.parse({
+      document: await toFile(Buffer.from('%PDF'), 'locked.pdf'),
+      password: 'hunter2',
+    });
+    const form = sentBody as FormData;
+    // Wired by the V2 spec-sync: `options.password` unlocks an encrypted PDF
+    // (it used to be documented as unsupported, always returning a 422), so the
+    // convenience param has to reach the wire even when the caller passes no
+    // other options — the form carries an `options` object it did not ask for.
+    expect(JSON.parse(String(form.get('options')))).toEqual({ password: 'hunter2' });
+  });
+
+  test('parse merges the password into a pre-serialized options string', async () => {
+    let sentBody: unknown;
+    const fetch: Fetch = async (input, init) => {
+      if (!String(input).startsWith('data:')) sentBody = init?.body;
+      return jsonResponse({ markdown: 'x', metadata: {} });
+    };
+    const client = new LandingAIADE({ apikey: 'k', environment: 'staging', maxRetries: 0, fetch });
+    await client.v2.parse({
+      document: await toFile(Buffer.from('%PDF'), 'locked.pdf'),
+      options: '{"pages":[0,1]}', // already JSON-encoded by the caller
+      password: 'hunter2',
+    });
+    const form = sentBody as FormData;
+    expect(JSON.parse(String(form.get('options')))).toEqual({ pages: [0, 1], password: 'hunter2' });
+    expect(form.get('password')).toBeNull();
+  });
+
+  test('parseJobs.create folds the password convenience param into options', async () => {
+    let sentBody: unknown;
+    const fetch: Fetch = async (input, init) => {
+      if (!String(input).startsWith('data:')) sentBody = init?.body;
+      return jsonResponse({ job_id: 'pj-11' }, 202);
+    };
+    const client = new LandingAIADE({ apikey: 'k', environment: 'staging', maxRetries: 0, fetch });
+    // The async route takes the same `ParseOptions` as the sync one, so an
+    // encrypted PDF is unlockable on a job too.
+    const job = await client.v2.parseJobs.create({
+      document: await toFile(Buffer.from('%PDF'), 'locked.pdf'),
+      password: 'hunter2',
+      service_tier: 'priority',
+    });
+    expect(job.job_id).toBe('pj-11');
+    const form = sentBody as FormData;
+    expect(JSON.parse(String(form.get('options')))).toEqual({ password: 'hunter2' });
+    expect(form.get('service_tier')).toBe('priority');
+    expect(form.get('password')).toBeNull();
+  });
+
   test('parseJobs.get normalizes the new result/error/completed_at envelope', async () => {
     const { client } = stubClient(() =>
       jsonResponse({

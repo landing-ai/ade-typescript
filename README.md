@@ -151,6 +151,32 @@ The `document` parameter accepts an `fs.ReadStream`, a web `File`, a `fetch` `Re
 
 The `model` parameter accepts a dated snapshot (`dpt-3-pro-20260710`), a `-latest` alias, or a bare family name (equivalent to that family's `-latest`). Two families are available: `dpt-3-pro` for highest quality, and `dpt-3-verity` for lower-latency parsing without vision-model captioning. It defaults to the latest DPT-3 Pro snapshot.
 
+### Encrypted PDFs
+
+Pass `password` to parse a password-protected PDF. The document is decrypted once at the start of processing, and the password is not retained with the result:
+
+```ts
+const parsed = await client.v2.parse({
+  document: fs.createReadStream('locked.pdf'),
+  password: process.env['PDF_PASSWORD'],
+  options: { inline_markdown: true }, // `password` merges into `options` on the wire
+});
+```
+
+`password` is a top-level convenience param that the SDK folds into the wire's `options` object, so passing it alongside your own `options` merges the two rather than replacing them. It works the same way on `client.v2.parseJobs.create`.
+
+Passwords apply to PDFs only. Supplying one for an image or an Office document fails with a 422 (`password_unsupported_content_type`), a wrong password fails with a 422 (`encrypted_pdf_wrong_password`), and omitting one for a locked PDF fails with a 422 (`encrypted_pdf_password_required`) — all surfaced as an `UnprocessableEntityError` whose `error.code` carries the code:
+
+```ts
+try {
+  await client.v2.parse({ document: fs.createReadStream('locked.pdf') });
+} catch (err) {
+  if (err instanceof LandingAIADE.UnprocessableEntityError) {
+    console.log((err.error as { code?: string }).code); // e.g. 'encrypted_pdf_password_required'
+  }
+}
+```
+
 ## Extract
 
 Use `client.v2.extract` to pull structured fields out of Markdown (typically from a parse response) using a schema. The `schema` parameter accepts a JSON Schema object or a JSON string. Provide exactly one Markdown source: `markdown` or `markdown_url`.

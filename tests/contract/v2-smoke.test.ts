@@ -298,6 +298,49 @@ describe('V2 contract (staging)', () => {
   );
 
   runIf(
+    'parse (sync) accepts an options password instead of rejecting it outright',
+    async () => {
+      const client = stagingClient();
+      // Wired by the V2 spec-sync: `options.password` used to be documented as
+      // unsupported — ANY value returned a 422 and the advice was to decrypt the
+      // file first. It now unlocks an encrypted PDF, so the field has to survive
+      // the trip: the SDK folds the top-level convenience param into `options`
+      // (see buildParseForm), and the gateway has to take it there.
+      //
+      // The sample is not encrypted, and the spec does not say what a password on
+      // an unencrypted PDF does, so this asserts the pair of outcomes the contract
+      // does cover rather than pinning one: either the parse succeeds, or it fails
+      // with a 422 carrying one of the documented password codes. What it rules out
+      // is the field being rejected as unknown, or a blanket "not supported" 422
+      // under some other code. Does NOT pin `model`, for the same reason as the
+      // tests above — which families a staging cluster can serve depends on how it
+      // was booked, not on the SDK. The wire placement is pinned in the mocked test
+      // in tests/api-resources/v2/v2.test.ts, which controls the request body.
+      const documentedCodes = [
+        'password_unsupported_content_type',
+        'encrypted_pdf_wrong_password',
+        'encrypted_pdf_password_required',
+      ];
+      try {
+        const res = await client.v2.parse({
+          document: await toFile(fs.readFileSync(SAMPLE_PDF), 'sample.pdf', { type: 'application/pdf' }),
+          password: 'not-the-password',
+        });
+        // `metadata` is the only required field on the response; `markdown` and
+        // `structure` are optional, so hold the accepted case to the same bar the
+        // parse tests above use for this sample — a tree with at least one page.
+        expect(res.metadata).toBeDefined();
+        expect((res.structure?.children ?? []).length).toBeGreaterThan(0);
+      } catch (err) {
+        if (!(err instanceof LandingAIADE.UnprocessableEntityError)) throw err;
+        const code = (err.error as { code?: string } | undefined)?.code;
+        expect(documentedCodes).toContain(code);
+      }
+    },
+    120_000, // sync call: 2 x REQUEST_TIMEOUT
+  );
+
+  runIf(
     'parseJobs.list returns a normalized JobList against the new envelope',
     async () => {
       const client = stagingClient();
