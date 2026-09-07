@@ -4,6 +4,9 @@ set -e
 
 cd "$(dirname "$0")/.."
 
+echo "==> Checking client.v2 routes against the spec snapshot"
+./scripts/spec-sync/check-v2-paths.sh specs/v2-aide.json src/resources/v2
+
 echo "==> Running eslint"
 ./node_modules/.bin/eslint .
 
