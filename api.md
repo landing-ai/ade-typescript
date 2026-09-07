@@ -61,6 +61,8 @@ Every node in a parse `structure` tree carries a <a href="./src/resources/v2/typ
 
 A <a href="./src/resources/v2/types.ts">`V2GroundingBox`</a> coordinate arrives at a fixed precision — at most 5 decimal places, clamped and rounded by the gateway before serializing, so it is the stored value rather than a truncation of something finer. `confidence` carries no such promise: the spec pins its `[0, 1]` range only, so compare it against a threshold rather than expecting a fixed number of decimal places.
 
+`client.v2.parse` and `client.v2.parseJobs.create` accept an optional `password` for an encrypted PDF (sent inside `options` on the wire); the document is decrypted at the start of processing and the password is not retained with the result. It is for PDFs only — a password sent with an image or an Office document is a `422` (`password_unsupported_content_type`), as are a wrong password (`encrypted_pdf_wrong_password`) and a locked PDF submitted without one (`encrypted_pdf_password_required`).
+
 `client.v2.parseJobs` and `client.v2.extractJobs` both return a single, unified <a href="./src/resources/v2/types.ts">`Job`</a> shape even though the underlying parse/extract job envelopes differ upstream — `Job.raw` retains the full original envelope as an escape hatch. `Job.metadata` carries the envelope's top-level metadata receipt (a <a href="./src/resources/v2/types.ts">`V2ParseMetadata`</a> for parse jobs), returned alongside `raw.output_url` when a job created with `output_save_url` completes; it is `null` for inline jobs, whose metadata lives on `Job.result`.
 
 Types:
