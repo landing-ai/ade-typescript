@@ -1,4 +1,4 @@
-import LandingAIADE, { toFile } from 'landingai-ade';
+import LandingAIADE, { UnprocessableEntityError, toFile } from 'landingai-ade';
 import fs from 'fs';
 import path from 'path';
 
@@ -13,6 +13,13 @@ const runIf = apiKey ? test : test.skip;
 
 const SAMPLE_MARKDOWN = '# Acme Inc. — Q1 Report\n\nTotal revenue for the quarter was **$1,250,000**.\n';
 const SAMPLE_PDF = path.join(__dirname, 'sample.pdf');
+
+// A 1x1 PNG, inline so the password test needs no binary fixture. Its only job is
+// to be a valid non-PDF upload; nothing asserts anything about its content.
+const TINY_PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'base64',
+);
 
 // This file is a merge gate against a LIVE environment, so it has to fail fast and legibly. The
 // SDK ships an 8-minute timeout with 2 retries — right for a real caller parsing a 500-page scan,
@@ -293,6 +300,28 @@ describe('V2 contract (staging)', () => {
           expect(score).toBeLessThanOrEqual(1);
         }
       }
+    },
+    120_000, // sync call: 2 x REQUEST_TIMEOUT
+  );
+
+  runIf(
+    'parse (sync) transmits a password and the gateway scopes it to PDFs',
+    async () => {
+      const client = stagingClient();
+      // Wired by the V2 spec-sync: `password` is no longer a blanket 422 ("encrypted
+      // PDFs are not supported") — it now unlocks an encrypted PDF, and the rejections
+      // are scoped to three named cases. The one this gate can reach without shipping
+      // an encrypted fixture is the content-type case, which the spec states outright:
+      // a password sent with an image is a 422. That makes it a guaranteed staging
+      // answer rather than a guess, and it still proves the SDK folds the param into
+      // `options` and puts it on the wire — a dropped password would parse the image
+      // and return 200 instead. Which 422 code comes back is NOT asserted: any other
+      // complaint about a 1x1 PNG is also a 422, so pinning the code would make an
+      // unrelated validation change fail this gate. The code and the happy path are
+      // pinned in the mocked tests in tests/api-resources/v2/v2.test.ts.
+      const image = await toFile(TINY_PNG, 'pixel.png', { type: 'image/png' });
+      const call = client.v2.parse({ document: image, password: 'not-a-pdf-password' });
+      await expect(call).rejects.toBeInstanceOf(UnprocessableEntityError);
     },
     120_000, // sync call: 2 x REQUEST_TIMEOUT
   );

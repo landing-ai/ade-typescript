@@ -1,4 +1,4 @@
-import LandingAIADE, { V2SyncTimeoutError, toFile } from 'landingai-ade';
+import LandingAIADE, { UnprocessableEntityError, V2SyncTimeoutError, toFile } from 'landingai-ade';
 import type { Fetch } from 'landingai-ade/internal/builtin-types';
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -411,6 +411,70 @@ describe('client.v2 routing', () => {
     const form = sentBody as FormData;
     expect(JSON.parse(String(form.get('options')))).toEqual({ inline_markdown: true, password: 'hunter2' });
     expect(form.get('password')).toBeNull(); // no longer sent as a top-level field
+  });
+
+  test('parse sends the password alone when no other options are given', async () => {
+    // Wired by the V2 spec-sync: encrypted PDFs are supported now — the password
+    // is the key that unlocks the document rather than a value the gateway
+    // rejects, so it has to reach the wire even when it is the only option.
+    let sentBody: unknown;
+    const fetch: Fetch = async (input, init) => {
+      if (!String(input).startsWith('data:')) sentBody = init?.body;
+      return jsonResponse({ markdown: 'x', metadata: {} });
+    };
+    const client = new LandingAIADE({ apikey: 'k', environment: 'staging', maxRetries: 0, fetch });
+    await client.v2.parse({
+      document: await toFile(Buffer.from('%PDF'), 'locked.pdf'),
+      password: 'hunter2',
+    });
+    const form = sentBody as FormData;
+    expect(JSON.parse(String(form.get('options')))).toEqual({ password: 'hunter2' });
+  });
+
+  test('parseJobs.create folds the password into options too', async () => {
+    let sentBody: unknown;
+    const fetch: Fetch = async (input, init) => {
+      if (!String(input).startsWith('data:')) sentBody = init?.body;
+      return jsonResponse({ job_id: 'pj-pw' }, 202);
+    };
+    const client = new LandingAIADE({ apikey: 'k', environment: 'staging', maxRetries: 0, fetch });
+    const job = await client.v2.parseJobs.create({
+      document: await toFile(Buffer.from('%PDF'), 'locked.pdf'),
+      password: 'hunter2',
+      service_tier: 'priority',
+    });
+    expect(job.job_id).toBe('pj-pw');
+    const form = sentBody as FormData;
+    expect(JSON.parse(String(form.get('options')))).toEqual({ password: 'hunter2' });
+    expect(form.get('service_tier')).toBe('priority');
+  });
+
+  test('a wrong password surfaces as a 422 naming the documented code', async () => {
+    // The spec scopes the password 422s to three named cases; this is the one a
+    // caller can act on, so pin that the body reaches them unmangled.
+    //
+    // Shape matters here, because `error` is the whole parsed body (see APIError in
+    // src/core/error.ts) and this test is what documents it: the spec's ErrorResponse
+    // is FLAT — `{code, message}`, both required — so the code reads back as
+    // `err.error.code`, NOT `err.error.error.code`. Staging confirms it. Do not wrap
+    // the mock body in an extra `error` object: the job envelope's `error` field is a
+    // different thing (see the parseJobs tests), and mocking this one nested makes the
+    // assertion agree with a body the gateway never sends.
+    const { client } = stubClient(() =>
+      jsonResponse(
+        { code: 'encrypted_pdf_wrong_password', message: 'The password did not open the PDF.' },
+        422,
+      ),
+    );
+    const call = client.v2.parse({
+      document: await toFile(Buffer.from('%PDF'), 'locked.pdf'),
+      password: 'wrong',
+    });
+    await expect(call).rejects.toBeInstanceOf(UnprocessableEntityError);
+    await expect(call).rejects.toMatchObject({
+      status: 422,
+      error: { code: 'encrypted_pdf_wrong_password' },
+    });
   });
 
   test('parseJobs.get normalizes the new result/error/completed_at envelope', async () => {

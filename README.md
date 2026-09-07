@@ -151,6 +151,19 @@ The `document` parameter accepts an `fs.ReadStream`, a web `File`, a `fetch` `Re
 
 The `model` parameter accepts a dated snapshot (`dpt-3-pro-20260710`), a `-latest` alias, or a bare family name (equivalent to that family's `-latest`). Two families are available: `dpt-3-pro` for highest quality, and `dpt-3-verity` for lower-latency parsing without vision-model captioning. It defaults to the latest DPT-3 Pro snapshot.
 
+### Encrypted PDFs
+
+Password-protected PDFs parse directly — pass the `password` parameter and skip decrypting the file yourself. The document is decrypted once at the start of processing, and the password is not retained with the result.
+
+```ts
+const parsed = await client.v2.parse({
+  document: fs.createReadStream('locked.pdf'),
+  password: process.env['PDF_PASSWORD'],
+});
+```
+
+`password` applies to PDFs only, and the server rejects the three mistakes with a `422`, each naming its case: `password_unsupported_content_type` (a password sent with an image or an Office document), `encrypted_pdf_wrong_password` (the password does not open the PDF), and `encrypted_pdf_password_required` (a locked PDF submitted without one).
+
 ## Extract
 
 Use `client.v2.extract` to pull structured fields out of Markdown (typically from a parse response) using a schema. The `schema` parameter accepts a JSON Schema object or a JSON string. Provide exactly one Markdown source: `markdown` or `markdown_url`.
