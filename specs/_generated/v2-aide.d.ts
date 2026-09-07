@@ -4,6 +4,134 @@
  */
 
 export interface paths {
+    "/v1/ade/classify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * ADE Classify
+         * @description Classify each page of a document into classes you define. Accepts a PDF, an image, or an Office document, plus the list of candidate classes; returns one predicted class per page. Runs synchronously and returns the result inline.
+         */
+        post: operations["v1-ade-classify_run_sync"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/ade/classify/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * ADE List Classify Jobs
+         * @description List your Classify jobs, newest first.
+         */
+        get: operations["v1-ade-classify_list_jobs"];
+        put?: never;
+        /**
+         * ADE Classify Jobs
+         * @description Classify each page of a document into classes you define. Accepts a PDF, an image, or an Office document, plus the list of candidate classes; returns one predicted class per page. Runs asynchronously and returns a job ID; use it to poll for status and retrieve the result once processing completes.
+         */
+        post: operations["v1-ade-classify_create_job"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/ade/classify/jobs/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * ADE Get Classify Jobs
+         * @description Get the status of an async Classify job, including its result once the job has completed.
+         */
+        get: operations["v1-ade-classify_get_job"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/ade/extract": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * ADE Extract
+         * @description Extract structured data from a Markdown document using a JSON Schema. v1-compatible wire, running the same extraction engine as `/v2/extract`. Runs synchronously and returns the result inline.
+         */
+        post: operations["v1-ade-extract_run_sync"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/ade/extract/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * ADE List Extract Jobs
+         * @description List your Extract jobs, newest first.
+         */
+        get: operations["v1-ade-extract_list_jobs"];
+        put?: never;
+        /**
+         * ADE Extract Jobs
+         * @description Extract structured data from a Markdown document using a JSON Schema. v1-compatible wire, running the same extraction engine as `/v2/extract`. Runs asynchronously and returns a job ID; use it to poll for status and retrieve the result once processing completes.
+         */
+        post: operations["v1-ade-extract_create_job"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/ade/extract/jobs/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * ADE Get Extract Jobs
+         * @description Get the status of an async Extract job, including its result once the job has completed.
+         */
+        get: operations["v1-ade-extract_get_job"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/ade/parse": {
         parameters: {
             query?: never;
@@ -78,7 +206,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/extract": {
+    "/v1/classify": {
         parameters: {
             query?: never;
             header?: never;
@@ -88,10 +216,54 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * ADE Extract
-         * @description Extract structured data from a Markdown document using a JSON Schema. v1-compatible wire, running the same extraction engine as `/v2/extract`. Runs synchronously and returns the result inline.
+         * ADE Classify
+         * @description Classify each page of a document into classes you define. Accepts a PDF, an image, or an Office document, plus the list of candidate classes; returns one predicted class per page. Runs synchronously and returns the result inline.
          */
-        post: operations["v1-extract_run_sync"];
+        post: operations["classify_run_sync"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/classify/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * ADE List Classify Jobs
+         * @description List your Classify jobs, newest first.
+         */
+        get: operations["classify_list_jobs"];
+        put?: never;
+        /**
+         * ADE Classify Jobs
+         * @description Classify each page of a document into classes you define. Accepts a PDF, an image, or an Office document, plus the list of candidate classes; returns one predicted class per page. Runs asynchronously and returns a job ID; use it to poll for status and retrieve the result once processing completes.
+         */
+        post: operations["classify_create_job"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/classify/jobs/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * ADE Get Classify Jobs
+         * @description Get the status of an async Classify job, including its result once the job has completed.
+         */
+        get: operations["classify_get_job"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -162,51 +334,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/extract/jobs": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * ADE List Extract Jobs
-         * @description List your Extract jobs, newest first.
-         */
-        get: operations["v1-extract_list_jobs"];
-        put?: never;
-        /**
-         * ADE Extract Jobs
-         * @description Extract structured data from a Markdown document using a JSON Schema. v1-compatible wire, running the same extraction engine as `/v2/extract`. Runs asynchronously and returns a job ID; use it to poll for status and retrieve the result once processing completes.
-         */
-        post: operations["v1-extract_create_job"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/extract/jobs/{job_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * ADE Get Extract Jobs
-         * @description Get the status of an async Extract job, including its result once the job has completed.
-         */
-        get: operations["v1-extract_get_job"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/parse": {
+    "/v1/split": {
         parameters: {
             query?: never;
             header?: never;
@@ -216,64 +344,10 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * ADE Parse v1
-         * @description Run synchronously and return the result inline.
-         *
-         *     Accepts ``application/json`` (the request fields as the body),
-         *     ``multipart/form-data`` (file fields are staged automatically),
-         *     or ``application/x-www-form-urlencoded`` (text fields only).
-         *
-         *     Returns **504** if the work does not finish within the wait
-         *     window — long-running work belongs on the async ``POST
-         *     {path}/jobs`` route, which returns 202 immediately and is polled
-         *     via ``GET {path}/jobs/{job_id}``. On a 504 the workflow is
-         *     CANCELLED (a sync caller can never collect the result); a retry
-         *     starts the work over as a fresh job.
+         * ADE Split
+         * @description Split a Markdown document into segments and return the split response inline.
          */
-        post: operations["parse2_run_sync"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/parse/jobs": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** ADE List Parse v1 Jobs */
-        get: operations["parse2_list_jobs"];
-        put?: never;
-        /** ADE Parse v1 Jobs */
-        post: operations["parse2_create_job"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/parse/jobs/{job_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * ADE Get Parse v1 Jobs
-         * @description Poll a job.
-         *
-         *     Returns ``{job_id, status, created_at}`` plus ``completed_at`` and
-         *     ``result`` (on ``completed``) or ``error: {code, message}`` (on
-         *     ``failed``). Statuses: ``pending`` → ``processing`` →
-         *     ``completed`` | ``failed``.
-         */
-        get: operations["parse2_get_job"];
-        put?: never;
-        post?: never;
+        post: operations["v1-split_run_sync"];
         delete?: never;
         options?: never;
         head?: never;
@@ -571,6 +645,28 @@ export interface components {
              * @description Human-readable description of the warning with more details.
              */
             msg: string;
+        };
+        /**
+         * ClassifyClass
+         * @description One classification option: a class name plus an optional description.
+         *
+         *     Wire key ``class`` (VTRA's ``ClassifyClass``); the field is ``class_name``
+         *     because ``class`` is a Python keyword, with the alias carrying the wire
+         *     name. ``populate_by_name`` lets the Temporal round-trip (which serializes by
+         *     FIELD name) rebuild the object on the worker side.
+         */
+        ClassifyClass: {
+            /**
+             * Class
+             * @description Class name assigned to a page when it matches.
+             */
+            class: string;
+            /**
+             * Description
+             * @description What this class represents. Improves classification.
+             * @default null
+             */
+            description: string | null;
         };
         /**
          * CreditUsage
@@ -912,6 +1008,87 @@ export interface components {
              */
             start: number;
         };
+        /**
+         * Split
+         * @description One split segment: consecutive pages of one classification (an
+         *     identifier change starts a new segment).
+         */
+        Split: {
+            /**
+             * Classification
+             * @description The split classification name this segment was assigned.
+             */
+            classification: string;
+            /**
+             * Identifier
+             * @description The identifier value extracted for this segment, when the matching split classification requested one. Null otherwise.
+             */
+            identifier: string | null;
+            /**
+             * Markdowns
+             * @description The Markdown content of each page in this segment, in order.
+             */
+            markdowns: string[];
+            /**
+             * Pages
+             * @description 0-indexed page numbers belonging to this segment, in order.
+             */
+            pages: number[];
+        };
+        /**
+         * SplitMetadata
+         * @description Information about a split request.
+         */
+        SplitMetadata: {
+            /**
+             * Credit Usage
+             * @description Credits consumed by this request: the input Markdown length in characters divided by 5000. Billed usage rounds this up to the next 0.1 credit.
+             */
+            credit_usage: number;
+            /**
+             * Duration Ms
+             * @description Total processing time in milliseconds.
+             */
+            duration_ms: number;
+            /**
+             * Filename
+             * @description Display name of the split document: the URL path's file name for `markdown_url` inputs, or a generated name for inline and uploaded Markdown.
+             */
+            filename: string;
+            /**
+             * Job Id
+             * @description The split job identifier — server-minted and unique per request. Correlates with the request's entry in your billing dashboard.
+             */
+            job_id: string;
+            /**
+             * Org Id
+             * @description Organization ID.
+             */
+            org_id: string | null;
+            /**
+             * Page Count
+             * @description Total number of pages in the input Markdown.
+             */
+            page_count: number;
+            /**
+             * Version
+             * @description The exact split model snapshot that processed the document, e.g. `split-20251105`.
+             */
+            version: string;
+        };
+        /**
+         * SplitResponse
+         * @description The split result: the merged `splits` segments and request `metadata`.
+         */
+        SplitResponse: {
+            /** @description Information about the request: file name, page count, duration, credits, and the resolved model version. */
+            metadata: components["schemas"]["SplitMetadata"];
+            /**
+             * Splits
+             * @description The split segments, in page order. Consecutive pages with the same classification merge into one segment; an identifier change starts a new segment.
+             */
+            splits: components["schemas"]["Split"][];
+        };
         /** TableOptions */
         TableOptions: {
             /**
@@ -983,6 +1160,54 @@ export interface components {
              * @description Structured warnings from the schema-generation process. Each is a ``{code, msg}`` object (e.g. code ``nonconformant_schema``).
              */
             warnings?: components["schemas"]["BuildSchemaWarning"][];
+        };
+        /**
+         * V1ClassifyMetadata
+         * @description Response metadata for a classify call — VTRA's ``ClassifyMetadata``.
+         */
+        V1ClassifyMetadata: {
+            /**
+             * Credit Usage
+             * @description Credits billed for this request.
+             * @default 0
+             */
+            credit_usage: number;
+            /**
+             * Duration Ms
+             * @description End-to-end request duration in milliseconds.
+             */
+            duration_ms: number;
+            /**
+             * Filename
+             * @description Name of the classified file.
+             * @default
+             */
+            filename: string;
+            /**
+             * Job Id
+             * @description Gateway job id (workflow id). Matches the billing row id in vision-agent.
+             * @default
+             */
+            job_id: string;
+            /** @description URL of the OpenAPI spec covering this API, for inspection and client generation. */
+            openapi_spec: string;
+            /**
+             * Org Id
+             * @description Organization ID.
+             * @default null
+             */
+            org_id: string | null;
+            /**
+             * Page Count
+             * @description Number of pages classified.
+             */
+            page_count: number;
+            /**
+             * Version
+             * @description Resolved classify pipeline version that produced this response.
+             * @default null
+             */
+            version: string | null;
         };
         /**
          * V1ExtractMetadata
@@ -1265,6 +1490,652 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    "v1-ade-classify_run_sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /**
+                     * Classes
+                     * @description The possible classes that can be assigned to pages in the document. Each entry is an object with a `class` name and an optional `description`. Only one class is assigned per page; unclassifiable pages receive 'unknown'. On a multipart request this is a JSON string.
+                     */
+                    classes: components["schemas"]["ClassifyClass"][];
+                    /**
+                     * Content Type
+                     * @default
+                     */
+                    content_type?: string;
+                    /** Document Ref */
+                    document_ref: string;
+                    /**
+                     * Filename
+                     * @default
+                     */
+                    filename?: string;
+                    /**
+                     * Model
+                     * @description Classify pipeline version, e.g. `classify-20260420`. Accepts `classify-latest`. Defaults to the latest version.
+                     * @default null
+                     */
+                    model?: string | null;
+                };
+                "multipart/form-data": {
+                    /**
+                     * Classes
+                     * @description The possible classes that can be assigned to pages in the document. Each entry is an object with a `class` name and an optional `description`. Only one class is assigned per page; unclassifiable pages receive 'unknown'. On a multipart request this is a JSON string. JSON-serialized string in form data.
+                     */
+                    classes: components["schemas"]["ClassifyClass"][];
+                    /**
+                     * Content Type
+                     * @default
+                     */
+                    content_type?: string;
+                    /**
+                     * Format: binary
+                     * @description The file to process. Provide either `document` or `document_url`, not both.
+                     */
+                    document?: string;
+                    /** @description A publicly accessible URL to the file to process. Provide either `document` or `document_url`, not both. */
+                    document_url?: string;
+                    /**
+                     * Filename
+                     * @default
+                     */
+                    filename?: string;
+                    /**
+                     * Model
+                     * @description Classify pipeline version, e.g. `classify-20260420`. Accepts `classify-latest`. Defaults to the latest version. JSON-serialized string in form data.
+                     * @default null
+                     */
+                    model?: string | null;
+                };
+            };
+        };
+        responses: {
+            /** @description v1-ade-classify result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * Classification
+                         * @description One classification result per page, in page order.
+                         */
+                        classification: {
+                            /** @description Predicted class label, or 'unknown'. */
+                            class: string;
+                            /** @description Page number, zero-indexed (the first page is 0). */
+                            page: number;
+                            /** @description Why the page was classified this way. */
+                            reason: string;
+                            /** @description A class the model proposes when the prediction is 'unknown'. */
+                            suggested_class?: string | null;
+                        }[];
+                        /** @description Metadata for the classification request. */
+                        metadata: components["schemas"]["V1ClassifyMetadata"];
+                    };
+                };
+            };
+            /** @description Request validation failed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    "v1-ade-classify_list_jobs": {
+        parameters: {
+            query?: {
+                /** @description Page number (0-indexed). */
+                page?: number;
+                /** @description Number of items per page. */
+                page_size?: number;
+                /** @description Filter by job status. */
+                status?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The caller's jobs, newest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        has_more?: boolean;
+                        jobs?: {
+                            completed_at?: string | null;
+                            created_at?: string | null;
+                            failure_reason?: string | null;
+                            /** @description The unique identifier for this v1-ade-classify job. Format: ``classify-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
+                            job_id?: string;
+                            model_version?: string | null;
+                            /** @enum {string} */
+                            status?: "pending" | "processing" | "completed" | "failed";
+                        }[];
+                        page?: number;
+                        page_size?: number;
+                    };
+                };
+            };
+            /** @description Request validation failed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    "v1-ade-classify_create_job": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /**
+                     * Classes
+                     * @description The possible classes that can be assigned to pages in the document. Each entry is an object with a `class` name and an optional `description`. Only one class is assigned per page; unclassifiable pages receive 'unknown'. On a multipart request this is a JSON string.
+                     */
+                    classes: components["schemas"]["ClassifyClass"][];
+                    /**
+                     * Content Type
+                     * @default
+                     */
+                    content_type?: string;
+                    /** Document Ref */
+                    document_ref: string;
+                    /**
+                     * Filename
+                     * @default
+                     */
+                    filename?: string;
+                    /**
+                     * Model
+                     * @description Classify pipeline version, e.g. `classify-20260420`. Accepts `classify-latest`. Defaults to the latest version.
+                     * @default null
+                     */
+                    model?: string | null;
+                    /** @description Async service tier. ``priority`` runs in the fast lane at the sync billing rate; absent → ``standard``. */
+                    service_tier?: ("standard" | "priority") | null;
+                };
+                "multipart/form-data": {
+                    /**
+                     * Classes
+                     * @description The possible classes that can be assigned to pages in the document. Each entry is an object with a `class` name and an optional `description`. Only one class is assigned per page; unclassifiable pages receive 'unknown'. On a multipart request this is a JSON string. JSON-serialized string in form data.
+                     */
+                    classes: components["schemas"]["ClassifyClass"][];
+                    /**
+                     * Content Type
+                     * @default
+                     */
+                    content_type?: string;
+                    /**
+                     * Format: binary
+                     * @description The file to process. Provide either `document` or `document_url`, not both.
+                     */
+                    document?: string;
+                    /** @description A publicly accessible URL to the file to process. Provide either `document` or `document_url`, not both. */
+                    document_url?: string;
+                    /**
+                     * Filename
+                     * @default
+                     */
+                    filename?: string;
+                    /**
+                     * Model
+                     * @description Classify pipeline version, e.g. `classify-20260420`. Accepts `classify-latest`. Defaults to the latest version. JSON-serialized string in form data.
+                     * @default null
+                     */
+                    model?: string | null;
+                    /** @description Async service tier. ``priority`` runs in the fast lane at the sync billing rate; absent → ``standard``. */
+                    service_tier?: ("standard" | "priority") | null;
+                };
+            };
+        };
+        responses: {
+            /** @description Job created */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        created_at?: string | null;
+                        /** @description The unique identifier for this v1-ade-classify job. Format: ``classify-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
+                        job_id?: string;
+                        /** @enum {string} */
+                        status?: "pending" | "processing" | "completed" | "failed";
+                    };
+                };
+            };
+            /** @description Request validation failed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    "v1-ade-classify_get_job": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The identifier of the job to retrieve, as returned by the create-job request. */
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Job status / result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Present once the job is terminal. */
+                        completed_at?: string;
+                        created_at?: string | null;
+                        /** @description Present once status is ``failed``. */
+                        error?: {
+                            /** @description Stable error code (``internal_error`` when unmapped). */
+                            code?: string;
+                            message?: string;
+                        };
+                        /** @description The unique identifier for this v1-ade-classify job. Format: ``classify-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
+                        job_id?: string;
+                        /** @description Estimated completion as a decimal from 0 to 1 — an estimate, not a measurement: it typically advances between polls while the job is ``processing``, may jump forward when the service reports a real milestone (e.g. parsed pages), and approaches but never reaches 1 (long-running jobs plateau near 0.98 — completion is signaled by ``status``, and a job may complete from any progress value). Present while ``processing``. */
+                        progress?: number;
+                        /** @description Present once status is ``completed``. */
+                        result?: {
+                            /**
+                             * Classification
+                             * @description One classification result per page, in page order.
+                             */
+                            classification: {
+                                /** @description Predicted class label, or 'unknown'. */
+                                class: string;
+                                /** @description Page number, zero-indexed (the first page is 0). */
+                                page: number;
+                                /** @description Why the page was classified this way. */
+                                reason: string;
+                                /** @description A class the model proposes when the prediction is 'unknown'. */
+                                suggested_class?: string | null;
+                            }[];
+                            /** @description Metadata for the classification request. */
+                            metadata: components["schemas"]["V1ClassifyMetadata"];
+                        } | null;
+                        /** @enum {string} */
+                        status?: "pending" | "processing" | "completed" | "failed";
+                    };
+                };
+            };
+            /** @description Not found (e.g. no such job). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request validation failed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    "v1-ade-extract_run_sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /**
+                     * Markdown
+                     * @default null
+                     */
+                    markdown?: string | null;
+                    /**
+                     * Markdown Url
+                     * @default null
+                     */
+                    markdown_url?: string | null;
+                    /**
+                     * Model
+                     * @default null
+                     */
+                    model?: string | null;
+                    /**
+                     * Schema
+                     * @default null
+                     */
+                    schema?: string | null;
+                    /**
+                     * Strict
+                     * @default false
+                     */
+                    strict?: boolean;
+                };
+                "multipart/form-data": {
+                    /**
+                     * Format: binary
+                     * @description File upload.
+                     */
+                    markdown?: string;
+                    /**
+                     * Markdown Url
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    markdown_url?: string | null;
+                    /**
+                     * Model
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    model?: string | null;
+                    /**
+                     * Schema
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    schema?: string | null;
+                    /**
+                     * Strict
+                     * @description JSON-serialized string in form data.
+                     * @default false
+                     */
+                    strict?: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description v1-ade-extract result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Extraction */
+                        extraction?: {
+                            [key: string]: unknown;
+                        };
+                        /** Extraction Metadata */
+                        extraction_metadata?: {
+                            [key: string]: unknown;
+                        };
+                        metadata?: components["schemas"]["V1ExtractMetadata"];
+                    };
+                };
+            };
+            /** @description Request validation failed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    "v1-ade-extract_list_jobs": {
+        parameters: {
+            query?: {
+                /** @description Page number (0-indexed). */
+                page?: number;
+                /** @description Number of items per page. */
+                page_size?: number;
+                /** @description Filter by job status. */
+                status?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The caller's jobs, newest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        has_more?: boolean;
+                        jobs?: {
+                            completed_at?: string | null;
+                            created_at?: string | null;
+                            failure_reason?: string | null;
+                            /** @description The unique identifier for this v1-ade-extract job. Format: ``extract-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
+                            job_id?: string;
+                            model_version?: string | null;
+                            /** @enum {string} */
+                            status?: "pending" | "processing" | "completed" | "failed";
+                        }[];
+                        page?: number;
+                        page_size?: number;
+                    };
+                };
+            };
+            /** @description Request validation failed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    "v1-ade-extract_create_job": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /**
+                     * Markdown
+                     * @default null
+                     */
+                    markdown?: string | null;
+                    /**
+                     * Markdown Url
+                     * @default null
+                     */
+                    markdown_url?: string | null;
+                    /**
+                     * Model
+                     * @default null
+                     */
+                    model?: string | null;
+                    /**
+                     * Schema
+                     * @default null
+                     */
+                    schema?: string | null;
+                    /** @description Async service tier. ``priority`` runs in the fast lane at the sync billing rate; absent → ``standard``. */
+                    service_tier?: ("standard" | "priority") | null;
+                    /**
+                     * Strict
+                     * @default false
+                     */
+                    strict?: boolean;
+                };
+                "multipart/form-data": {
+                    /**
+                     * Format: binary
+                     * @description File upload.
+                     */
+                    markdown?: string;
+                    /**
+                     * Markdown Url
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    markdown_url?: string | null;
+                    /**
+                     * Model
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    model?: string | null;
+                    /**
+                     * Schema
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    schema?: string | null;
+                    /** @description Async service tier. ``priority`` runs in the fast lane at the sync billing rate; absent → ``standard``. */
+                    service_tier?: ("standard" | "priority") | null;
+                    /**
+                     * Strict
+                     * @description JSON-serialized string in form data.
+                     * @default false
+                     */
+                    strict?: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description Job created */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        created_at?: string | null;
+                        /** @description The unique identifier for this v1-ade-extract job. Format: ``extract-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
+                        job_id?: string;
+                        /** @enum {string} */
+                        status?: "pending" | "processing" | "completed" | "failed";
+                    };
+                };
+            };
+            /** @description Request validation failed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    "v1-ade-extract_get_job": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The identifier of the job to retrieve, as returned by the create-job request. */
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Job status / result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Present once the job is terminal. */
+                        completed_at?: string;
+                        created_at?: string | null;
+                        /** @description Present once status is ``failed``. */
+                        error?: {
+                            /** @description Stable error code (``internal_error`` when unmapped). */
+                            code?: string;
+                            message?: string;
+                        };
+                        /** @description The unique identifier for this v1-ade-extract job. Format: ``extract-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
+                        job_id?: string;
+                        /** @description Estimated completion as a decimal from 0 to 1 — an estimate, not a measurement: it typically advances between polls while the job is ``processing``, may jump forward when the service reports a real milestone (e.g. parsed pages), and approaches but never reaches 1 (long-running jobs plateau near 0.98 — completion is signaled by ``status``, and a job may complete from any progress value). Present while ``processing``. */
+                        progress?: number;
+                        /** @description Present once status is ``completed``. */
+                        result?: {
+                            /** Extraction */
+                            extraction?: {
+                                [key: string]: unknown;
+                            };
+                            /** Extraction Metadata */
+                            extraction_metadata?: {
+                                [key: string]: unknown;
+                            };
+                            metadata?: components["schemas"]["V1ExtractMetadata"];
+                        } | null;
+                        /** @enum {string} */
+                        status?: "pending" | "processing" | "completed" | "failed";
+                    };
+                };
+            };
+            /** @description Not found (e.g. no such job). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Request validation failed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     "v1-ade-parse_run_sync": {
         parameters: {
             query?: never;
@@ -1344,9 +2215,11 @@ export interface operations {
                     } | null;
                     /**
                      * Format: binary
-                     * @description File upload.
+                     * @description The file to process. Provide either `document` or `document_url`, not both.
                      */
-                    document_ref: string;
+                    document?: string;
+                    /** @description A publicly accessible URL to the file to process. Provide either `document` or `document_url`, not both. */
+                    document_url?: string;
                     /** Filename */
                     filename: string;
                     /**
@@ -1419,6 +2292,11 @@ export interface operations {
                          * @default 0
                          */
                         billable_pages: number;
+                        /**
+                         * Billing Suppressed
+                         * @default false
+                         */
+                        billing_suppressed: boolean;
                         /**
                          * Completion Tokens
                          * @default 0
@@ -1630,9 +2508,11 @@ export interface operations {
                     } | null;
                     /**
                      * Format: binary
-                     * @description File upload.
+                     * @description The file to process. Provide either `document` or `document_url`, not both.
                      */
-                    document_ref: string;
+                    document?: string;
+                    /** @description A publicly accessible URL to the file to process. Provide either `document` or `document_url`, not both. */
+                    document_url?: string;
                     /** Filename */
                     filename: string;
                     /**
@@ -1771,6 +2651,11 @@ export interface operations {
                              */
                             billable_pages: number;
                             /**
+                             * Billing Suppressed
+                             * @default false
+                             */
+                            billing_suppressed: boolean;
+                            /**
                              * Completion Tokens
                              * @default 0
                              */
@@ -1857,7 +2742,7 @@ export interface operations {
             };
         };
     };
-    "v1-extract_run_sync": {
+    classify_run_sync: {
         parameters: {
             query?: never;
             header?: never;
@@ -1868,82 +2753,309 @@ export interface operations {
             content: {
                 "application/json": {
                     /**
-                     * Markdown
-                     * @default null
+                     * Classes
+                     * @description The possible classes that can be assigned to pages in the document. Each entry is an object with a `class` name and an optional `description`. Only one class is assigned per page; unclassifiable pages receive 'unknown'. On a multipart request this is a JSON string.
                      */
-                    markdown?: string | null;
+                    classes: components["schemas"]["ClassifyClass"][];
                     /**
-                     * Markdown Url
-                     * @default null
+                     * Content Type
+                     * @default
                      */
-                    markdown_url?: string | null;
+                    content_type?: string;
+                    /** Document Ref */
+                    document_ref: string;
+                    /**
+                     * Filename
+                     * @default
+                     */
+                    filename?: string;
                     /**
                      * Model
+                     * @description Classify pipeline version, e.g. `classify-20260420`. Accepts `classify-latest`. Defaults to the latest version.
                      * @default null
                      */
                     model?: string | null;
-                    /**
-                     * Schema
-                     * @default null
-                     */
-                    schema?: string | null;
-                    /**
-                     * Strict
-                     * @default false
-                     */
-                    strict?: boolean;
                 };
                 "multipart/form-data": {
                     /**
-                     * Format: binary
-                     * @description File upload.
+                     * Classes
+                     * @description The possible classes that can be assigned to pages in the document. Each entry is an object with a `class` name and an optional `description`. Only one class is assigned per page; unclassifiable pages receive 'unknown'. On a multipart request this is a JSON string. JSON-serialized string in form data.
                      */
-                    markdown?: string;
+                    classes: components["schemas"]["ClassifyClass"][];
                     /**
-                     * Markdown Url
-                     * @description JSON-serialized string in form data.
-                     * @default null
+                     * Content Type
+                     * @default
                      */
-                    markdown_url?: string | null;
+                    content_type?: string;
+                    /**
+                     * Format: binary
+                     * @description The file to process. Provide either `document` or `document_url`, not both.
+                     */
+                    document?: string;
+                    /** @description A publicly accessible URL to the file to process. Provide either `document` or `document_url`, not both. */
+                    document_url?: string;
+                    /**
+                     * Filename
+                     * @default
+                     */
+                    filename?: string;
                     /**
                      * Model
-                     * @description JSON-serialized string in form data.
+                     * @description Classify pipeline version, e.g. `classify-20260420`. Accepts `classify-latest`. Defaults to the latest version. JSON-serialized string in form data.
                      * @default null
                      */
                     model?: string | null;
-                    /**
-                     * Schema
-                     * @description JSON-serialized string in form data.
-                     * @default null
-                     */
-                    schema?: string | null;
-                    /**
-                     * Strict
-                     * @description JSON-serialized string in form data.
-                     * @default false
-                     */
-                    strict?: boolean;
                 };
             };
         };
         responses: {
-            /** @description v1-extract result */
+            /** @description classify result */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": {
-                        /** Extraction */
-                        extraction?: {
-                            [key: string]: unknown;
-                        };
-                        /** Extraction Metadata */
-                        extraction_metadata?: {
-                            [key: string]: unknown;
-                        };
-                        metadata?: components["schemas"]["V1ExtractMetadata"];
+                        /**
+                         * Classification
+                         * @description One classification result per page, in page order.
+                         */
+                        classification: {
+                            /** @description Predicted class label, or 'unknown'. */
+                            class: string;
+                            /** @description Page number, zero-indexed (the first page is 0). */
+                            page: number;
+                            /** @description Why the page was classified this way. */
+                            reason: string;
+                            /** @description A class the model proposes when the prediction is 'unknown'. */
+                            suggested_class?: string | null;
+                        }[];
+                        /** @description Metadata for the classification request. */
+                        metadata: components["schemas"]["V1ClassifyMetadata"];
                     };
+                };
+            };
+            /** @description Request validation failed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    classify_list_jobs: {
+        parameters: {
+            query?: {
+                /** @description Page number (0-indexed). */
+                page?: number;
+                /** @description Number of items per page. */
+                page_size?: number;
+                /** @description Filter by job status. */
+                status?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The caller's jobs, newest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        has_more?: boolean;
+                        jobs?: {
+                            completed_at?: string | null;
+                            created_at?: string | null;
+                            failure_reason?: string | null;
+                            /** @description The unique identifier for this classify job. Format: ``classify-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
+                            job_id?: string;
+                            model_version?: string | null;
+                            /** @enum {string} */
+                            status?: "pending" | "processing" | "completed" | "failed";
+                        }[];
+                        page?: number;
+                        page_size?: number;
+                    };
+                };
+            };
+            /** @description Request validation failed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    classify_create_job: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /**
+                     * Classes
+                     * @description The possible classes that can be assigned to pages in the document. Each entry is an object with a `class` name and an optional `description`. Only one class is assigned per page; unclassifiable pages receive 'unknown'. On a multipart request this is a JSON string.
+                     */
+                    classes: components["schemas"]["ClassifyClass"][];
+                    /**
+                     * Content Type
+                     * @default
+                     */
+                    content_type?: string;
+                    /** Document Ref */
+                    document_ref: string;
+                    /**
+                     * Filename
+                     * @default
+                     */
+                    filename?: string;
+                    /**
+                     * Model
+                     * @description Classify pipeline version, e.g. `classify-20260420`. Accepts `classify-latest`. Defaults to the latest version.
+                     * @default null
+                     */
+                    model?: string | null;
+                    /** @description Async service tier. ``priority`` runs in the fast lane at the sync billing rate; absent → ``standard``. */
+                    service_tier?: ("standard" | "priority") | null;
+                };
+                "multipart/form-data": {
+                    /**
+                     * Classes
+                     * @description The possible classes that can be assigned to pages in the document. Each entry is an object with a `class` name and an optional `description`. Only one class is assigned per page; unclassifiable pages receive 'unknown'. On a multipart request this is a JSON string. JSON-serialized string in form data.
+                     */
+                    classes: components["schemas"]["ClassifyClass"][];
+                    /**
+                     * Content Type
+                     * @default
+                     */
+                    content_type?: string;
+                    /**
+                     * Format: binary
+                     * @description The file to process. Provide either `document` or `document_url`, not both.
+                     */
+                    document?: string;
+                    /** @description A publicly accessible URL to the file to process. Provide either `document` or `document_url`, not both. */
+                    document_url?: string;
+                    /**
+                     * Filename
+                     * @default
+                     */
+                    filename?: string;
+                    /**
+                     * Model
+                     * @description Classify pipeline version, e.g. `classify-20260420`. Accepts `classify-latest`. Defaults to the latest version. JSON-serialized string in form data.
+                     * @default null
+                     */
+                    model?: string | null;
+                    /** @description Async service tier. ``priority`` runs in the fast lane at the sync billing rate; absent → ``standard``. */
+                    service_tier?: ("standard" | "priority") | null;
+                };
+            };
+        };
+        responses: {
+            /** @description Job created */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        created_at?: string | null;
+                        /** @description The unique identifier for this classify job. Format: ``classify-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
+                        job_id?: string;
+                        /** @enum {string} */
+                        status?: "pending" | "processing" | "completed" | "failed";
+                    };
+                };
+            };
+            /** @description Request validation failed. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    classify_get_job: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The identifier of the job to retrieve, as returned by the create-job request. */
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Job status / result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Present once the job is terminal. */
+                        completed_at?: string;
+                        created_at?: string | null;
+                        /** @description Present once status is ``failed``. */
+                        error?: {
+                            /** @description Stable error code (``internal_error`` when unmapped). */
+                            code?: string;
+                            message?: string;
+                        };
+                        /** @description The unique identifier for this classify job. Format: ``classify-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
+                        job_id?: string;
+                        /** @description Estimated completion as a decimal from 0 to 1 — an estimate, not a measurement: it typically advances between polls while the job is ``processing``, may jump forward when the service reports a real milestone (e.g. parsed pages), and approaches but never reaches 1 (long-running jobs plateau near 0.98 — completion is signaled by ``status``, and a job may complete from any progress value). Present while ``processing``. */
+                        progress?: number;
+                        /** @description Present once status is ``completed``. */
+                        result?: {
+                            /**
+                             * Classification
+                             * @description One classification result per page, in page order.
+                             */
+                            classification: {
+                                /** @description Predicted class label, or 'unknown'. */
+                                class: string;
+                                /** @description Page number, zero-indexed (the first page is 0). */
+                                page: number;
+                                /** @description Why the page was classified this way. */
+                                reason: string;
+                                /** @description A class the model proposes when the prediction is 'unknown'. */
+                                suggested_class?: string | null;
+                            }[];
+                            /** @description Metadata for the classification request. */
+                            metadata: components["schemas"]["V1ClassifyMetadata"];
+                        } | null;
+                        /** @enum {string} */
+                        status?: "pending" | "processing" | "completed" | "failed";
+                    };
+                };
+            };
+            /** @description Not found (e.g. no such job). */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Request validation failed. */
@@ -2276,57 +3388,7 @@ export interface operations {
             };
         };
     };
-    "v1-extract_list_jobs": {
-        parameters: {
-            query?: {
-                /** @description Page number (0-indexed). */
-                page?: number;
-                /** @description Number of items per page. */
-                page_size?: number;
-                /** @description Filter by job status. */
-                status?: string | null;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The caller's jobs, newest first */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        has_more?: boolean;
-                        jobs?: {
-                            completed_at?: string | null;
-                            created_at?: string | null;
-                            failure_reason?: string | null;
-                            /** @description The unique identifier for this v1-extract job. Format: ``extract-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
-                            job_id?: string;
-                            model_version?: string | null;
-                            /** @enum {string} */
-                            status?: "pending" | "processing" | "completed" | "failed";
-                        }[];
-                        page?: number;
-                        page_size?: number;
-                    };
-                };
-            };
-            /** @description Request validation failed. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    "v1-extract_create_job": {
+    "v1-split_run_sync": {
         parameters: {
             query?: never;
             header?: never;
@@ -2335,745 +3397,26 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": {
-                    /**
-                     * Markdown
-                     * @default null
-                     */
-                    markdown?: string | null;
-                    /**
-                     * Markdown Url
-                     * @default null
-                     */
-                    markdown_url?: string | null;
-                    /**
-                     * Model
-                     * @default null
-                     */
-                    model?: string | null;
-                    /**
-                     * Schema
-                     * @default null
-                     */
-                    schema?: string | null;
-                    /** @description Async service tier. ``priority`` runs in the fast lane at the sync billing rate; absent → ``standard``. */
-                    service_tier?: ("standard" | "priority") | null;
-                    /**
-                     * Strict
-                     * @default false
-                     */
-                    strict?: boolean;
-                };
                 "multipart/form-data": {
-                    /**
-                     * Format: binary
-                     * @description File upload.
-                     */
+                    /** @description Markdown content to split, as an inline string or an uploaded file. Provide either `markdown` or `markdown_url`, not both. */
                     markdown?: string;
-                    /**
-                     * Markdown Url
-                     * @description JSON-serialized string in form data.
-                     * @default null
-                     */
-                    markdown_url?: string | null;
-                    /**
-                     * Model
-                     * @description JSON-serialized string in form data.
-                     * @default null
-                     */
-                    model?: string | null;
-                    /**
-                     * Schema
-                     * @description JSON-serialized string in form data.
-                     * @default null
-                     */
-                    schema?: string | null;
-                    /** @description Async service tier. ``priority`` runs in the fast lane at the sync billing rate; absent → ``standard``. */
-                    service_tier?: ("standard" | "priority") | null;
-                    /**
-                     * Strict
-                     * @description JSON-serialized string in form data.
-                     * @default false
-                     */
-                    strict?: boolean;
+                    /** @description A publicly accessible URL to the Markdown file to split. Provide either `markdown` or `markdown_url`, not both. */
+                    markdown_url?: string;
+                    /** @description The split model version to use. Accepts a dated snapshot (`split-20251105`), `split-latest`, or `split` (both aliases resolve to the latest snapshot). Defaults to the latest snapshot. The resolved version is echoed back as `metadata.version`. */
+                    model?: string;
+                    /** @description The split classification entries, as a JSON-encoded array of objects with `name` (required), `description`, and `identifier` keys. At most 19 entries. Sent as a JSON-serialized string in form data. */
+                    split_class: string;
                 };
             };
         };
         responses: {
-            /** @description Job created */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        created_at?: string | null;
-                        /** @description The unique identifier for this v1-extract job. Format: ``extract-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
-                        job_id?: string;
-                        /** @enum {string} */
-                        status?: "pending" | "processing" | "completed" | "failed";
-                    };
-                };
-            };
-            /** @description Request validation failed. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    "v1-extract_get_job": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The identifier of the job to retrieve, as returned by the create-job request. */
-                job_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Job status / result */
+            /** @description The split response */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        /** @description Present once the job is terminal. */
-                        completed_at?: string;
-                        created_at?: string | null;
-                        /** @description Present once status is ``failed``. */
-                        error?: {
-                            /** @description Stable error code (``internal_error`` when unmapped). */
-                            code?: string;
-                            message?: string;
-                        };
-                        /** @description The unique identifier for this v1-extract job. Format: ``extract-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
-                        job_id?: string;
-                        /** @description Estimated completion as a decimal from 0 to 1 — an estimate, not a measurement: it typically advances between polls while the job is ``processing``, may jump forward when the service reports a real milestone (e.g. parsed pages), and approaches but never reaches 1 (long-running jobs plateau near 0.98 — completion is signaled by ``status``, and a job may complete from any progress value). Present while ``processing``. */
-                        progress?: number;
-                        /** @description Present once status is ``completed``. */
-                        result?: {
-                            /** Extraction */
-                            extraction?: {
-                                [key: string]: unknown;
-                            };
-                            /** Extraction Metadata */
-                            extraction_metadata?: {
-                                [key: string]: unknown;
-                            };
-                            metadata?: components["schemas"]["V1ExtractMetadata"];
-                        } | null;
-                        /** @enum {string} */
-                        status?: "pending" | "processing" | "completed" | "failed";
-                    };
-                };
-            };
-            /** @description Not found (e.g. no such job). */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-            /** @description Request validation failed. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    parse2_run_sync: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    /** Content Type */
-                    content_type: string;
-                    /**
-                     * Custom Prompts
-                     * @default null
-                     */
-                    custom_prompts?: {
-                        [key: string]: string;
-                    } | null;
-                    /** Document Ref */
-                    document_ref: string;
-                    /** Filename */
-                    filename: string;
-                    /**
-                     * Job Id
-                     * @default null
-                     */
-                    job_id?: string | null;
-                    /**
-                     * Model Versions
-                     * @default null
-                     */
-                    model_versions?: {
-                        [key: string]: string;
-                    } | null;
-                    /**
-                     * Password
-                     * @default null
-                     */
-                    password?: string | null;
-                    /**
-                     * Pricing Multiplier
-                     * @default 1
-                     */
-                    pricing_multiplier?: number;
-                    /**
-                     * Processing Mode
-                     * @default sync
-                     */
-                    processing_mode?: string;
-                    /**
-                     * Split
-                     * @default null
-                     */
-                    split?: string | null;
-                    /**
-                     * Version
-                     * @default null
-                     */
-                    version?: string | null;
-                    /**
-                     * X Request Id
-                     * @default null
-                     */
-                    x_request_id?: string | null;
-                };
-                "multipart/form-data": {
-                    /** Content Type */
-                    content_type: string;
-                    /**
-                     * Custom Prompts
-                     * @description JSON-serialized string in form data.
-                     * @default null
-                     */
-                    custom_prompts?: {
-                        [key: string]: string;
-                    } | null;
-                    /**
-                     * Format: binary
-                     * @description File upload.
-                     */
-                    document_ref: string;
-                    /** Filename */
-                    filename: string;
-                    /**
-                     * Job Id
-                     * @description JSON-serialized string in form data.
-                     * @default null
-                     */
-                    job_id?: string | null;
-                    /**
-                     * Model Versions
-                     * @description JSON-serialized string in form data.
-                     * @default null
-                     */
-                    model_versions?: {
-                        [key: string]: string;
-                    } | null;
-                    /**
-                     * Password
-                     * @description JSON-serialized string in form data.
-                     * @default null
-                     */
-                    password?: string | null;
-                    /**
-                     * Pricing Multiplier
-                     * @description JSON-serialized string in form data.
-                     * @default 1
-                     */
-                    pricing_multiplier?: number;
-                    /**
-                     * Processing Mode
-                     * @default sync
-                     */
-                    processing_mode?: string;
-                    /**
-                     * Split
-                     * @description JSON-serialized string in form data.
-                     * @default null
-                     */
-                    split?: string | null;
-                    /**
-                     * Version
-                     * @description JSON-serialized string in form data.
-                     * @default null
-                     */
-                    version?: string | null;
-                    /**
-                     * X Request Id
-                     * @description JSON-serialized string in form data.
-                     * @default null
-                     */
-                    x_request_id?: string | null;
-                };
-            };
-        };
-        responses: {
-            /** @description parse2 result */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * Base Credit
-                         * @default 0
-                         */
-                        base_credit: number;
-                        /**
-                         * Billable Pages
-                         * @default 0
-                         */
-                        billable_pages: number;
-                        /**
-                         * Completion Tokens
-                         * @default 0
-                         */
-                        completion_tokens: number;
-                        credit_usage?: components["schemas"]["CreditUsage"];
-                        /**
-                         * Duration Ms
-                         * @default 0
-                         */
-                        duration_ms: number;
-                        /** Failed Pages */
-                        failed_pages?: number[];
-                        /**
-                         * Model Family
-                         * @default null
-                         */
-                        model_family: string | null;
-                        /**
-                         * Output Ref
-                         * @default null
-                         */
-                        output_ref: string | null;
-                        /**
-                         * Page Count
-                         * @default 0
-                         */
-                        page_count: number;
-                        /**
-                         * Prompt Tokens
-                         * @default 0
-                         */
-                        prompt_tokens: number;
-                        /** Response */
-                        response: {
-                            [key: string]: unknown;
-                        };
-                        /**
-                         * Status Code
-                         * @default 200
-                         */
-                        status_code: number;
-                        /**
-                         * Token Steps
-                         * @default null
-                         */
-                        token_steps: {
-                            [key: string]: unknown;
-                        }[] | null;
-                        /**
-                         * Total Tokens
-                         * @default 0
-                         */
-                        total_tokens: number;
-                        /**
-                         * Usage
-                         * @default null
-                         */
-                        usage: {
-                            [key: string]: unknown;
-                        } | null;
-                    };
-                };
-            };
-            /** @description Request validation failed. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    parse2_list_jobs: {
-        parameters: {
-            query?: {
-                /** @description Page number (0-indexed). */
-                page?: number;
-                /** @description Number of items per page. */
-                page_size?: number;
-                /** @description Filter by job status. */
-                status?: string | null;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The caller's jobs, newest first */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        has_more?: boolean;
-                        jobs?: {
-                            completed_at?: string | null;
-                            created_at?: string | null;
-                            failure_reason?: string | null;
-                            /** @description The unique identifier for this parse2 job. Format: ``parse2-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
-                            job_id?: string;
-                            model_version?: string | null;
-                            /** @enum {string} */
-                            status?: "pending" | "processing" | "completed" | "failed";
-                        }[];
-                        page?: number;
-                        page_size?: number;
-                    };
-                };
-            };
-            /** @description Request validation failed. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    parse2_create_job: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": {
-                    /** Content Type */
-                    content_type: string;
-                    /**
-                     * Custom Prompts
-                     * @default null
-                     */
-                    custom_prompts?: {
-                        [key: string]: string;
-                    } | null;
-                    /** Document Ref */
-                    document_ref: string;
-                    /** Filename */
-                    filename: string;
-                    /**
-                     * Job Id
-                     * @default null
-                     */
-                    job_id?: string | null;
-                    /**
-                     * Model Versions
-                     * @default null
-                     */
-                    model_versions?: {
-                        [key: string]: string;
-                    } | null;
-                    /**
-                     * Output Save Url
-                     * @default null
-                     */
-                    output_save_url?: string | null;
-                    /**
-                     * Password
-                     * @default null
-                     */
-                    password?: string | null;
-                    /**
-                     * Pricing Multiplier
-                     * @default 1
-                     */
-                    pricing_multiplier?: number;
-                    /**
-                     * Processing Mode
-                     * @default sync
-                     */
-                    processing_mode?: string;
-                    /** @description Async service tier. ``priority`` runs in the fast lane at the sync billing rate; absent → ``standard``. */
-                    service_tier?: ("standard" | "priority") | null;
-                    /**
-                     * Split
-                     * @default null
-                     */
-                    split?: string | null;
-                    /**
-                     * Version
-                     * @default null
-                     */
-                    version?: string | null;
-                    /**
-                     * X Request Id
-                     * @default null
-                     */
-                    x_request_id?: string | null;
-                };
-                "multipart/form-data": {
-                    /** Content Type */
-                    content_type: string;
-                    /**
-                     * Custom Prompts
-                     * @description JSON-serialized string in form data.
-                     * @default null
-                     */
-                    custom_prompts?: {
-                        [key: string]: string;
-                    } | null;
-                    /**
-                     * Format: binary
-                     * @description File upload.
-                     */
-                    document_ref: string;
-                    /** Filename */
-                    filename: string;
-                    /**
-                     * Job Id
-                     * @description JSON-serialized string in form data.
-                     * @default null
-                     */
-                    job_id?: string | null;
-                    /**
-                     * Model Versions
-                     * @description JSON-serialized string in form data.
-                     * @default null
-                     */
-                    model_versions?: {
-                        [key: string]: string;
-                    } | null;
-                    /**
-                     * Output Save Url
-                     * @description JSON-serialized string in form data.
-                     * @default null
-                     */
-                    output_save_url?: string | null;
-                    /**
-                     * Password
-                     * @description JSON-serialized string in form data.
-                     * @default null
-                     */
-                    password?: string | null;
-                    /**
-                     * Pricing Multiplier
-                     * @description JSON-serialized string in form data.
-                     * @default 1
-                     */
-                    pricing_multiplier?: number;
-                    /**
-                     * Processing Mode
-                     * @default sync
-                     */
-                    processing_mode?: string;
-                    /** @description Async service tier. ``priority`` runs in the fast lane at the sync billing rate; absent → ``standard``. */
-                    service_tier?: ("standard" | "priority") | null;
-                    /**
-                     * Split
-                     * @description JSON-serialized string in form data.
-                     * @default null
-                     */
-                    split?: string | null;
-                    /**
-                     * Version
-                     * @description JSON-serialized string in form data.
-                     * @default null
-                     */
-                    version?: string | null;
-                    /**
-                     * X Request Id
-                     * @description JSON-serialized string in form data.
-                     * @default null
-                     */
-                    x_request_id?: string | null;
-                };
-            };
-        };
-        responses: {
-            /** @description Job created */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        created_at?: string | null;
-                        /** @description The unique identifier for this parse2 job. Format: ``parse2-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
-                        job_id?: string;
-                        /** @enum {string} */
-                        status?: "pending" | "processing" | "completed" | "failed";
-                    };
-                };
-            };
-            /** @description Request validation failed. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
-                };
-            };
-        };
-    };
-    parse2_get_job: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description The identifier of the job to retrieve, as returned by the create-job request. */
-                job_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Job status / result */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description Present once the job is terminal. */
-                        completed_at?: string;
-                        created_at?: string | null;
-                        /** @description Present once status is ``failed``. */
-                        error?: {
-                            /** @description Stable error code (``internal_error`` when unmapped). */
-                            code?: string;
-                            message?: string;
-                        };
-                        /** @description The unique identifier for this parse2 job. Format: ``parse2-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
-                        job_id?: string;
-                        /** @description The result's metadata block (billing included), present alongside ``output_url`` once a job with ``output_save_url`` has ``completed`` — the delivery moves the content, not the receipt. Same shape as the inline ``result``'s ``metadata``; inline jobs carry it there instead. */
-                        metadata?: Record<string, never> | null;
-                        /** @description The URL the result was delivered to. Present once the job has ``completed`` and ``output_save_url`` was set, instead of inline ``result``. */
-                        output_url?: string | null;
-                        /** @description Estimated completion as a decimal from 0 to 1 — an estimate, not a measurement: it typically advances between polls while the job is ``processing``, may jump forward when the service reports a real milestone (e.g. parsed pages), and approaches but never reaches 1 (long-running jobs plateau near 0.98 — completion is signaled by ``status``, and a job may complete from any progress value). Present while ``processing``. */
-                        progress?: number;
-                        /** @description Present once status is ``completed`` and ``output_save_url`` was not set. When ``output_save_url`` was set, the result is delivered there and ``output_url`` is returned instead. */
-                        result?: {
-                            /**
-                             * Base Credit
-                             * @default 0
-                             */
-                            base_credit: number;
-                            /**
-                             * Billable Pages
-                             * @default 0
-                             */
-                            billable_pages: number;
-                            /**
-                             * Completion Tokens
-                             * @default 0
-                             */
-                            completion_tokens: number;
-                            credit_usage?: components["schemas"]["CreditUsage"];
-                            /**
-                             * Duration Ms
-                             * @default 0
-                             */
-                            duration_ms: number;
-                            /** Failed Pages */
-                            failed_pages?: number[];
-                            /**
-                             * Model Family
-                             * @default null
-                             */
-                            model_family: string | null;
-                            /**
-                             * Output Ref
-                             * @default null
-                             */
-                            output_ref: string | null;
-                            /**
-                             * Page Count
-                             * @default 0
-                             */
-                            page_count: number;
-                            /**
-                             * Prompt Tokens
-                             * @default 0
-                             */
-                            prompt_tokens: number;
-                            /** Response */
-                            response: {
-                                [key: string]: unknown;
-                            };
-                            /**
-                             * Status Code
-                             * @default 200
-                             */
-                            status_code: number;
-                            /**
-                             * Token Steps
-                             * @default null
-                             */
-                            token_steps: {
-                                [key: string]: unknown;
-                            }[] | null;
-                            /**
-                             * Total Tokens
-                             * @default 0
-                             */
-                            total_tokens: number;
-                            /**
-                             * Usage
-                             * @default null
-                             */
-                            usage: {
-                                [key: string]: unknown;
-                            } | null;
-                        } | null;
-                        /** @enum {string} */
-                        status?: "pending" | "processing" | "completed" | "failed";
-                    };
-                };
-            };
-            /** @description Not found (e.g. no such job). */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorResponse"];
+                    "application/json": components["schemas"]["SplitResponse"];
                 };
             };
             /** @description Request validation failed. */
@@ -3688,7 +4031,7 @@ export interface operations {
                         pages?: number[] | null;
                         /**
                          * Password
-                         * @description Password for encrypted PDFs. Not currently supported — providing a value returns a 422 error; decrypt the file before uploading.
+                         * @description Password for an encrypted PDF. The document is decrypted once at the start of processing; the password is not retained with the result. PDFs only — supplying one for an image or Office document returns a 422 (`password_unsupported_content_type`). A wrong password returns a 422 (`encrypted_pdf_wrong_password`); omitting it for a locked PDF returns a 422 (`encrypted_pdf_password_required`).
                          * @default null
                          */
                         password?: string | null;
@@ -3831,7 +4174,7 @@ export interface operations {
                         pages?: number[] | null;
                         /**
                          * Password
-                         * @description Password for encrypted PDFs. Not currently supported — providing a value returns a 422 error; decrypt the file before uploading.
+                         * @description Password for an encrypted PDF. The document is decrypted once at the start of processing; the password is not retained with the result. PDFs only — supplying one for an image or Office document returns a 422 (`password_unsupported_content_type`). A wrong password returns a 422 (`encrypted_pdf_wrong_password`); omitting it for a locked PDF returns a 422 (`encrypted_pdf_password_required`).
                          * @default null
                          */
                         password?: string | null;
