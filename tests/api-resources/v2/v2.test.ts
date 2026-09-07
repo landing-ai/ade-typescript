@@ -452,9 +452,17 @@ describe('client.v2 routing', () => {
   test('a wrong password surfaces as a 422 naming the documented code', async () => {
     // The spec scopes the password 422s to three named cases; this is the one a
     // caller can act on, so pin that the body reaches them unmangled.
+    //
+    // Shape matters here, because `error` is the whole parsed body (see APIError in
+    // src/core/error.ts) and this test is what documents it: the spec's ErrorResponse
+    // is FLAT — `{code, message}`, both required — so the code reads back as
+    // `err.error.code`, NOT `err.error.error.code`. Staging confirms it. Do not wrap
+    // the mock body in an extra `error` object: the job envelope's `error` field is a
+    // different thing (see the parseJobs tests), and mocking this one nested makes the
+    // assertion agree with a body the gateway never sends.
     const { client } = stubClient(() =>
       jsonResponse(
-        { error: { code: 'encrypted_pdf_wrong_password', message: 'The password did not open the PDF.' } },
+        { code: 'encrypted_pdf_wrong_password', message: 'The password did not open the PDF.' },
         422,
       ),
     );
@@ -465,7 +473,7 @@ describe('client.v2 routing', () => {
     await expect(call).rejects.toBeInstanceOf(UnprocessableEntityError);
     await expect(call).rejects.toMatchObject({
       status: 422,
-      error: { error: { code: 'encrypted_pdf_wrong_password' } },
+      error: { code: 'encrypted_pdf_wrong_password' },
     });
   });
 

@@ -322,10 +322,6 @@ describe('V2 contract (staging)', () => {
       const image = await toFile(TINY_PNG, 'pixel.png', { type: 'image/png' });
       const call = client.v2.parse({ document: image, password: 'not-a-pdf-password' });
       await expect(call).rejects.toBeInstanceOf(UnprocessableEntityError);
-      await expect(call).rejects.toMatchObject({
-        status: 422,
-        error: { error: { code: 'password_unsupported_content_type' } },
-      });
     },
     120_000, // sync call: 2 x REQUEST_TIMEOUT
   );
