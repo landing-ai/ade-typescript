@@ -132,8 +132,20 @@ Every spec-sync PR (and any PR to `main`) must pass `.github/workflows/pr-gates.
 - **contract-tests** — `tests/contract` (`yarn test:contract`) run against staging when
   `LANDINGAI_ADE_STAGING_APIKEY` is set; skipped otherwise, and only required on `spec-sync/*`
   branches.
+- **check-v2-paths** (`scripts/spec-sync/check-v2-paths.sh`, run by `./scripts/lint` in the CI
+  `lint` job and inside the spec-sync run's own lint step so the AI repair pass sees it) —
+  cross-checks the URL paths the `client.v2` resources send against `specs/v2-aide.json` in both
+  directions: a wired path the spec lacks fails (in `ade-python#153` the AI pass rewrote the
+  gateway's new `/v1/classify` and `/v1/split` routes as `client.v2.classify`/`split` hitting
+  non-existent `/v2/*` paths), and a `/v2/*` spec route no resource sends fails unless it is listed
+  as deferred in the script.
 
-Spec-sync PRs are AI-drafted and **require human review** before merge.
+Spec-sync PRs are AI-drafted and **require human review** before merge. Every AI step pins
+`--model "claude-opus-5[1m]"` (the same pin as `ade-python`; unpinned, the action floats with the
+Claude Code release and the two SDKs silently diverge on the same spec change), and right after each
+AI step the run prints the agent's narration and tool calls (a `jq` filter over the action's
+transcript, held in the workflow's top-level `env`) to the step log so a wiring decision can be
+audited afterwards — the log rather than an artifact, because only logs are secret-masked.
 
 **Secrets required (repo settings):** `SPEC_SYNC_TOKEN` (a fine-grained PAT scoped to this repo with
 `Contents: Read and write` and `Pull requests: Read and write`), `ANTHROPIC_API_KEY`, and
@@ -148,6 +160,13 @@ never talks to `aide`. The `/v2/workflow*` routes **are** shipped (`client.v2.wo
 `workflowJobs`) but **hand-maintained**: they stay in the tracked spec (so a workflow spec change
 still opens a mechanical spec-sync PR as a signal), but the AI-wiring step **excludes** them — a
 maintainer reconciles workflow spec drift by hand rather than having it auto-drafted.
+
+**V2 scope:** `client.v2` is backed by the spec's `/v2/*` routes **only**. The AIDE spec also
+carries `/v1/*` compatibility routes (`/v1/ade/*`, `/v1/classify`, `/v1/split`, …); those are the V1
+surface and are never wired into `client.v2` — the AI prompt says so, and `check-v2-paths` rejects
+any wired path the snapshot does not have, so a `/v1/*` route can no longer be "translated" into a
+`/v2/*` one. A new `/v1/*` route in the V2 spec is therefore expected to produce a PR that wires
+only the in-scope `/v2/*` changes (if any) and mentions the unwired routes in its description.
 
 **Protected environment:** the `contract-tests` gate runs AI-drafted test code with
 `LANDINGAI_ADE_STAGING_APIKEY` in env. Configure a **`spec-sync-staging`** Environment (repo Settings
