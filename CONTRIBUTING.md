@@ -146,11 +146,11 @@ Every spec-sync PR (and any PR to `main`) must pass `.github/workflows/pr-gates.
 Spec-sync PRs are AI-drafted and **require human review** before merge. Every AI step pins
 `--model "claude-opus-5[1m]"` (the same pin as `ade-python`; unpinned, the action floats with the
 Claude Code release and the two SDKs silently diverge on the same spec change), and right after each
-AI step the run prints the agent's tool calls — tool name plus path-like arguments that pass a strict
-character check, nothing else — to the step log (a `jq` filter held in the workflow's top-level
-`env`), so what the agent read and edited can be audited afterwards. Free-form agent text is
-deliberately not logged: the spec is untrusted input, and narration from a prompt-injected agent
-could carry a transformed credential past secret masking.
+AI step the run prints the agent's tool calls — tool name and argument names only, no values — to the
+step log (a `jq` filter held in the workflow's top-level `env`), and the commit step prints
+`git diff --cached --stat`, so what the agent did and changed can be audited afterwards. No
+agent-controlled value is logged: the spec is untrusted input, and a prompt-injected agent could
+encode a credential into narration or a file path and carry it past secret masking.
 
 **Secrets required (repo settings):** `SPEC_SYNC_TOKEN` (a fine-grained PAT scoped to this repo with
 `Contents: Read and write` and `Pull requests: Read and write`), `ANTHROPIC_API_KEY`, and
