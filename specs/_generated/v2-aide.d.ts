@@ -1600,7 +1600,7 @@ export interface operations {
                 /** @description Page number (0-indexed). */
                 page?: number;
                 /** @description Number of items per page. */
-                page_size?: number;
+                pageSize?: number;
                 /** @description Filter by job status. */
                 status?: string | null;
             };
@@ -1626,7 +1626,7 @@ export interface operations {
                             job_id?: string;
                             model_version?: string | null;
                             /** @enum {string} */
-                            status?: "pending" | "processing" | "completed" | "failed";
+                            status?: "pending" | "processing" | "completed" | "failed" | "cancelled";
                         }[];
                         page?: number;
                         page_size?: number;
@@ -1923,7 +1923,7 @@ export interface operations {
                 /** @description Page number (0-indexed). */
                 page?: number;
                 /** @description Number of items per page. */
-                page_size?: number;
+                pageSize?: number;
                 /** @description Filter by job status. */
                 status?: string | null;
             };
@@ -1949,7 +1949,7 @@ export interface operations {
                             job_id?: string;
                             model_version?: string | null;
                             /** @enum {string} */
-                            status?: "pending" | "processing" | "completed" | "failed";
+                            status?: "pending" | "processing" | "completed" | "failed" | "cancelled";
                         }[];
                         page?: number;
                         page_size?: number;
@@ -2378,7 +2378,7 @@ export interface operations {
                 /** @description Page number (0-indexed). */
                 page?: number;
                 /** @description Number of items per page. */
-                page_size?: number;
+                pageSize?: number;
                 /** @description Filter by job status. */
                 status?: string | null;
             };
@@ -2404,7 +2404,7 @@ export interface operations {
                             job_id?: string;
                             model_version?: string | null;
                             /** @enum {string} */
-                            status?: "pending" | "processing" | "completed" | "failed";
+                            status?: "pending" | "processing" | "completed" | "failed" | "cancelled";
                         }[];
                         page?: number;
                         page_size?: number;
@@ -2852,7 +2852,7 @@ export interface operations {
                 /** @description Page number (0-indexed). */
                 page?: number;
                 /** @description Number of items per page. */
-                page_size?: number;
+                pageSize?: number;
                 /** @description Filter by job status. */
                 status?: string | null;
             };
@@ -2878,7 +2878,7 @@ export interface operations {
                             job_id?: string;
                             model_version?: string | null;
                             /** @enum {string} */
-                            status?: "pending" | "processing" | "completed" | "failed";
+                            status?: "pending" | "processing" | "completed" | "failed" | "cancelled";
                         }[];
                         page?: number;
                         page_size?: number;
@@ -3175,7 +3175,7 @@ export interface operations {
                 /** @description Page number (0-indexed). */
                 page?: number;
                 /** @description Number of items per page. */
-                page_size?: number;
+                pageSize?: number;
                 /** @description Filter by job status. */
                 status?: string | null;
             };
@@ -3201,7 +3201,7 @@ export interface operations {
                             job_id?: string;
                             model_version?: string | null;
                             /** @enum {string} */
-                            status?: "pending" | "processing" | "completed" | "failed";
+                            status?: "pending" | "processing" | "completed" | "failed" | "cancelled";
                         }[];
                         page?: number;
                         page_size?: number;
@@ -3588,7 +3588,7 @@ export interface operations {
                 /** @description Page number (0-indexed). */
                 page?: number;
                 /** @description Number of items per page. */
-                page_size?: number;
+                pageSize?: number;
                 /** @description Filter by job status. */
                 status?: string | null;
             };
@@ -3614,7 +3614,7 @@ export interface operations {
                             job_id?: string;
                             model_version?: string | null;
                             /** @enum {string} */
-                            status?: "pending" | "processing" | "completed" | "failed";
+                            status?: "pending" | "processing" | "completed" | "failed" | "cancelled";
                         }[];
                         page?: number;
                         page_size?: number;
@@ -4075,7 +4075,7 @@ export interface operations {
                 /** @description Page number (0-indexed). */
                 page?: number;
                 /** @description Number of items per page. */
-                page_size?: number;
+                pageSize?: number;
                 /** @description Filter by job status. */
                 status?: string | null;
             };
@@ -4425,7 +4425,7 @@ export interface operations {
                 /** @description Page number (0-indexed). */
                 page?: number;
                 /** @description Number of items per page. */
-                page_size?: number;
+                pageSize?: number;
                 /** @description Filter by job status. */
                 status?: string | null;
             };
@@ -4451,7 +4451,7 @@ export interface operations {
                             job_id?: string;
                             model_version?: string | null;
                             /** @enum {string} */
-                            status?: "pending" | "processing" | "completed" | "failed";
+                            status?: "pending" | "processing" | "completed" | "failed" | "cancelled";
                         }[];
                         page?: number;
                         page_size?: number;
