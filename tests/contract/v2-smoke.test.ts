@@ -330,12 +330,48 @@ describe('V2 contract (staging)', () => {
     'parseJobs.list returns a normalized JobList against the new envelope',
     async () => {
       const client = stagingClient();
-      const list = await client.v2.parseJobs.list({ page: 0, page_size: 1 });
+      // Wired by the V2 spec-sync: the page-size query parameter was renamed
+      // `page_size` -> `pageSize`, so this passes the new name.
+      const list = await client.v2.parseJobs.list({ page: 0, pageSize: 1 });
       expect(Array.isArray(list.jobs)).toBe(true);
+      // The renamed parameter is honoured: staging may hold fewer than 1 job
+      // under this key, so the bound is one-sided (the old name would be
+      // ignored and fall back to the server default of 10).
+      expect(list.jobs.length).toBeLessThanOrEqual(1);
       for (const job of list.jobs) {
         expect(typeof job.job_id).toBe('string');
         // The list envelope now emits ISO-8601 timestamps; the normalizer maps
         // them to `Date` (or `null` when absent).
+        expect(job.created_at === null || job.created_at instanceof Date).toBe(true);
+      }
+    },
+    60_000, // list route: 1 x REQUEST_TIMEOUT
+  );
+
+  runIf(
+    'extractJobs.list honours the renamed pageSize param and the widened status enum',
+    async () => {
+      const client = stagingClient();
+      // Wired by the V2 spec-sync: `/v2/extract/jobs` renamed its page-size
+      // query parameter `page_size` -> `pageSize` and widened the listed
+      // `status` enum with `cancelled`. Both are asserted absent-or-valid,
+      // which is all a live listing can guarantee: this key may hold no extract
+      // jobs at all, and nothing here can force one into any given state. The
+      // populated `cancelled` case is pinned in the mocked test in
+      // tests/api-resources/v2/v2.test.ts, which controls the response body.
+      const list = await client.v2.extractJobs.list({ page: 0, pageSize: 2 });
+      expect(Array.isArray(list.jobs)).toBe(true);
+      expect(list.jobs.length).toBeLessThanOrEqual(2);
+      // `page`/`page_size` are optional on the listing envelope, so the
+      // normalizer reports `null` when the gateway omits them.
+      expect(list.page == null || typeof list.page === 'number').toBe(true);
+      expect(list.page_size == null || typeof list.page_size === 'number').toBe(true);
+      for (const job of list.jobs) {
+        expect(typeof job.job_id).toBe('string');
+        expect(['pending', 'processing', 'completed', 'failed', 'cancelled']).toContain(job.status);
+        expect(job.is_terminal).toBe(
+          job.status === 'completed' || job.status === 'failed' || job.status === 'cancelled',
+        );
         expect(job.created_at === null || job.created_at instanceof Date).toBe(true);
       }
     },

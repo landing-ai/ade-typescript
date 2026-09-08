@@ -575,6 +575,63 @@ describe('client.v2 routing', () => {
     expect(list.org_id).toBe('o');
   });
 
+  // Wired by the V2 spec-sync: the page-size query parameter on
+  // `/v2/parse/jobs` and `/v2/extract/jobs` was renamed `page_size` -> `pageSize`.
+  test('parseJobs.list sends the page size as the renamed pageSize query param', async () => {
+    const { client, calls } = stubClient(() => jsonResponse({ jobs: [] }));
+    await client.v2.parseJobs.list({ page: 2, pageSize: 25, status: 'completed' });
+    const url = new URL(calls[0]!);
+    expect(url.pathname).toBe('/v2/parse/jobs');
+    expect(url.searchParams.get('pageSize')).toBe('25');
+    expect(url.searchParams.get('page')).toBe('2');
+    expect(url.searchParams.get('status')).toBe('completed');
+    // The old name must not go on the wire — the gateway no longer reads it.
+    expect(url.searchParams.has('page_size')).toBe(false);
+  });
+
+  test('extractJobs.list forwards the deprecated page_size under the new name', async () => {
+    const { client, calls } = stubClient(() => jsonResponse({ jobs: [] }));
+    await client.v2.extractJobs.list({ page_size: 5 });
+    const url = new URL(calls[0]!);
+    expect(url.pathname).toBe('/v2/extract/jobs');
+    expect(url.searchParams.get('pageSize')).toBe('5');
+    expect(url.searchParams.has('page_size')).toBe(false);
+  });
+
+  test('list sends pageSize when both spellings are supplied, and neither when neither is', async () => {
+    const { client, calls } = stubClient(() => jsonResponse({ jobs: [] }));
+    await client.v2.extractJobs.list({ pageSize: 7, page_size: 5 });
+    expect(new URL(calls[0]!).searchParams.get('pageSize')).toBe('7');
+
+    await client.v2.extractJobs.list({ page: 1 });
+    const url = new URL(calls[1]!);
+    expect(url.searchParams.has('pageSize')).toBe(false);
+    expect(url.searchParams.get('page')).toBe('1');
+  });
+
+  // Wired by the V2 spec-sync: the `/v2/extract/jobs` listing now reports
+  // `cancelled` alongside the other statuses.
+  test('extractJobs.list normalizes a cancelled job from the listing', async () => {
+    const { client } = stubClient(() =>
+      jsonResponse({
+        jobs: [
+          { job_id: 'ej-c', status: 'cancelled', created_at: '2026-01-02T03:04:05Z' },
+          { job_id: 'ej-p', status: 'processing' },
+        ],
+        has_more: false,
+        page: 0,
+        page_size: 2,
+      }),
+    );
+    const list = await client.v2.extractJobs.list({ pageSize: 2 });
+    expect(list.jobs[0]!.status).toBe('cancelled');
+    expect(list.jobs[0]!.is_terminal).toBe(true);
+    expect(list.jobs[0]!.result).toBeNull();
+    expect(list.jobs[1]!.status).toBe('processing');
+    expect(list.jobs[1]!.is_terminal).toBe(false);
+    expect(list.page_size).toBe(2);
+  });
+
   test('extractJobs.create sends service_tier in the JSON body', async () => {
     let sentBody: unknown;
     const fetch: Fetch = async (_input, init) => {

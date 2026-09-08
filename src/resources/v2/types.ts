@@ -7,9 +7,10 @@
 // original envelope is always available on `Job.raw`.
 
 /**
- * Common job status across parse, extract, and workflow jobs. Extract and
- * workflow jobs never report `cancelled`, but the union is shared so callers
- * only learn one enum.
+ * Common job status across parse, extract, and workflow jobs. Not every route
+ * reports every value — the parse job listing documents only `pending`,
+ * `processing`, `completed` and `failed`, while the extract job listing also
+ * reports `cancelled` — but the union is shared so callers only learn one enum.
  */
 export type JobStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
 

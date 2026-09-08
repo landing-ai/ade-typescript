@@ -71,11 +71,40 @@ export interface V2ParseJobCreateParams extends V2ParseParams {
 }
 
 export interface V2JobListParams {
+  /** Page number (0-indexed). Omitted → the server default (`0`). */
   page?: number;
 
+  /**
+   * Number of items per page, 1–100. Omitted → the server default (`10`). Sent
+   * as the `pageSize` query parameter, which is the name the gateway reads.
+   */
+  pageSize?: number;
+
+  /**
+   * @deprecated The gateway renamed this query parameter to `pageSize`. Still
+   * accepted here and forwarded under the new name, so existing callers keep
+   * working; prefer `pageSize`, which wins when both are supplied.
+   */
   page_size?: number;
 
+  /** Filter by job status, e.g. `completed`. Omitted → no filtering. */
   status?: string | null;
+}
+
+/**
+ * Build the query for a `/v2/parse/jobs` or `/v2/extract/jobs` listing. The
+ * gateway renamed the page-size query parameter from `page_size` to `pageSize`,
+ * so `pageSize` is what goes on the wire; the deprecated `page_size` param is
+ * forwarded under the new name rather than sent as-is (the gateway would ignore
+ * it and silently fall back to its default page size).
+ */
+export function buildJobListQuery(query: V2JobListParams): Record<string, unknown> {
+  const { pageSize, page_size, ...rest } = query;
+  const wire: Record<string, unknown> = { ...rest };
+  // `??`, not `||`, so an explicit `0` is preserved; it also treats an omitted
+  // `pageSize` and an explicit `null` alike before falling back to the old name.
+  wire['pageSize'] = pageSize ?? page_size;
+  return cleanQuery(wire);
 }
 
 /**
@@ -148,7 +177,7 @@ export class ParseJobs extends V2Resource {
   /** List async parse jobs associated with your API key, newest first. */
   async list(query: V2JobListParams = {}, options?: RequestOptions): Promise<JobList> {
     const raw = await this._client.get<Record<string, unknown>>(this.v2Url('/v2/parse/jobs'), {
-      query: cleanQuery(query as Record<string, unknown>),
+      query: buildJobListQuery(query),
       ...options,
     });
     const jobs = jobsFromEnvelope(raw).map(normalizeParseJob);

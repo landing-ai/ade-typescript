@@ -292,14 +292,14 @@ try {
 }
 ```
 
-The `create`, `get`, and `wait` methods return a normalized `Job` with `job_id`, `status` (`pending`, `processing`, `completed`, `failed`, or `cancelled`), `progress`, `result`, `metadata`, `error`, `is_terminal`, and `raw` (the unmodified API envelope, for any field not surfaced on the typed shape). `progress` is an estimate, not a measurement: it approaches but never reaches 1 (long-running jobs plateau near 0.98), so key completion off `status`, which can go terminal from any progress value. The `list` method returns a `JobList` with a `jobs` array and `has_more`, plus the `page`/`page_size` pagination fields; `org_id` is populated only by older parse envelopes. Fields an endpoint doesn't populate are `null`.
+The `create`, `get`, and `wait` methods return a normalized `Job` with `job_id`, `status` (`pending`, `processing`, `completed`, `failed`, or `cancelled`), `progress`, `result`, `metadata`, `error`, `is_terminal`, and `raw` (the unmodified API envelope, for any field not surfaced on the typed shape). `progress` is an estimate, not a measurement: it approaches but never reaches 1 (long-running jobs plateau near 0.98), so key completion off `status`, which can go terminal from any progress value. The `list` method takes `page`, `pageSize` (1–100, default 10) and `status`, and returns a `JobList` with a `jobs` array and `has_more`, plus the `page`/`page_size` pagination fields; `org_id` is populated only by older parse envelopes. Fields an endpoint doesn't populate are `null`. The page-size _request_ parameter is `pageSize`; the earlier `page_size` spelling is still accepted and forwarded under the new name, so existing calls keep paginating, but prefer `pageSize`. (The _response_ envelope still reports `page_size`.) A job listed by `client.v2.extractJobs.list` can report `cancelled` as well as `pending`, `processing`, `completed` and `failed`.
 
 ```ts
 // Poll manually instead of blocking
 const current = await client.v2.parseJobs.get(job.job_id);
 
 // List jobs, with optional filtering
-const jobs = await client.v2.parseJobs.list({ status: 'completed', page: 0, page_size: 10 });
+const jobs = await client.v2.parseJobs.list({ status: 'completed', page: 0, pageSize: 10 });
 for (const j of jobs.jobs) {
   console.log(j.job_id, j.status);
 }
