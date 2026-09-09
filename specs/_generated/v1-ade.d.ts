@@ -1357,6 +1357,13 @@ export interface operations {
                     "application/json": components["schemas"]["ExtractResponse"];
                 };
             };
+            /** @description The request body was not form-encoded. Send multipart/form-data. */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -1470,6 +1477,13 @@ export interface operations {
                      */
                     "application/json": components["schemas"]["JobCreationResponse"];
                 };
+            };
+            /** @description The request body was not form-encoded. Send multipart/form-data. */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
