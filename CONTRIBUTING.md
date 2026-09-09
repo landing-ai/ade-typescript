@@ -173,6 +173,34 @@ any wired path the snapshot does not have, so a `/v1/*` route can no longer be "
 `/v2/*` one. A new `/v1/*` route in the V2 spec is therefore expected to produce a PR that wires
 only the in-scope `/v2/*` changes (if any) and mentions the unwired routes in its description.
 
+**V2 request fields — no gate, compare by hand.** The same rule applies one level down: `client.v2`
+sends the **top-level** properties of an operation's `requestBody`, a field the spec declares inside
+a nested object is not a top-level field, and a top-level field on a `/v1/*` operation is not a
+`/v2` field however familiar its name. The encrypted-PDF password is the live example — declared at
+`options.password` on `/v2/parse*` and nowhere else, while `/v1/ade/parse*` in the _same_ spec
+declares a top-level `password`. Both SDKs nevertheless expose two hand-written top-level
+conveniences that fold into nested fields, and these must stay identical in `ade-typescript` and
+`ade-python`:
+
+- `password` on `/v2/parse` and `/v2/parse/jobs` → `options.password`. When a caller supplies both,
+  an explicit `options.password` **wins**, an explicit `null` included (`null` means "no password").
+  Test the _value_, not key presence: `{password: undefined}` is how JS spells "absent" and
+  `JSON.stringify` drops the key, so a presence test would suppress the shorthand **and** send no
+  password at all. `ade-python` carries the mirror-image trap — there `dict(json.loads(x))` accepts
+  any pair-sequence, so `'[["password", "sneaky"]]'` silently becomes the options dict; coerce
+  `options` through a helper that requires an object on both the string and the object branch.
+- `strict` on `/v2/extract` and `/v2/extract/jobs` → `options.strict`. No conflict is possible —
+  neither SDK exposes `options` on extract, so the shorthand is the only way to reach the field. If
+  either SDK ever exposes it, that becomes a real tie-break and needs a rule here first.
+
+**Nothing in CI checks this** — `check-v2-paths` covers routes only, and a hand-written alias is not
+spec-derived, so neither repo's CI can see the other's choice. A PR that adds or touches a top-level
+param which is _not_ in the spec's top-level `requestBody` properties has to be diffed against the
+other repo by hand: precedence, `undefined`/`None` handling, and whether either SDK sends the value
+twice. That comparison is exactly what did not happen before #121 / `ade-python#160` — the two SDKs
+picked opposite tie-breaks and one call sent a different password per language, which surfaced only
+as a 422 `encrypted_pdf_wrong_password` naming no cause.
+
 **Protected environment:** the `contract-tests` gate runs AI-drafted test code with
 `LANDINGAI_ADE_STAGING_APIKEY` in env. Configure a **`spec-sync-staging`** Environment (repo Settings
 → Environments) with a **required reviewer** so a maintainer approves before the staging key is
