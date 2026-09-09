@@ -1,4 +1,9 @@
-import LandingAIADE, { UnprocessableEntityError, V2SyncTimeoutError, toFile } from 'landingai-ade';
+import LandingAIADE, {
+  LandingAIADEError,
+  UnprocessableEntityError,
+  V2SyncTimeoutError,
+  toFile,
+} from 'landingai-ade';
 import type { Fetch } from 'landingai-ade/internal/builtin-types';
 
 function jsonResponse(body: unknown, status = 200): Response {
@@ -8,16 +13,28 @@ function jsonResponse(body: unknown, status = 200): Response {
   });
 }
 
-/** A client backed by a stub fetch that records request URLs and returns `handler`'s response. */
-function stubClient(handler: (url: string) => Response): { client: LandingAIADE; calls: string[] } {
+/**
+ * A client backed by a stub fetch that returns `handler`'s response, recording the
+ * request URLs and the body of the last request.
+ */
+function stubClient(handler: (url: string) => Response): {
+  client: LandingAIADE;
+  calls: string[];
+  sentForm: () => FormData;
+} {
   const calls: string[] = [];
-  const fetch: Fetch = async (input) => {
+  let sentBody: unknown;
+  const fetch: Fetch = async (input, init) => {
     const url = String(input);
-    if (!url.startsWith('data:')) calls.push(url); // ignore the FormData-support probe
+    if (!url.startsWith('data:')) {
+      // ignore the FormData-support probe
+      calls.push(url);
+      sentBody = init?.body;
+    }
     return handler(url);
   };
   const client = new LandingAIADE({ apikey: 'k', environment: 'staging', maxRetries: 0, fetch });
-  return { client, calls };
+  return { client, calls, sentForm: () => sentBody as FormData };
 }
 
 describe('client.v2 routing', () => {
@@ -397,18 +414,13 @@ describe('client.v2 routing', () => {
   });
 
   test('parse folds the password convenience param into options', async () => {
-    let sentBody: unknown;
-    const fetch: Fetch = async (input, init) => {
-      if (!String(input).startsWith('data:')) sentBody = init?.body;
-      return jsonResponse({ markdown: 'x', metadata: {} });
-    };
-    const client = new LandingAIADE({ apikey: 'k', environment: 'staging', maxRetries: 0, fetch });
+    const { client, sentForm } = stubClient(() => jsonResponse({ markdown: 'x', metadata: {} }));
     await client.v2.parse({
       document: await toFile(Buffer.from('%PDF'), 'a.pdf'),
       options: { inline_markdown: true },
       password: 'hunter2',
     });
-    const form = sentBody as FormData;
+    const form = sentForm();
     expect(JSON.parse(String(form.get('options')))).toEqual({ inline_markdown: true, password: 'hunter2' });
     expect(form.get('password')).toBeNull(); // no longer sent as a top-level field
   });
@@ -417,36 +429,134 @@ describe('client.v2 routing', () => {
     // Wired by the V2 spec-sync: encrypted PDFs are supported now — the password
     // is the key that unlocks the document rather than a value the gateway
     // rejects, so it has to reach the wire even when it is the only option.
-    let sentBody: unknown;
-    const fetch: Fetch = async (input, init) => {
-      if (!String(input).startsWith('data:')) sentBody = init?.body;
-      return jsonResponse({ markdown: 'x', metadata: {} });
-    };
-    const client = new LandingAIADE({ apikey: 'k', environment: 'staging', maxRetries: 0, fetch });
+    const { client, sentForm } = stubClient(() => jsonResponse({ markdown: 'x', metadata: {} }));
     await client.v2.parse({
       document: await toFile(Buffer.from('%PDF'), 'locked.pdf'),
       password: 'hunter2',
     });
-    const form = sentBody as FormData;
+    const form = sentForm();
     expect(JSON.parse(String(form.get('options')))).toEqual({ password: 'hunter2' });
   });
 
   test('parseJobs.create folds the password into options too', async () => {
-    let sentBody: unknown;
-    const fetch: Fetch = async (input, init) => {
-      if (!String(input).startsWith('data:')) sentBody = init?.body;
-      return jsonResponse({ job_id: 'pj-pw' }, 202);
-    };
-    const client = new LandingAIADE({ apikey: 'k', environment: 'staging', maxRetries: 0, fetch });
+    const { client, sentForm } = stubClient(() => jsonResponse({ job_id: 'pj-pw' }, 202));
     const job = await client.v2.parseJobs.create({
       document: await toFile(Buffer.from('%PDF'), 'locked.pdf'),
       password: 'hunter2',
       service_tier: 'priority',
     });
     expect(job.job_id).toBe('pj-pw');
-    const form = sentBody as FormData;
+    const form = sentForm();
     expect(JSON.parse(String(form.get('options')))).toEqual({ password: 'hunter2' });
     expect(form.get('service_tier')).toBe('priority');
+  });
+
+  test('an explicit options.password wins over the password shorthand', async () => {
+    // `password` is shorthand for the contract field `options.password`, so the
+    // caller who wrote out the field is the deliberate one and takes the tie.
+    // ade-python's `_build_parse_body` breaks it the same way. The two SDKs used
+    // to disagree here, so the same call decrypted with a different password
+    // depending on the language -- and the losing one surfaced only as a 422
+    // `encrypted_pdf_wrong_password` that named no cause.
+    const { client, sentForm } = stubClient(() => jsonResponse({ markdown: 'x', metadata: {} }));
+    await client.v2.parse({
+      document: await toFile(Buffer.from('%PDF'), 'locked.pdf'),
+      options: { inline_markdown: true, password: 'from-options' },
+      password: 'shorthand',
+    });
+    const form = sentForm();
+    expect(JSON.parse(String(form.get('options')))).toEqual({
+      inline_markdown: true,
+      password: 'from-options',
+    });
+    expect(form.get('password')).toBeNull();
+  });
+
+  test('parseJobs.create gives options.password the same precedence', async () => {
+    const { client, sentForm } = stubClient(() => jsonResponse({ job_id: 'pj-pw2' }, 202));
+    await client.v2.parseJobs.create({
+      document: await toFile(Buffer.from('%PDF'), 'locked.pdf'),
+      options: { password: 'from-options' },
+      password: 'shorthand',
+    });
+    expect(JSON.parse(String(sentForm().get('options')))).toEqual({ password: 'from-options' });
+  });
+
+  test('a pre-serialized options string keeps its own password', async () => {
+    // `options` also accepts a JSON string, which takes a separate branch -- it
+    // used to lose this tie because the shorthand was spread in after the parse.
+    const { client, sentForm } = stubClient(() => jsonResponse({ markdown: 'x', metadata: {} }));
+    await client.v2.parse({
+      document: await toFile(Buffer.from('%PDF'), 'locked.pdf'),
+      options: JSON.stringify({ pages: '1-2', password: 'from-options' }),
+      password: 'shorthand',
+    });
+    expect(JSON.parse(String(sentForm().get('options')))).toEqual({
+      pages: '1-2',
+      password: 'from-options',
+    });
+  });
+
+  test('a pre-serialized options string still takes the password shorthand', async () => {
+    const { client, sentForm } = stubClient(() => jsonResponse({ markdown: 'x', metadata: {} }));
+    await client.v2.parse({
+      document: await toFile(Buffer.from('%PDF'), 'locked.pdf'),
+      options: JSON.stringify({ pages: '1-2' }),
+      password: 'shorthand',
+    });
+    expect(JSON.parse(String(sentForm().get('options')))).toEqual({
+      pages: '1-2',
+      password: 'shorthand',
+    });
+  });
+
+  test('an options.password of undefined falls through to the shorthand', async () => {
+    // `undefined` is how JS spells "absent", and `JSON.stringify` drops the key --
+    // so a key-presence test (`'password' in opts`) would suppress the shorthand AND
+    // then erase the key, sending a locked PDF with no password at all and earning an
+    // unattributable 422 `encrypted_pdf_password_required`. Only an explicit value
+    // wins. Reachable from typed callers: `{ password: cfg.password }` type-checks
+    // when `cfg.password` is optional.
+    const { client, sentForm } = stubClient(() => jsonResponse({ markdown: 'x', metadata: {} }));
+    await client.v2.parse({
+      document: await toFile(Buffer.from('%PDF'), 'locked.pdf'),
+      options: { pages: [1], password: undefined },
+      password: 'shorthand',
+    });
+    expect(JSON.parse(String(sentForm().get('options')))).toEqual({
+      pages: [1],
+      password: 'shorthand',
+    });
+  });
+
+  test('an options array is rejected on both the object and the string branch', async () => {
+    // `coerceOptions` validates the object branch too, so a JS caller cannot smuggle
+    // an array in past the string check and have it spread into `{"0": ...}`.
+    const { client } = stubClient(() => jsonResponse({ markdown: 'x', metadata: {} }));
+    for (const options of [['x'] as unknown as Record<string, unknown>, '["x"]', '[["password","sneaky"]]']) {
+      await expect(
+        client.v2.parse({
+          document: await toFile(Buffer.from('%PDF'), 'locked.pdf'),
+          options,
+          password: 'shorthand',
+        }),
+      ).rejects.toThrow(LandingAIADEError);
+    }
+  });
+
+  test('an options string that is not JSON is rejected, not smuggled top-level', async () => {
+    // This used to fall back to a top-level `password` form field. No snapshot
+    // since 2026-07-13 declares one, so the gateway drops it and the caller loses
+    // the key to a 422 that names nothing. Reject the malformed `options` instead
+    // -- the request was already unsendable, and the error says which field.
+    const { client } = stubClient(() => jsonResponse({ markdown: 'x', metadata: {} }));
+    await expect(
+      client.v2.parse({
+        document: await toFile(Buffer.from('%PDF'), 'locked.pdf'),
+        options: 'not json',
+        password: 'shorthand',
+      }),
+    ).rejects.toThrow(LandingAIADEError);
   });
 
   test('a wrong password surfaces as a 422 naming the documented code', async () => {

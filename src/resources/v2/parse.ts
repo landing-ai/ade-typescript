@@ -39,8 +39,9 @@ export interface V2ParseParams {
    * supplying one for an image or an Office document returns a 422
    * (`password_unsupported_content_type`). A wrong password returns a 422
    * (`encrypted_pdf_wrong_password`), and omitting one for a locked PDF returns
-   * a 422 (`encrypted_pdf_password_required`). Sent within `options` on the
-   * wire.
+   * a 422 (`encrypted_pdf_password_required`). Sent on the wire as
+   * `options.password` and only there -- this is shorthand for that contract
+   * field, so an explicit `options.password` takes precedence over it.
    */
   password?: string | null;
 }
@@ -79,6 +80,32 @@ export interface V2JobListParams {
 }
 
 /**
+ * Coerce an accepted `options` value into a plain object. The contract sends
+ * `options` as a JSON object, so anything that does not decode to one is a
+ * caller mistake -- name the field here instead of leaving the gateway to
+ * reject the request without naming it. Mirrors `coerceSchema` in
+ * `src/lib/schema.ts`, which does the same job for `schema`.
+ */
+function coerceOptions(options: Record<string, unknown> | string): Record<string, unknown> {
+  if (typeof options === 'string') {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(options);
+    } catch (err) {
+      throw new LandingAIADEError(`options is not valid JSON: ${(err as Error).message}`);
+    }
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+      throw new LandingAIADEError('options JSON string must decode to an object');
+    }
+    return parsed as Record<string, unknown>;
+  }
+  if (typeof options === 'object' && options !== null && !Array.isArray(options)) {
+    return { ...options };
+  }
+  throw new LandingAIADEError(`Unsupported options type: ${typeof options}`);
+}
+
+/**
  * Build the multipart form body for parse. `options` is JSON-encoded per the
  * contract; unset (`undefined`/`null`) fields are dropped so they aren't sent.
  */
@@ -90,29 +117,24 @@ export function buildParseForm(params: V2ParseJobCreateParams): Record<string, u
       body[key] = value;
     }
   }
-  // The parse request carries `password` inside `options` — it is the key that
-  // unlocks an encrypted PDF, so it has to survive the trip intact. Fold the
-  // top-level convenience param into the options object, mirroring how
-  // `buildExtractBody` folds `strict`.
-  let opts = options;
-  if (password !== undefined && password !== null) {
-    if (opts === undefined || opts === null) {
-      opts = { password };
-    } else if (typeof opts === 'object') {
-      opts = { ...opts, password };
-    } else {
-      // `options` was pre-serialized as a JSON string; merge into it when it
-      // parses as an object, otherwise keep the caller's string and pass the
-      // password as a top-level field so it is never silently dropped.
-      try {
-        opts = { ...(JSON.parse(opts) as Record<string, unknown>), password };
-      } catch {
-        body['password'] = password;
-      }
-    }
+  // `password` is shorthand for the contract field `options.password`, which is
+  // where the spec declares the password and the only place it declares it. Fold
+  // the shorthand in so the request carries the key exactly once, and never write
+  // a top-level `password` field: the contract has none, so a gateway drops it and
+  // the caller loses the key with nothing to show for it.
+  let opts = options === undefined || options === null ? undefined : coerceOptions(options);
+  // An explicit `options.password` beats the shorthand, `null` included -- the spec
+  // types the field `string | null`, and null means "no password". `undefined` is
+  // not a value here: it is how JS spells "absent", and `JSON.stringify` drops the
+  // key, so it must fall through to the shorthand rather than suppress it and leave
+  // the request carrying no password at all. Test the value, not key presence.
+  // ade-python breaks the tie the same way (`_build_parse_body`) -- the two SDKs
+  // used to disagree, which is what this rule exists to settle.
+  if (password !== undefined && password !== null && opts?.['password'] === undefined) {
+    opts = { ...opts, password };
   }
-  if (opts !== undefined && opts !== null) {
-    body['options'] = typeof opts === 'string' ? opts : JSON.stringify(opts);
+  if (opts !== undefined) {
+    body['options'] = JSON.stringify(opts);
   }
   return body;
 }

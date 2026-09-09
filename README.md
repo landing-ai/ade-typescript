@@ -164,6 +164,19 @@ const parsed = await client.v2.parse({
 
 `password` applies to PDFs only, and the server rejects the three mistakes with a `422`, each naming its case: `password_unsupported_content_type` (a password sent with an image or an Office document), `encrypted_pdf_wrong_password` (the password does not open the PDF), and `encrypted_pdf_password_required` (a locked PDF submitted without one).
 
+`password` is shorthand for the contract field `options.password`, which is where the SDK puts it on the wire — and the only place it puts it. Both forms work; if you supply both, the explicit `options.password` wins:
+
+```ts
+// sends options.password = "from-options"
+await client.v2.parse({
+  document: fs.createReadStream('locked.pdf'),
+  options: { password: 'from-options' },
+  password: 'ignored',
+});
+```
+
+[ade-python](https://github.com/landing-ai/ade-python) resolves the conflict the same way, so the two SDKs agree.
+
 ## Extract
 
 Use `client.v2.extract` to pull structured fields out of Markdown (typically from a parse response) using a schema. The `schema` parameter accepts a JSON Schema object or a JSON string. Provide exactly one Markdown source: `markdown` or `markdown_url`.
