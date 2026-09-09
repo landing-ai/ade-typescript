@@ -1110,6 +1110,7 @@ export class LandingAIADE {
   static AuthenticationError = Errors.AuthenticationError;
   static InternalServerError = Errors.InternalServerError;
   static PermissionDeniedError = Errors.PermissionDeniedError;
+  static UnsupportedMediaTypeError = Errors.UnsupportedMediaTypeError;
   static UnprocessableEntityError = Errors.UnprocessableEntityError;
   static V2SyncTimeoutError = Errors.V2SyncTimeoutError;
   static JobWaitTimeoutError = Errors.JobWaitTimeoutError;

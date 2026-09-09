@@ -218,6 +218,8 @@ class LandingAIADE {
     static toFile: typeof Uploads.toFile;
     // (undocumented)
     static UnprocessableEntityError: typeof Errors.UnprocessableEntityError;
+    // (undocumented)
+    static UnsupportedMediaTypeError: typeof Errors.UnsupportedMediaTypeError;
     //
     // (undocumented)
     v2: V2;
@@ -272,6 +274,10 @@ export function toFile(value: ToFileInput | PromiseLike<ToFileInput>, name?: str
 
 // @public (undocumented)
 export class UnprocessableEntityError extends APIError<422, Headers> {
+}
+
+// @public
+export class UnsupportedMediaTypeError extends APIError<415, Headers> {
 }
 
 //
