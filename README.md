@@ -175,6 +175,8 @@ await client.v2.parse({
 });
 ```
 
+That applies to an explicit `null` too: `options: { password: null }` means "no password" and silences the `password` shorthand behind it. `options` itself must be an object, or a JSON string that decodes to one — anything else throws `LandingAIADEError` before the request is sent.
+
 [ade-python](https://github.com/landing-ai/ade-python) resolves the conflict the same way, so the two SDKs agree.
 
 ## Extract

@@ -30,7 +30,11 @@ export interface V2ParseParams {
    */
   model?: string | null;
 
-  /** Additional parsing options. Sent to the server as a JSON-encoded form field. */
+  /**
+   * Additional parsing options. Sent to the server as a JSON-encoded form field.
+   * Must be an object, or a JSON string that decodes to one -- anything else
+   * throws `LandingAIADEError` before the request is sent.
+   */
   options?: Record<string, unknown> | string | null;
 
   /**
@@ -102,7 +106,9 @@ function coerceOptions(options: Record<string, unknown> | string): Record<string
   if (typeof options === 'object' && options !== null && !Array.isArray(options)) {
     return { ...options };
   }
-  throw new LandingAIADEError(`Unsupported options type: ${typeof options}`);
+  throw new LandingAIADEError(
+    `Unsupported options type: ${Array.isArray(options) ? 'array' : typeof options}`,
+  );
 }
 
 /**
@@ -130,7 +136,14 @@ export function buildParseForm(params: V2ParseJobCreateParams): Record<string, u
   // the request carrying no password at all. Test the value, not key presence.
   // ade-python breaks the tie the same way (`_build_parse_body`) -- the two SDKs
   // used to disagree, which is what this rule exists to settle.
-  if (password !== undefined && password !== null && opts?.['password'] === undefined) {
+  // Read it as an OWN property: `opts?.['password']` walks the prototype chain, so a
+  // polluted `Object.prototype.password` would suppress the shorthand on every call and
+  // then serialize to nothing -- a locked PDF sent with no password at all.
+  const explicit =
+    opts !== undefined && Object.prototype.hasOwnProperty.call(opts, 'password') ?
+      opts['password']
+    : undefined;
+  if (password !== undefined && password !== null && explicit === undefined) {
     opts = { ...opts, password };
   }
   if (opts !== undefined) {
