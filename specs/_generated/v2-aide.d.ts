@@ -1052,7 +1052,7 @@ export interface components {
             duration_ms: number;
             /**
              * Filename
-             * @description Display name of the split document: the URL path's file name for `markdown_url` inputs, or a generated name for inline and uploaded Markdown.
+             * @description Display name of the split document: the uploaded file's name for `markdown` file uploads (`.md` is appended when the name has no suffix), the URL path's file name for `markdown_url` inputs, or a generated name for inline Markdown.
              */
             filename: string;
             /**
@@ -1600,7 +1600,7 @@ export interface operations {
                 /** @description Page number (0-indexed). */
                 page?: number;
                 /** @description Number of items per page. */
-                page_size?: number;
+                pageSize?: number;
                 /** @description Filter by job status. */
                 status?: string | null;
             };
@@ -1626,7 +1626,7 @@ export interface operations {
                             job_id?: string;
                             model_version?: string | null;
                             /** @enum {string} */
-                            status?: "pending" | "processing" | "completed" | "failed";
+                            status?: "pending" | "processing" | "completed" | "failed" | "cancelled";
                         }[];
                         page?: number;
                         page_size?: number;
@@ -1923,7 +1923,7 @@ export interface operations {
                 /** @description Page number (0-indexed). */
                 page?: number;
                 /** @description Number of items per page. */
-                page_size?: number;
+                pageSize?: number;
                 /** @description Filter by job status. */
                 status?: string | null;
             };
@@ -1949,7 +1949,7 @@ export interface operations {
                             job_id?: string;
                             model_version?: string | null;
                             /** @enum {string} */
-                            status?: "pending" | "processing" | "completed" | "failed";
+                            status?: "pending" | "processing" | "completed" | "failed" | "cancelled";
                         }[];
                         page?: number;
                         page_size?: number;
@@ -1993,6 +1993,11 @@ export interface operations {
                      */
                     model?: string | null;
                     /**
+                     * Output Save Url
+                     * @default null
+                     */
+                    output_save_url?: string | null;
+                    /**
                      * Schema
                      * @default null
                      */
@@ -2023,6 +2028,12 @@ export interface operations {
                      * @default null
                      */
                     model?: string | null;
+                    /**
+                     * Output Save Url
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    output_save_url?: string | null;
                     /**
                      * Schema
                      * @description JSON-serialized string in form data.
@@ -2097,9 +2108,13 @@ export interface operations {
                         };
                         /** @description The unique identifier for this v1-ade-extract job. Format: ``extract-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
                         job_id?: string;
+                        /** @description The result's metadata block (billing included), present alongside ``output_url`` once a job with ``output_save_url`` has ``completed`` — the delivery moves the content, not the receipt. Same shape as the inline ``result``'s ``metadata``; inline jobs carry it there instead. */
+                        metadata?: Record<string, never> | null;
+                        /** @description The URL the result was delivered to. Present once the job has ``completed`` and ``output_save_url`` was set, instead of inline ``result``. */
+                        output_url?: string | null;
                         /** @description Estimated completion as a decimal from 0 to 1 — an estimate, not a measurement: it typically advances between polls while the job is ``processing``, may jump forward when the service reports a real milestone (e.g. parsed pages), and approaches but never reaches 1 (long-running jobs plateau near 0.98 — completion is signaled by ``status``, and a job may complete from any progress value). Present while ``processing``. */
                         progress?: number;
-                        /** @description Present once status is ``completed``. */
+                        /** @description Present once status is ``completed`` and ``output_save_url`` was not set. When ``output_save_url`` was set, the result is delivered there and ``output_url`` is returned instead. */
                         result?: {
                             /** Extraction */
                             extraction?: {
@@ -2378,7 +2393,7 @@ export interface operations {
                 /** @description Page number (0-indexed). */
                 page?: number;
                 /** @description Number of items per page. */
-                page_size?: number;
+                pageSize?: number;
                 /** @description Filter by job status. */
                 status?: string | null;
             };
@@ -2404,7 +2419,7 @@ export interface operations {
                             job_id?: string;
                             model_version?: string | null;
                             /** @enum {string} */
-                            status?: "pending" | "processing" | "completed" | "failed";
+                            status?: "pending" | "processing" | "completed" | "failed" | "cancelled";
                         }[];
                         page?: number;
                         page_size?: number;
@@ -2852,7 +2867,7 @@ export interface operations {
                 /** @description Page number (0-indexed). */
                 page?: number;
                 /** @description Number of items per page. */
-                page_size?: number;
+                pageSize?: number;
                 /** @description Filter by job status. */
                 status?: string | null;
             };
@@ -2878,7 +2893,7 @@ export interface operations {
                             job_id?: string;
                             model_version?: string | null;
                             /** @enum {string} */
-                            status?: "pending" | "processing" | "completed" | "failed";
+                            status?: "pending" | "processing" | "completed" | "failed" | "cancelled";
                         }[];
                         page?: number;
                         page_size?: number;
@@ -3175,7 +3190,7 @@ export interface operations {
                 /** @description Page number (0-indexed). */
                 page?: number;
                 /** @description Number of items per page. */
-                page_size?: number;
+                pageSize?: number;
                 /** @description Filter by job status. */
                 status?: string | null;
             };
@@ -3201,7 +3216,7 @@ export interface operations {
                             job_id?: string;
                             model_version?: string | null;
                             /** @enum {string} */
-                            status?: "pending" | "processing" | "completed" | "failed";
+                            status?: "pending" | "processing" | "completed" | "failed" | "cancelled";
                         }[];
                         page?: number;
                         page_size?: number;
@@ -3588,7 +3603,7 @@ export interface operations {
                 /** @description Page number (0-indexed). */
                 page?: number;
                 /** @description Number of items per page. */
-                page_size?: number;
+                pageSize?: number;
                 /** @description Filter by job status. */
                 status?: string | null;
             };
@@ -3614,7 +3629,7 @@ export interface operations {
                             job_id?: string;
                             model_version?: string | null;
                             /** @enum {string} */
-                            status?: "pending" | "processing" | "completed" | "failed";
+                            status?: "pending" | "processing" | "completed" | "failed" | "cancelled";
                         }[];
                         page?: number;
                         page_size?: number;
@@ -4075,7 +4090,7 @@ export interface operations {
                 /** @description Page number (0-indexed). */
                 page?: number;
                 /** @description Number of items per page. */
-                page_size?: number;
+                pageSize?: number;
                 /** @description Filter by job status. */
                 status?: string | null;
             };
@@ -4425,7 +4440,7 @@ export interface operations {
                 /** @description Page number (0-indexed). */
                 page?: number;
                 /** @description Number of items per page. */
-                page_size?: number;
+                pageSize?: number;
                 /** @description Filter by job status. */
                 status?: string | null;
             };
@@ -4451,7 +4466,7 @@ export interface operations {
                             job_id?: string;
                             model_version?: string | null;
                             /** @enum {string} */
-                            status?: "pending" | "processing" | "completed" | "failed";
+                            status?: "pending" | "processing" | "completed" | "failed" | "cancelled";
                         }[];
                         page?: number;
                         page_size?: number;
