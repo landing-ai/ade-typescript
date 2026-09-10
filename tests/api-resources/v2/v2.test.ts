@@ -730,6 +730,57 @@ describe('client.v2 routing', () => {
     expect(list.org_id).toBe('o');
   });
 
+  test('parseJobs.list sends the per-page count under the spec name pageSize', async () => {
+    const { client, calls } = stubClient(() => jsonResponse({ jobs: [] }));
+    await client.v2.parseJobs.list({ page: 1, pageSize: 5, status: 'completed' });
+    const url = new URL(calls[0]!);
+    expect(url.pathname).toBe('/v2/parse/jobs');
+    expect(url.searchParams.get('pageSize')).toBe('5');
+    expect(url.searchParams.get('page')).toBe('1');
+    expect(url.searchParams.get('status')).toBe('completed');
+    // The spec renamed the parameter, so the old name must not reach the wire —
+    // the gateway drops an undeclared query param instead of erroring on it.
+    expect(url.searchParams.has('page_size')).toBe(false);
+  });
+
+  test('extractJobs.list folds the superseded page_size spelling onto pageSize', async () => {
+    const { client, calls } = stubClient(() => jsonResponse({ jobs: [] }));
+    await client.v2.extractJobs.list({ page_size: 7 });
+    const url = new URL(calls[0]!);
+    expect(url.pathname).toBe('/v2/extract/jobs');
+    expect(url.searchParams.get('pageSize')).toBe('7');
+    expect(url.searchParams.has('page_size')).toBe(false);
+  });
+
+  test('an explicit pageSize wins over the superseded page_size', async () => {
+    const { client, calls } = stubClient(() => jsonResponse({ jobs: [] }));
+    // `page_size` is only a fallback: an `undefined` `pageSize` is how JS spells
+    // "absent", so the value is what decides, not key presence.
+    await client.v2.parseJobs.list({ pageSize: 3, page_size: 9 });
+    expect(new URL(calls[0]!).searchParams.getAll('pageSize')).toEqual(['3']);
+  });
+
+  test('extractJobs.list normalizes a cancelled job as terminal', async () => {
+    const { client } = stubClient(() =>
+      jsonResponse({
+        jobs: [
+          { job_id: 'ej-c', status: 'cancelled', created_at: '2026-01-02T03:04:05Z' },
+          { job_id: 'ej-p', status: 'processing' },
+        ],
+        has_more: false,
+        page: 0,
+        page_size: 10,
+      }),
+    );
+    // Wired by the V2 spec-sync: the `/v2/extract/jobs` listing now documents
+    // `cancelled` alongside pending/processing/completed/failed.
+    const list = await client.v2.extractJobs.list();
+    expect(list.jobs.map((job) => job.status)).toEqual(['cancelled', 'processing']);
+    expect(list.jobs[0]!.is_terminal).toBe(true);
+    expect(list.jobs[1]!.is_terminal).toBe(false);
+    expect(list.page_size).toBe(10);
+  });
+
   test('extractJobs.create sends service_tier in the JSON body', async () => {
     let sentBody: unknown;
     const fetch: Fetch = async (_input, init) => {

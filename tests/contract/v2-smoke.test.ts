@@ -327,9 +327,43 @@ describe('V2 contract (staging)', () => {
   );
 
   runIf(
+    'extractJobs.list honours the renamed pageSize parameter',
+    async () => {
+      const client = stagingClient();
+      // Wired by the V2 spec-sync: the per-page query parameter on the /v2 job
+      // listings is now named `pageSize` (it was `page_size`), and the extract
+      // listing documents `cancelled` alongside the other four statuses. Asking
+      // for one job per page is a guaranteed answer whatever this key's jobs
+      // look like: the page can be empty, but it cannot exceed the requested
+      // size — if the SDK sent the superseded name the gateway would drop it and
+      // fall back to a page of 10. Nothing here assumes a job exists, and no
+      // status is required to appear; the specific statuses are pinned in the
+      // mocked test in tests/api-resources/v2/v2.test.ts.
+      const list = await client.v2.extractJobs.list({ page: 0, pageSize: 1 });
+      expect(Array.isArray(list.jobs)).toBe(true);
+      expect(list.jobs.length).toBeLessThanOrEqual(1);
+      // `page_size` on the RESPONSE envelope keeps its snake_case name — only the
+      // query parameter was renamed. The envelope may omit it, and nothing pins
+      // which value it echoes, so this is absent-or-a-number only.
+      expect(list.page_size == null || typeof list.page_size === 'number').toBe(true);
+      for (const job of list.jobs) {
+        expect(typeof job.job_id).toBe('string');
+        expect(['pending', 'processing', 'completed', 'failed', 'cancelled']).toContain(job.status);
+        expect(job.is_terminal).toBe(
+          job.status === 'completed' || job.status === 'failed' || job.status === 'cancelled',
+        );
+      }
+    },
+    60_000, // list route: 1 x REQUEST_TIMEOUT
+  );
+
+  runIf(
     'parseJobs.list returns a normalized JobList against the new envelope',
     async () => {
       const client = stagingClient();
+      // Keeps using the superseded `page_size` spelling on purpose: the SDK folds
+      // it onto the wire's `pageSize`, so this also gates that older callers
+      // still paginate against the renamed parameter.
       const list = await client.v2.parseJobs.list({ page: 0, page_size: 1 });
       expect(Array.isArray(list.jobs)).toBe(true);
       for (const job of list.jobs) {

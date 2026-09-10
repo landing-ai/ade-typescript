@@ -2,16 +2,9 @@ import { LandingAIADEError } from '../../core/error';
 import { RequestOptions } from '../../internal/request-options';
 import { path } from '../../internal/utils/path';
 import { ExtractSchema, coerceSchema } from '../../lib/schema';
-import {
-  V2Resource,
-  WaitOptions,
-  buildJobList,
-  cleanQuery,
-  jobsFromEnvelope,
-  pollUntilTerminal,
-} from './_base';
+import { V2Resource, WaitOptions, buildJobList, jobsFromEnvelope, pollUntilTerminal } from './_base';
 import { normalizeExtractJob } from './_normalize';
-import { V2JobListParams } from './parse';
+import { V2JobListParams, buildJobListQuery } from './parse';
 import { Job, JobList } from './types';
 
 export interface V2ExtractParams {
@@ -110,10 +103,13 @@ export class ExtractJobs extends V2Resource {
     return normalizeExtractJob(raw);
   }
 
-  /** List async extract jobs associated with your API key, newest first. */
+  /**
+   * List async extract jobs associated with your API key, newest first. A listed
+   * job may report any `JobStatus`, `cancelled` included.
+   */
   async list(query: V2JobListParams = {}, options?: RequestOptions): Promise<JobList> {
     const raw = await this._client.get<Record<string, unknown>>(this.v2Url('/v2/extract/jobs'), {
-      query: cleanQuery(query as Record<string, unknown>),
+      query: buildJobListQuery(query),
       ...options,
     });
     const jobs = jobsFromEnvelope(raw).map(normalizeExtractJob);

@@ -78,9 +78,43 @@ export interface V2ParseJobCreateParams extends V2ParseParams {
 export interface V2JobListParams {
   page?: number;
 
+  /**
+   * Number of items per page. Sent on the wire as `pageSize`, which is the name
+   * the spec gives this query parameter on `/v2/parse/jobs` and
+   * `/v2/extract/jobs` (the V1 job listings already spelled it that way).
+   */
+  pageSize?: number;
+
+  /**
+   * Superseded spelling of `pageSize`, still accepted so existing callers keep
+   * paginating: on `parseJobs.list` and `extractJobs.list` a value passed here is
+   * folded onto `pageSize` before the request goes out rather than sent under
+   * this name. The spec no longer declares a `page_size` query parameter, and an
+   * undeclared query parameter is dropped by the gateway -- sending it verbatim
+   * would silently fall back to the default page size instead of erroring. An
+   * explicit `pageSize` takes precedence.
+   */
   page_size?: number;
 
   status?: string | null;
+}
+
+/**
+ * Build the query for a V2 job listing: fold the superseded `page_size`
+ * spelling onto the wire name `pageSize` (see `V2JobListParams`) so both reach
+ * the gateway, and drop params left unset.
+ */
+export function buildJobListQuery(query: V2JobListParams): Record<string, unknown> {
+  const { page_size: legacyPageSize, pageSize, ...rest } = query;
+  const out = cleanQuery(rest as Record<string, unknown>);
+  // Test the value, not key presence: `{ pageSize: undefined }` is how JS spells
+  // "absent", so it has to fall through to `page_size` rather than suppress it.
+  // `!= null` covers an absent key and an explicit `null` alike.
+  const perPage = pageSize != null ? pageSize : legacyPageSize;
+  if (perPage != null) {
+    out['pageSize'] = perPage;
+  }
+  return out;
 }
 
 /**
@@ -183,7 +217,7 @@ export class ParseJobs extends V2Resource {
   /** List async parse jobs associated with your API key, newest first. */
   async list(query: V2JobListParams = {}, options?: RequestOptions): Promise<JobList> {
     const raw = await this._client.get<Record<string, unknown>>(this.v2Url('/v2/parse/jobs'), {
-      query: cleanQuery(query as Record<string, unknown>),
+      query: buildJobListQuery(query),
       ...options,
     });
     const jobs = jobsFromEnvelope(raw).map(normalizeParseJob);
