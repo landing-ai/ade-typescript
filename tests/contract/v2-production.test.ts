@@ -102,7 +102,7 @@ describe('V2 e2e (production)', () => {
       const done = await client.v2.parseJobs.wait(created.job_id, { timeout: 180_000 });
       expect(done.is_terminal).toBe(true);
 
-      const list = await client.v2.parseJobs.list({ page: 0, page_size: 10 });
+      const list = await client.v2.parseJobs.list({ page: 0, pageSize: 10 });
       expect(list.jobs.length).toBeGreaterThan(0);
       for (const job of list.jobs) {
         expect(typeof job.job_id).toBe('string');

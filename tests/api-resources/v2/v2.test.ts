@@ -722,12 +722,68 @@ describe('client.v2 routing', () => {
 
   test('parseJobs.list builds a JobList with the pagination envelope', async () => {
     const { client } = stubClient(() =>
-      jsonResponse({ jobs: [{ job_id: 'a', status: 'pending' }], has_more: true, org_id: 'o' }),
+      jsonResponse({
+        jobs: [{ job_id: 'a', status: 'pending' }],
+        has_more: true,
+        org_id: 'o',
+        page: 0,
+        page_size: 10,
+      }),
     );
-    const list = await client.v2.parseJobs.list({ page: 0, page_size: 10 });
+    const list = await client.v2.parseJobs.list({ page: 0, pageSize: 10 });
     expect(list.jobs[0]!.job_id).toBe('a');
     expect(list.has_more).toBe(true);
     expect(list.org_id).toBe('o');
+    // The response envelope still spells the page size `page_size`; only the
+    // query parameter was renamed.
+    expect(list.page).toBe(0);
+    expect(list.page_size).toBe(10);
+  });
+
+  test('parseJobs.list sends the page size as the pageSize query param', async () => {
+    // Wired by the V2 spec-sync: the job-list routes renamed the query parameter
+    // `page_size` -> `pageSize`, so the camelCase spelling has to reach the wire
+    // verbatim -- a snake_case key is simply ignored by the gateway, silently
+    // capping the page at its default of 10.
+    const { client, calls } = stubClient(() => jsonResponse({ jobs: [], has_more: false }));
+    await client.v2.parseJobs.list({ page: 1, pageSize: 25, status: 'completed' });
+    const url = new URL(calls[calls.length - 1]!);
+    expect(url.pathname).toBe('/v2/parse/jobs');
+    expect(url.searchParams.get('pageSize')).toBe('25');
+    expect(url.searchParams.get('page')).toBe('1');
+    expect(url.searchParams.get('status')).toBe('completed');
+    expect(url.searchParams.has('page_size')).toBe(false);
+  });
+
+  test('extractJobs.list sends the pageSize query param too', async () => {
+    const { client, calls } = stubClient(() => jsonResponse({ jobs: [], has_more: false }));
+    await client.v2.extractJobs.list({ pageSize: 5 });
+    const url = new URL(calls[calls.length - 1]!);
+    expect(url.pathname).toBe('/v2/extract/jobs');
+    expect(url.searchParams.get('pageSize')).toBe('5');
+    expect(url.searchParams.has('page_size')).toBe(false);
+  });
+
+  test('extractJobs.list normalizes a cancelled job as terminal', async () => {
+    // Wired by the V2 spec-sync: `cancelled` joined the extract job-list status
+    // enum, and the shared `JobStatus` union carries it through instead of
+    // falling back to `pending` the way an unrecognized status would.
+    const { client } = stubClient(() =>
+      jsonResponse({
+        jobs: [
+          { job_id: 'ej-c', status: 'cancelled', created_at: '2026-01-02T03:04:05Z' },
+          { job_id: 'ej-p', status: 'processing' },
+        ],
+        has_more: false,
+        page: 0,
+        page_size: 10,
+      }),
+    );
+    const list = await client.v2.extractJobs.list({ pageSize: 10 });
+    expect(list.jobs[0]!.status).toBe('cancelled');
+    expect(list.jobs[0]!.is_terminal).toBe(true);
+    expect(list.jobs[1]!.status).toBe('processing');
+    expect(list.jobs[1]!.is_terminal).toBe(false);
   });
 
   test('extractJobs.create sends service_tier in the JSON body', async () => {
