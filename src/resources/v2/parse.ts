@@ -76,10 +76,30 @@ export interface V2ParseJobCreateParams extends V2ParseParams {
 }
 
 export interface V2JobListParams {
+  /** Page number (0-indexed). Omit for the first page. */
   page?: number;
 
+  /**
+   * Number of items per page, `1`-`100`. When absent, the gateway applies its
+   * own default of 10. Sent on the wire as `pageSize`, which is how every V2
+   * job-list route now spells the query parameter.
+   */
+  pageSize?: number;
+
+  /**
+   * Number of items per page.
+   *
+   * @deprecated The V2 job-list routes took `page_size` as the query parameter
+   * name; the spec renamed it to `pageSize`, so a value passed here reaches the
+   * gateway under a name it no longer reads and the page size falls back to the
+   * default of 10. Pass `pageSize` instead. This property is kept only so
+   * existing callers keep compiling.
+   */
   page_size?: number;
 
+  /**
+   * Filter by job status (for example `completed`). Omit for every status.
+   */
   status?: string | null;
 }
 

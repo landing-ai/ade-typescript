@@ -330,13 +330,43 @@ describe('V2 contract (staging)', () => {
     'parseJobs.list returns a normalized JobList against the new envelope',
     async () => {
       const client = stagingClient();
-      const list = await client.v2.parseJobs.list({ page: 0, page_size: 1 });
+      const list = await client.v2.parseJobs.list({ page: 0, pageSize: 1 });
       expect(Array.isArray(list.jobs)).toBe(true);
       for (const job of list.jobs) {
         expect(typeof job.job_id).toBe('string');
         // The list envelope now emits ISO-8601 timestamps; the normalizer maps
         // them to `Date` (or `null` when absent).
         expect(job.created_at === null || job.created_at instanceof Date).toBe(true);
+      }
+    },
+    60_000, // list route: 1 x REQUEST_TIMEOUT
+  );
+
+  runIf(
+    'extractJobs.list honours the renamed pageSize query parameter',
+    async () => {
+      const client = stagingClient();
+      // Wired by the V2 spec-sync: the job-list routes renamed the page-size query
+      // parameter `page_size` -> `pageSize`. A page of at most 1 is the observable
+      // proof that the SDK spells it the way the gateway now reads it: under the old
+      // name the parameter is ignored and the page falls back to the default of 10.
+      // Nothing here assumes the key has any jobs, so an empty page passes too.
+      const list = await client.v2.extractJobs.list({ page: 0, pageSize: 1 });
+      expect(Array.isArray(list.jobs)).toBe(true);
+      expect(list.jobs.length).toBeLessThanOrEqual(1);
+      // The envelope's own `page_size` (still snake_case in the response) is
+      // optional here: assert absent-or-in-range rather than a pinned value.
+      expect(list.page_size == null || (list.page_size >= 1 && list.page_size <= 100)).toBe(true);
+      for (const job of list.jobs) {
+        expect(typeof job.job_id).toBe('string');
+        // `cancelled` joined this route's status enum. Compare against the raw
+        // envelope rather than a fixed list: `toStatus` falls back to `pending`
+        // for anything it does not recognize, so a list-membership check would
+        // pass on exactly the regression worth catching.
+        expect(job.status).toBe(job.raw['status']);
+        expect(job.is_terminal).toBe(
+          job.status === 'completed' || job.status === 'failed' || job.status === 'cancelled',
+        );
       }
     },
     60_000, // list route: 1 x REQUEST_TIMEOUT

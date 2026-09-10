@@ -7,9 +7,12 @@
 // original envelope is always available on `Job.raw`.
 
 /**
- * Common job status across parse, extract, and workflow jobs. Extract and
- * workflow jobs never report `cancelled`, but the union is shared so callers
- * only learn one enum.
+ * Common job status across parse, extract, and workflow jobs; one union so
+ * callers only learn one enum. `cancelled` is now declared by the extract
+ * job-list envelope (`client.v2.extractJobs.list`), so handle it there — the
+ * other V2 job envelopes document only `pending`/`processing`/`completed`/
+ * `failed`. A status outside the union normalizes to `pending`, with the
+ * server's own string kept on `Job.raw`.
  */
 export type JobStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
 
@@ -70,6 +73,10 @@ export interface Job {
 /**
  * A page of normalized jobs plus the pagination envelope. `org_id` is populated
  * for parse listings, `page`/`page_size` for extract/workflow listings.
+ *
+ * The response keeps spelling the page size `page_size` even though the request
+ * takes it as `pageSize` (see `V2JobListParams.pageSize`) — the rename is on the
+ * query parameter only, so this field is unchanged.
  */
 export interface JobList {
   jobs: Array<Job>;
