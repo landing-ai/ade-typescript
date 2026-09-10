@@ -115,6 +115,12 @@ describe('_saveResponse', () => {
 
     _saveResponse(testDir, 'myinput', 'split', result);
     expect(fs.existsSync(path.join(testDir, 'myinput_split_output.json'))).toBe(true);
+
+    _saveResponse(testDir, 'myinput', 'classify', result);
+    expect(fs.existsSync(path.join(testDir, 'myinput_classify_output.json'))).toBe(true);
+
+    _saveResponse(testDir, 'myinput', 'section', result);
+    expect(fs.existsSync(path.join(testDir, 'myinput_section_output.json'))).toBe(true);
   });
 
   it('creates nested directories', () => {
@@ -128,7 +134,7 @@ describe('_saveResponse', () => {
 
   it('skips redundant "output" prefix when filename is "output"', () => {
     const result = {};
-    for (const method of ['parse', 'extract', 'split']) {
+    for (const method of ['parse', 'extract', 'split', 'classify', 'section']) {
       _saveResponse(testDir, 'output', method, result);
       expect(fs.existsSync(path.join(testDir, `${method}_output.json`))).toBe(true);
       expect(fs.existsSync(path.join(testDir, `output_${method}_output.json`))).toBe(false);
