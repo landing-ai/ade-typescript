@@ -1,5 +1,22 @@
 # Changelog
 
+## 2.13.0 (2026-09-11)
+
+Full Changelog: [v2.12.1...v2.13.0](https://github.com/landing-ai/ade-typescript/compare/v2.12.1...v2.13.0)
+
+### Bug Fixes
+
+* **v2:** let an explicit options.password win over the password shorthand (#121) ([bab73d6](https://github.com/landing-ai/ade-typescript/commit/bab73d651bafc642c9243c959dfc226a8f4ffb85))
+* **spec-sync:** pin opus-5, scope V2 wiring to /v2 routes, gate wired paths (#119) ([522e5a4](https://github.com/landing-ai/ade-typescript/commit/522e5a486e84f7a8654a5b2deb217328bcec1154))
+
+### Documentation
+
+* **spec-sync:** scope the wiring prompt to request fields, record the aliases (#122) ([cd988b8](https://github.com/landing-ai/ade-typescript/commit/cd988b89eeafeca355e88faf352ddf8db7a39f7e))
+
+### Other Changes
+
+* spec-sync(v2): parse: add password support for encrypted pdfs (#118) ([0102391](https://github.com/landing-ai/ade-typescript/commit/010239174ed450df4ad097b1db37ea9fda763e2c))
+
 ## 2.12.1 (2026-08-28)
 
 Full Changelog: [v2.12.0...v2.12.1](https://github.com/landing-ai/ade-typescript/compare/v2.12.0...v2.12.1)
