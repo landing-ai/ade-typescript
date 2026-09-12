@@ -414,16 +414,17 @@ try {
 }
 ```
 
-| Status Code | Error Type                 |
-| ----------- | -------------------------- |
-| 400         | `BadRequestError`          |
-| 401         | `AuthenticationError`      |
-| 403         | `PermissionDeniedError`    |
-| 404         | `NotFoundError`            |
-| 422         | `UnprocessableEntityError` |
-| 429         | `RateLimitError`           |
-| >=500       | `InternalServerError`      |
-| N/A         | `APIConnectionError`       |
+| Status Code | Error Type                  |
+| ----------- | --------------------------- |
+| 400         | `BadRequestError`           |
+| 401         | `AuthenticationError`       |
+| 403         | `PermissionDeniedError`     |
+| 404         | `NotFoundError`             |
+| 415         | `UnsupportedMediaTypeError` |
+| 422         | `UnprocessableEntityError`  |
+| 429         | `RateLimitError`            |
+| >=500       | `InternalServerError`       |
+| N/A         | `APIConnectionError`        |
 
 ### Retries
 
