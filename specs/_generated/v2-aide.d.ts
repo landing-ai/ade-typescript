@@ -1052,12 +1052,12 @@ export interface components {
             duration_ms: number;
             /**
              * Filename
-             * @description Display name of the split document: the URL path's file name for `markdown_url` inputs, or a generated name for inline and uploaded Markdown.
+             * @description Display name of the split document: the uploaded file's name for `markdown` file uploads (`.md` is appended when the name has no suffix), the URL path's file name for `markdown_url` inputs, or a generated name for inline Markdown.
              */
             filename: string;
             /**
              * Job Id
-             * @description The split job identifier — server-minted and unique per request. Correlates with the request's entry in your billing dashboard.
+             * @description The split job identifier for this request. When present it is the id of the request's entry in your billing dashboard — whichever stack served it — so it is the one to quote for this run. Empty when the serving stack reported no id, in which case there is no billing entry to quote.
              */
             job_id: string;
             /**
@@ -1185,7 +1185,7 @@ export interface components {
             filename: string;
             /**
              * Job Id
-             * @description Gateway job id (workflow id). Matches the billing row id in vision-agent.
+             * @description The job id for this request. When present it is the id of this run's billing row in vision-agent, so it is the id to quote for its usage entry. Not necessarily the gateway workflow id: when the request is served by the classic stack, this is that stack's id for the row it billed. Empty when the serving stack reported no id, in which case there is no usage entry to quote.
              * @default
              */
             job_id: string;
@@ -1386,6 +1386,12 @@ export interface components {
          * @description Extraction options (``docs/extract-v2-contract.md`` → Options).
          */
         V2ExtractOptions: {
+            /**
+             * Grounding
+             * @description When ``true`` (default), the grounding stage runs and each extracted leaf carries ``ranges`` into the source Markdown where a reference was found (``ranges`` is ``null`` for a value that could not be located). When ``false``, the grounding stage is skipped: every ``extraction_metadata`` leaf has ``ranges: null`` and the request completes faster. Preview.
+             * @default true
+             */
+            grounding: boolean;
             /**
              * Strict
              * @description When ``true``, a schema containing fields the model cannot extract fails with a validation error — HTTP 422 on the sync route, or a failed job (``status: "failed"``) on the async ``/jobs`` route. When ``false`` (default), unsupported fields are skipped and extraction continues.
@@ -1600,7 +1606,7 @@ export interface operations {
                 /** @description Page number (0-indexed). */
                 page?: number;
                 /** @description Number of items per page. */
-                page_size?: number;
+                pageSize?: number;
                 /** @description Filter by job status. */
                 status?: string | null;
             };
@@ -1626,7 +1632,7 @@ export interface operations {
                             job_id?: string;
                             model_version?: string | null;
                             /** @enum {string} */
-                            status?: "pending" | "processing" | "completed" | "failed";
+                            status?: "pending" | "processing" | "completed" | "failed" | "cancelled";
                         }[];
                         page?: number;
                         page_size?: number;
@@ -1923,7 +1929,7 @@ export interface operations {
                 /** @description Page number (0-indexed). */
                 page?: number;
                 /** @description Number of items per page. */
-                page_size?: number;
+                pageSize?: number;
                 /** @description Filter by job status. */
                 status?: string | null;
             };
@@ -1949,7 +1955,7 @@ export interface operations {
                             job_id?: string;
                             model_version?: string | null;
                             /** @enum {string} */
-                            status?: "pending" | "processing" | "completed" | "failed";
+                            status?: "pending" | "processing" | "completed" | "failed" | "cancelled";
                         }[];
                         page?: number;
                         page_size?: number;
@@ -1993,12 +1999,15 @@ export interface operations {
                      */
                     model?: string | null;
                     /**
+                     * Output Save Url
+                     * @default null
+                     */
+                    output_save_url?: string | null;
+                    /**
                      * Schema
                      * @default null
                      */
                     schema?: string | null;
-                    /** @description Async service tier. ``priority`` runs in the fast lane at the sync billing rate; absent → ``standard``. */
-                    service_tier?: ("standard" | "priority") | null;
                     /**
                      * Strict
                      * @default false
@@ -2024,13 +2033,17 @@ export interface operations {
                      */
                     model?: string | null;
                     /**
+                     * Output Save Url
+                     * @description JSON-serialized string in form data.
+                     * @default null
+                     */
+                    output_save_url?: string | null;
+                    /**
                      * Schema
                      * @description JSON-serialized string in form data.
                      * @default null
                      */
                     schema?: string | null;
-                    /** @description Async service tier. ``priority`` runs in the fast lane at the sync billing rate; absent → ``standard``. */
-                    service_tier?: ("standard" | "priority") | null;
                     /**
                      * Strict
                      * @description JSON-serialized string in form data.
@@ -2097,9 +2110,13 @@ export interface operations {
                         };
                         /** @description The unique identifier for this v1-ade-extract job. Format: ``extract-<26-character Crockford base32 ULID>`` (``[0-9a-hjkmnp-tv-z]{26}`` tail). Opaque, server-minted, and stable for the life of the job — the same id is returned on the sync response, the async 202, and every poll. Treat it as opaque; older id formats remain accepted indefinitely and are never re-issued. */
                         job_id?: string;
+                        /** @description The result's metadata block (billing included), present alongside ``output_url`` once a job with ``output_save_url`` has ``completed`` — the delivery moves the content, not the receipt. Same shape as the inline ``result``'s ``metadata``; inline jobs carry it there instead. */
+                        metadata?: Record<string, never> | null;
+                        /** @description The URL the result was delivered to. Present once the job has ``completed`` and ``output_save_url`` was set, instead of inline ``result``. */
+                        output_url?: string | null;
                         /** @description Estimated completion as a decimal from 0 to 1 — an estimate, not a measurement: it typically advances between polls while the job is ``processing``, may jump forward when the service reports a real milestone (e.g. parsed pages), and approaches but never reaches 1 (long-running jobs plateau near 0.98 — completion is signaled by ``status``, and a job may complete from any progress value). Present while ``processing``. */
                         progress?: number;
-                        /** @description Present once status is ``completed``. */
+                        /** @description Present once status is ``completed`` and ``output_save_url`` was not set. When ``output_save_url`` was set, the result is delivered there and ``output_url`` is returned instead. */
                         result?: {
                             /** Extraction */
                             extraction?: {
@@ -2160,47 +2177,20 @@ export interface operations {
                     /** Filename */
                     filename: string;
                     /**
-                     * Job Id
+                     * Version
                      * @default null
                      */
-                    job_id?: string | null;
-                    /**
-                     * Model Versions
-                     * @default null
-                     */
-                    model_versions?: {
-                        [key: string]: string;
-                    } | null;
+                    model?: string | null;
                     /**
                      * Password
                      * @default null
                      */
                     password?: string | null;
                     /**
-                     * Pricing Multiplier
-                     * @default 1
-                     */
-                    pricing_multiplier?: number;
-                    /**
-                     * Processing Mode
-                     * @default sync
-                     */
-                    processing_mode?: string;
-                    /**
                      * Split
                      * @default null
                      */
                     split?: string | null;
-                    /**
-                     * Version
-                     * @default null
-                     */
-                    version?: string | null;
-                    /**
-                     * X Request Id
-                     * @default null
-                     */
-                    x_request_id?: string | null;
                 };
                 "multipart/form-data": {
                     /** Content Type */
@@ -2223,19 +2213,11 @@ export interface operations {
                     /** Filename */
                     filename: string;
                     /**
-                     * Job Id
+                     * Version
                      * @description JSON-serialized string in form data.
                      * @default null
                      */
-                    job_id?: string | null;
-                    /**
-                     * Model Versions
-                     * @description JSON-serialized string in form data.
-                     * @default null
-                     */
-                    model_versions?: {
-                        [key: string]: string;
-                    } | null;
+                    model?: string | null;
                     /**
                      * Password
                      * @description JSON-serialized string in form data.
@@ -2243,34 +2225,11 @@ export interface operations {
                      */
                     password?: string | null;
                     /**
-                     * Pricing Multiplier
-                     * @description JSON-serialized string in form data.
-                     * @default 1
-                     */
-                    pricing_multiplier?: number;
-                    /**
-                     * Processing Mode
-                     * @default sync
-                     */
-                    processing_mode?: string;
-                    /**
                      * Split
                      * @description JSON-serialized string in form data.
                      * @default null
                      */
                     split?: string | null;
-                    /**
-                     * Version
-                     * @description JSON-serialized string in form data.
-                     * @default null
-                     */
-                    version?: string | null;
-                    /**
-                     * X Request Id
-                     * @description JSON-serialized string in form data.
-                     * @default null
-                     */
-                    x_request_id?: string | null;
                 };
             };
         };
@@ -2378,7 +2337,7 @@ export interface operations {
                 /** @description Page number (0-indexed). */
                 page?: number;
                 /** @description Number of items per page. */
-                page_size?: number;
+                pageSize?: number;
                 /** @description Filter by job status. */
                 status?: string | null;
             };
@@ -2404,7 +2363,7 @@ export interface operations {
                             job_id?: string;
                             model_version?: string | null;
                             /** @enum {string} */
-                            status?: "pending" | "processing" | "completed" | "failed";
+                            status?: "pending" | "processing" | "completed" | "failed" | "cancelled";
                         }[];
                         page?: number;
                         page_size?: number;
@@ -2446,17 +2405,10 @@ export interface operations {
                     /** Filename */
                     filename: string;
                     /**
-                     * Job Id
+                     * Version
                      * @default null
                      */
-                    job_id?: string | null;
-                    /**
-                     * Model Versions
-                     * @default null
-                     */
-                    model_versions?: {
-                        [key: string]: string;
-                    } | null;
+                    model?: string | null;
                     /**
                      * Output Save Url
                      * @default null
@@ -2468,32 +2420,10 @@ export interface operations {
                      */
                     password?: string | null;
                     /**
-                     * Pricing Multiplier
-                     * @default 1
-                     */
-                    pricing_multiplier?: number;
-                    /**
-                     * Processing Mode
-                     * @default sync
-                     */
-                    processing_mode?: string;
-                    /** @description Async service tier. ``priority`` runs in the fast lane at the sync billing rate; absent → ``standard``. */
-                    service_tier?: ("standard" | "priority") | null;
-                    /**
                      * Split
                      * @default null
                      */
                     split?: string | null;
-                    /**
-                     * Version
-                     * @default null
-                     */
-                    version?: string | null;
-                    /**
-                     * X Request Id
-                     * @default null
-                     */
-                    x_request_id?: string | null;
                 };
                 "multipart/form-data": {
                     /** Content Type */
@@ -2516,19 +2446,11 @@ export interface operations {
                     /** Filename */
                     filename: string;
                     /**
-                     * Job Id
+                     * Version
                      * @description JSON-serialized string in form data.
                      * @default null
                      */
-                    job_id?: string | null;
-                    /**
-                     * Model Versions
-                     * @description JSON-serialized string in form data.
-                     * @default null
-                     */
-                    model_versions?: {
-                        [key: string]: string;
-                    } | null;
+                    model?: string | null;
                     /**
                      * Output Save Url
                      * @description JSON-serialized string in form data.
@@ -2542,36 +2464,11 @@ export interface operations {
                      */
                     password?: string | null;
                     /**
-                     * Pricing Multiplier
-                     * @description JSON-serialized string in form data.
-                     * @default 1
-                     */
-                    pricing_multiplier?: number;
-                    /**
-                     * Processing Mode
-                     * @default sync
-                     */
-                    processing_mode?: string;
-                    /** @description Async service tier. ``priority`` runs in the fast lane at the sync billing rate; absent → ``standard``. */
-                    service_tier?: ("standard" | "priority") | null;
-                    /**
                      * Split
                      * @description JSON-serialized string in form data.
                      * @default null
                      */
                     split?: string | null;
-                    /**
-                     * Version
-                     * @description JSON-serialized string in form data.
-                     * @default null
-                     */
-                    version?: string | null;
-                    /**
-                     * X Request Id
-                     * @description JSON-serialized string in form data.
-                     * @default null
-                     */
-                    x_request_id?: string | null;
                 };
             };
         };
@@ -2852,7 +2749,7 @@ export interface operations {
                 /** @description Page number (0-indexed). */
                 page?: number;
                 /** @description Number of items per page. */
-                page_size?: number;
+                pageSize?: number;
                 /** @description Filter by job status. */
                 status?: string | null;
             };
@@ -2878,7 +2775,7 @@ export interface operations {
                             job_id?: string;
                             model_version?: string | null;
                             /** @enum {string} */
-                            status?: "pending" | "processing" | "completed" | "failed";
+                            status?: "pending" | "processing" | "completed" | "failed" | "cancelled";
                         }[];
                         page?: number;
                         page_size?: number;
@@ -3175,7 +3072,7 @@ export interface operations {
                 /** @description Page number (0-indexed). */
                 page?: number;
                 /** @description Number of items per page. */
-                page_size?: number;
+                pageSize?: number;
                 /** @description Filter by job status. */
                 status?: string | null;
             };
@@ -3201,7 +3098,7 @@ export interface operations {
                             job_id?: string;
                             model_version?: string | null;
                             /** @enum {string} */
-                            status?: "pending" | "processing" | "completed" | "failed";
+                            status?: "pending" | "processing" | "completed" | "failed" | "cancelled";
                         }[];
                         page?: number;
                         page_size?: number;
@@ -3459,7 +3356,7 @@ export interface operations {
                      */
                     model?: string | null;
                     /**
-                     * @description Extraction options (``strict``). Omit for defaults.
+                     * @description Extraction options (``strict``, ``grounding``). Omit for defaults.
                      * @default null
                      */
                     options?: components["schemas"]["V2ExtractOptions"] | null;
@@ -3499,7 +3396,7 @@ export interface operations {
                      */
                     model?: string | null;
                     /**
-                     * @description Extraction options (``strict``). Omit for defaults. JSON-serialized string in form data.
+                     * @description Extraction options (``strict``, ``grounding``). Omit for defaults. JSON-serialized string in form data.
                      * @default null
                      */
                     options?: components["schemas"]["V2ExtractOptions"] | null;
@@ -3588,7 +3485,7 @@ export interface operations {
                 /** @description Page number (0-indexed). */
                 page?: number;
                 /** @description Number of items per page. */
-                page_size?: number;
+                pageSize?: number;
                 /** @description Filter by job status. */
                 status?: string | null;
             };
@@ -3614,7 +3511,7 @@ export interface operations {
                             job_id?: string;
                             model_version?: string | null;
                             /** @enum {string} */
-                            status?: "pending" | "processing" | "completed" | "failed";
+                            status?: "pending" | "processing" | "completed" | "failed" | "cancelled";
                         }[];
                         page?: number;
                         page_size?: number;
@@ -3661,7 +3558,7 @@ export interface operations {
                      */
                     model?: string | null;
                     /**
-                     * @description Extraction options (``strict``). Omit for defaults.
+                     * @description Extraction options (``strict``, ``grounding``). Omit for defaults.
                      * @default null
                      */
                     options?: components["schemas"]["V2ExtractOptions"] | null;
@@ -3709,7 +3606,7 @@ export interface operations {
                      */
                     model?: string | null;
                     /**
-                     * @description Extraction options (``strict``). Omit for defaults. JSON-serialized string in form data.
+                     * @description Extraction options (``strict``, ``grounding``). Omit for defaults. JSON-serialized string in form data.
                      * @default null
                      */
                     options?: components["schemas"]["V2ExtractOptions"] | null;
@@ -4075,7 +3972,7 @@ export interface operations {
                 /** @description Page number (0-indexed). */
                 page?: number;
                 /** @description Number of items per page. */
-                page_size?: number;
+                pageSize?: number;
                 /** @description Filter by job status. */
                 status?: string | null;
             };
@@ -4425,7 +4322,7 @@ export interface operations {
                 /** @description Page number (0-indexed). */
                 page?: number;
                 /** @description Number of items per page. */
-                page_size?: number;
+                pageSize?: number;
                 /** @description Filter by job status. */
                 status?: string | null;
             };
@@ -4451,7 +4348,7 @@ export interface operations {
                             job_id?: string;
                             model_version?: string | null;
                             /** @enum {string} */
-                            status?: "pending" | "processing" | "completed" | "failed";
+                            status?: "pending" | "processing" | "completed" | "failed" | "cancelled";
                         }[];
                         page?: number;
                         page_size?: number;
