@@ -65,6 +65,8 @@ A <a href="./src/resources/v2/types.ts">`V2GroundingBox`</a> coordinate arrives 
 
 `client.v2.parseJobs` and `client.v2.extractJobs` both return a single, unified <a href="./src/resources/v2/types.ts">`Job`</a> shape even though the underlying parse/extract job envelopes differ upstream — `Job.raw` retains the full original envelope as an escape hatch. `Job.metadata` carries the envelope's top-level metadata receipt (a <a href="./src/resources/v2/types.ts">`V2ParseMetadata`</a> for parse jobs), returned alongside `raw.output_url` when a job created with `output_save_url` completes; it is `null` for inline jobs, whose metadata lives on `Job.result`.
 
+`client.v2.parseJobs.list` and `client.v2.extractJobs.list` take `page_size`, which the request carries as the contract's `pageSize` query parameter (the listing still echoes the effective size back as `JobList.page_size`, so the SDK name follows the response). An extract listing can report a `cancelled` job, the same terminal status parse listings already use; `Job.is_terminal` is `true` for it.
+
 Types:
 
 - <code><a href="./src/resources/v2/types.ts">Job</a></code>

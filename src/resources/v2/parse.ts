@@ -78,9 +78,34 @@ export interface V2ParseJobCreateParams extends V2ParseParams {
 export interface V2JobListParams {
   page?: number;
 
+  /**
+   * Number of items per page. The contract names this query parameter
+   * `pageSize`, which is what the parse and extract job listings put on the
+   * wire; the name here stays snake_case to match the `page_size` the listing
+   * echoes back on `JobList`.
+   */
   page_size?: number;
 
   status?: string | null;
+}
+
+/**
+ * Build the query for a job listing. The contract names the page-size query
+ * parameter `pageSize`, so `page_size` goes on the wire under that name --
+ * spelling it snake_case there is not an error the gateway reports, it just
+ * leaves the listing on its default page size with nothing to show for it.
+ * Every other entry is passed through, and unset ones are dropped as usual.
+ */
+export function buildJobListQuery(query: V2JobListParams): Record<string, unknown> {
+  const { page_size, ...rest } = query;
+  const out = cleanQuery(rest as Record<string, unknown>);
+  // `!= null` so an absent key and an explicit `null` are both "unset"; `0` is
+  // out of range per the contract (minimum 1) but is still the caller's value
+  // to send, so let the gateway reject it rather than dropping it here.
+  if (page_size != null) {
+    out['pageSize'] = page_size;
+  }
+  return out;
 }
 
 /**
@@ -183,7 +208,7 @@ export class ParseJobs extends V2Resource {
   /** List async parse jobs associated with your API key, newest first. */
   async list(query: V2JobListParams = {}, options?: RequestOptions): Promise<JobList> {
     const raw = await this._client.get<Record<string, unknown>>(this.v2Url('/v2/parse/jobs'), {
-      query: cleanQuery(query as Record<string, unknown>),
+      query: buildJobListQuery(query),
       ...options,
     });
     const jobs = jobsFromEnvelope(raw).map(normalizeParseJob);
