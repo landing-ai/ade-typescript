@@ -319,7 +319,13 @@ for (const j of jobs.jobs) {
   console.log(j.job_id, j.status);
 }
 console.log(jobs.has_more);
+
+// Extract jobs list the same way, and can report a `cancelled` job
+const extractJobs = await client.v2.extractJobs.list({ page: 0, page_size: 10 });
+console.log(extractJobs.jobs.filter((j) => j.is_terminal).length);
 ```
+
+`page_size` is the SDK's name for the page-size query parameter, which the request carries under the contract's spelling, `pageSize`; the listing echoes the effective size back as `page_size`, which is why the parameter keeps that name here.
 
 Extract jobs work the same way. The `create` method takes the same schema and Markdown arguments as `client.v2.extract`, plus `service_tier` and an optional `output_save_url` (a presigned URL the finished result is delivered to; the completed job then reports `output_url` in `Job.raw` instead of an inline `result`); it does not accept `saveTo`. The delivery moves the content, not the receipt: a completed job whose result went to an `output_save_url` still returns its metadata block — billing included — on `Job.metadata`, while an inline job leaves `Job.metadata` `null` and carries the same block inside `result.metadata`.
 

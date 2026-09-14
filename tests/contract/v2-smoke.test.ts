@@ -341,4 +341,37 @@ describe('V2 contract (staging)', () => {
     },
     60_000, // list route: 1 x REQUEST_TIMEOUT
   );
+
+  runIf(
+    'extractJobs.list honours the renamed pageSize query parameter',
+    async () => {
+      const client = stagingClient();
+      // Wired by the V2 spec-sync: the page-size query parameter on the /v2 job
+      // listings is now named `pageSize` (it was `page_size`), so the SDK's
+      // `page_size` param goes on the wire under the new name. Asking for one job
+      // per page is the check the rename can actually fail — sent under the old
+      // name the parameter is ignored and the gateway falls back to its default
+      // page of 10. Nothing here assumes the key has jobs: an empty page is a
+      // legal answer and satisfies both the length bound and the loop.
+      const list = await client.v2.extractJobs.list({ page: 0, page_size: 1 });
+      expect(Array.isArray(list.jobs)).toBe(true);
+      expect(list.jobs.length).toBeLessThanOrEqual(1);
+      // The envelope echoes the effective page size back; absent-or-valid, since
+      // the field is optional on the wire and reads back `null` when omitted.
+      if (list.page_size != null) {
+        expect(list.page_size).toBe(1);
+      }
+      for (const job of list.jobs) {
+        expect(typeof job.job_id).toBe('string');
+        // The extract listing's status enum now includes `cancelled` alongside
+        // the four it already had. Which one a given job is in is staging's
+        // business, so this asserts only that it is one of them and that
+        // `is_terminal` agrees; the `cancelled` case itself is pinned in the
+        // mocked test in tests/api-resources/v2/v2.test.ts.
+        expect(['pending', 'processing', 'completed', 'failed', 'cancelled']).toContain(job.status);
+        expect(job.is_terminal).toBe(['completed', 'failed', 'cancelled'].includes(job.status));
+      }
+    },
+    60_000, // list route: 1 x REQUEST_TIMEOUT
+  );
 });

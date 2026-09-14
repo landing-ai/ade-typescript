@@ -730,6 +730,47 @@ describe('client.v2 routing', () => {
     expect(list.org_id).toBe('o');
   });
 
+  test('parseJobs.list sends page_size as the contract `pageSize` query param', async () => {
+    const { client, calls } = stubClient(() => jsonResponse({ jobs: [], has_more: false }));
+    await client.v2.parseJobs.list({ page: 0, page_size: 5, status: 'completed' });
+    const url = new URL(calls.find((u) => u.includes('/v2/parse/jobs'))!);
+    // The contract renamed this query parameter; the old spelling is silently
+    // ignored by the gateway, so assert it is gone rather than just that the
+    // new one is there.
+    expect(url.searchParams.get('pageSize')).toBe('5');
+    expect(url.searchParams.get('page_size')).toBeNull();
+    // The other params keep their contract names, `page: 0` included.
+    expect(url.searchParams.get('page')).toBe('0');
+    expect(url.searchParams.get('status')).toBe('completed');
+  });
+
+  test('extractJobs.list sends page_size as the contract `pageSize` query param', async () => {
+    const { client, calls } = stubClient(() => jsonResponse({ jobs: [], has_more: false }));
+    await client.v2.extractJobs.list({ page_size: 1 });
+    const url = new URL(calls.find((u) => u.includes('/v2/extract/jobs'))!);
+    expect(url.searchParams.get('pageSize')).toBe('1');
+    expect(url.searchParams.get('page_size')).toBeNull();
+  });
+
+  test('extractJobs.list normalizes a cancelled job as terminal', async () => {
+    const { client } = stubClient(() =>
+      jsonResponse({
+        jobs: [{ job_id: 'ej-c', status: 'cancelled', failure_reason: 'cancelled by user' }],
+        has_more: false,
+        page: 0,
+        page_size: 1,
+      }),
+    );
+    // `cancelled` is new on the extract listing's status enum; the shared
+    // `JobStatus` union already carried it, so it must survive normalization
+    // rather than falling back to `pending`.
+    const list = await client.v2.extractJobs.list({ page: 0, page_size: 1 });
+    expect(list.jobs[0]!.status).toBe('cancelled');
+    expect(list.jobs[0]!.is_terminal).toBe(true);
+    expect(list.jobs[0]!.error).toEqual({ code: null, message: 'cancelled by user' });
+    expect(list.page_size).toBe(1);
+  });
+
   test('extractJobs.create sends service_tier in the JSON body', async () => {
     let sentBody: unknown;
     const fetch: Fetch = async (_input, init) => {
