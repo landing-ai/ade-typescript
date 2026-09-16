@@ -1387,6 +1387,12 @@ export interface components {
          */
         V2ExtractOptions: {
             /**
+             * Grounding
+             * @description When ``true`` (default), the grounding stage runs and each extracted leaf carries ``ranges`` into the source Markdown where a reference was found (``ranges`` is ``null`` for a value that could not be located). When ``false``, the grounding stage is skipped: every ``extraction_metadata`` leaf has ``ranges: null`` and the request completes faster. Preview.
+             * @default true
+             */
+            grounding: boolean;
+            /**
              * Strict
              * @description When ``true``, a schema containing fields the model cannot extract fails with a validation error — HTTP 422 on the sync route, or a failed job (``status: "failed"``) on the async ``/jobs`` route. When ``false`` (default), unsupported fields are skipped and extraction continues.
              * @default false
@@ -3350,7 +3356,7 @@ export interface operations {
                      */
                     model?: string | null;
                     /**
-                     * @description Extraction options (``strict``). Omit for defaults.
+                     * @description Extraction options (``strict``, ``grounding``). Omit for defaults.
                      * @default null
                      */
                     options?: components["schemas"]["V2ExtractOptions"] | null;
@@ -3390,7 +3396,7 @@ export interface operations {
                      */
                     model?: string | null;
                     /**
-                     * @description Extraction options (``strict``). Omit for defaults. JSON-serialized string in form data.
+                     * @description Extraction options (``strict``, ``grounding``). Omit for defaults. JSON-serialized string in form data.
                      * @default null
                      */
                     options?: components["schemas"]["V2ExtractOptions"] | null;
@@ -3552,7 +3558,7 @@ export interface operations {
                      */
                     model?: string | null;
                     /**
-                     * @description Extraction options (``strict``). Omit for defaults.
+                     * @description Extraction options (``strict``, ``grounding``). Omit for defaults.
                      * @default null
                      */
                     options?: components["schemas"]["V2ExtractOptions"] | null;
@@ -3600,7 +3606,7 @@ export interface operations {
                      */
                     model?: string | null;
                     /**
-                     * @description Extraction options (``strict``). Omit for defaults. JSON-serialized string in form data.
+                     * @description Extraction options (``strict``, ``grounding``). Omit for defaults. JSON-serialized string in form data.
                      * @default null
                      */
                     options?: components["schemas"]["V2ExtractOptions"] | null;
