@@ -16,6 +16,7 @@ export {
   AuthenticationError,
   InternalServerError,
   PermissionDeniedError,
+  UnsupportedMediaTypeError,
   UnprocessableEntityError,
   V2SyncTimeoutError,
   JobWaitTimeoutError,

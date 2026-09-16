@@ -943,7 +943,7 @@ jobs:
         if: steps.drift.outputs.code == '10' && steps.existing.outputs.open != 'true'
         env:
           LINT_FIRST: ${{ steps.ai_lint.outcome }}
-          LINT_FINAL: ${{ steps.ai_lint_final.outcome }}   # 'skipped' when the first lint passed
+          LINT_FINAL: ${{ steps.ai_lint_final.outcome }} # 'skipped' when the first lint passed
         run: |
           if [ "$LINT_FIRST" = 'success' ]; then
             lint_note='Lint clean.'

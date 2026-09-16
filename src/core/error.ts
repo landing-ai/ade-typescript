@@ -74,6 +74,10 @@ export class APIError<
       return new ConflictError(status, error, message, headers);
     }
 
+    if (status === 415) {
+      return new UnsupportedMediaTypeError(status, error, message, headers);
+    }
+
     if (status === 422) {
       return new UnprocessableEntityError(status, error, message, headers);
     }
@@ -120,6 +124,13 @@ export class PermissionDeniedError extends APIError<403, Headers> {}
 export class NotFoundError extends APIError<404, Headers> {}
 
 export class ConflictError extends APIError<409, Headers> {}
+
+/**
+ * The request body was not form-encoded. The V1 `extract` and `extractJobs.create`
+ * routes take `multipart/form-data`; the SDK already sends that, so a 415 usually
+ * means a custom `content-type` header overrode it.
+ */
+export class UnsupportedMediaTypeError extends APIError<415, Headers> {}
 
 export class UnprocessableEntityError extends APIError<422, Headers> {}
 

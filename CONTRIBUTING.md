@@ -140,7 +140,7 @@ Every spec-sync PR (and any PR to `main`) must pass `.github/workflows/pr-gates.
   scope, a missing one as not in the spec (in `ade-python#153` the AI pass rewrote the gateway's new
   `/v1/classify` and `/v1/split` routes as `client.v2.classify`/`split` hitting non-existent `/v2/*`
   paths). Reverse: every `/v2/*` spec route outside the hand-maintained `/v2/workflow*` namespace
-  must be *sent* at a `v2Url(...)` call site — a doc-comment mention does not count; the wired
+  must be _sent_ at a `v2Url(...)` call site — a doc-comment mention does not count; the wired
   workflow paths are still validated forward.
 
 Spec-sync PRs are AI-drafted and **require human review** before merge. Every AI step pins

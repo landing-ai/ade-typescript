@@ -1,9 +1,16 @@
-import LandingAIADE, { toFile } from 'landingai-ade';
+import LandingAIADE, { UnsupportedMediaTypeError, toFile } from 'landingai-ade';
+import type { Fetch } from 'landingai-ade/internal/builtin-types';
 
 const client = new LandingAIADE({
   apikey: 'My Apikey',
   baseURL: process.env['TEST_API_BASE_URL'] ?? 'http://127.0.0.1:4010',
 });
+
+/** A client backed by a stub fetch that always replies with `response`. */
+function stubClient(response: () => Response): LandingAIADE {
+  const fetch: Fetch = async () => response();
+  return new LandingAIADE({ apikey: 'k', baseURL: 'http://127.0.0.1:4010', maxRetries: 0, fetch });
+}
 
 describe('top level methods', () => {
   // Mock server tests are disabled
@@ -49,6 +56,19 @@ describe('top level methods', () => {
       model: 'model',
       strict: true,
     });
+  });
+
+  test('extract surfaces a 415 as UnsupportedMediaTypeError', async () => {
+    // The spec documents a 415 on this route for a body that is not form-encoded.
+    // The route sends multipart/form-data, so a caller only reaches this by
+    // overriding content-type -- but the status must still map to its own class
+    // rather than falling through to the bare APIError.
+    const stubbed = stubClient(
+      () => new Response(null, { status: 415, statusText: 'Unsupported Media Type' }),
+    );
+    const call = stubbed.extract({ schema: '{}' });
+    await expect(call).rejects.toBeInstanceOf(UnsupportedMediaTypeError);
+    await expect(call).rejects.toMatchObject({ status: 415 });
   });
 
   // Mock server tests are disabled
