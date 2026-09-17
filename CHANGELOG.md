@@ -1,5 +1,23 @@
 # Changelog
 
+## 2.13.1 (2026-09-17)
+
+Full Changelog: [v2.13.0...v2.13.1](https://github.com/landing-ai/ade-typescript/compare/v2.13.0...v2.13.1)
+
+### Features
+
+* **v2:** expose extract grounding as a top-level param (#129) ([214d413](https://github.com/landing-ai/ade-typescript/commit/214d41390ae9750cbc1aa158cc3f81a2eb8dc7a6))
+
+### Chores
+
+* **spec-sync:** update V2 spec snapshot + regenerated reference types (#128) ([99bf2e2](https://github.com/landing-ai/ade-typescript/commit/99bf2e2307a198764b9b900ad3adfaedaf071755))
+* **spec-sync:** update V2 spec snapshot + regenerated reference types (#127) ([a24f04e](https://github.com/landing-ai/ade-typescript/commit/a24f04ed766b278f9857fb1e35f96bde45dbf711))
+
+### Other Changes
+
+* spec-sync(v1): add unsupportedmediatypeerror for 415 responses (#123) ([a8f31be](https://github.com/landing-ai/ade-typescript/commit/a8f31bebf0c748642f48925fccea99ffc7780db7))
+* spec-sync(v2): fix job list `page_size` query param and add `cancelled` status (#126) ([f1809e9](https://github.com/landing-ai/ade-typescript/commit/f1809e9125710b53cfac24d422ec0edba654b191))
+
 ## 2.13.0 (2026-09-11)
 
 Full Changelog: [v2.12.1...v2.13.0](https://github.com/landing-ai/ade-typescript/compare/v2.12.1...v2.13.0)
