@@ -28,6 +28,15 @@ export interface V2ExtractParams {
    * prune unsupported fields and continue. Sent as `options.strict`.
    */
   strict?: boolean | null;
+
+  /**
+   * If `false`, skip the grounding stage: every `extraction_metadata` leaf comes
+   * back with `ranges: null` and the request finishes faster. Defaults to `true`
+   * server-side. Sent as `options.grounding`. Preview — with grounding off the
+   * `extraction` itself can differ slightly from a grounded run (empty leaves are
+   * not nulled and all-empty array rows are not dropped).
+   */
+  grounding?: boolean | null;
 }
 
 export interface V2ExtractJobCreateParams extends V2ExtractParams {
@@ -69,8 +78,24 @@ export function buildExtractBody(params: V2ExtractJobCreateParams): Record<strin
       body[key] = value;
     }
   }
-  if (params.strict !== undefined && params.strict !== null) {
-    body['options'] = { strict: Boolean(params.strict) };
+  // `strict` and `grounding` are hand-written top-level shorthands that both fold into
+  // the SAME nested `options` object (CONTRIBUTING.md -> "V2 request fields"), so they
+  // are collected and attached once: assigning `body['options']` per shorthand would
+  // drop whichever landed first. `options` is `additionalProperties: false` upstream,
+  // so nothing beyond these two may ride along. An absent or `null` value leaves the
+  // key out entirely and the server default applies (`strict` false, `grounding` true)
+  // -- `Boolean()` rather than truthiness so an explicit `false` is sent, not dropped.
+  const options: Record<string, boolean> = {};
+  for (const [key, value] of [
+    ['strict', params.strict],
+    ['grounding', params.grounding],
+  ] as const) {
+    if (value !== undefined && value !== null) {
+      options[key] = Boolean(value);
+    }
+  }
+  if (Object.keys(options).length > 0) {
+    body['options'] = options;
   }
   return body;
 }
