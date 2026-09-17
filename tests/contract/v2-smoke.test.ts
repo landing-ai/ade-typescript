@@ -391,12 +391,14 @@ describe('V2 contract (staging)', () => {
         markdown: SAMPLE_MARKDOWN,
         grounding: false,
       });
-      const leaves = Object.values(res.extraction_metadata).filter(
-        (leaf): leaf is { ranges: unknown } => typeof leaf === 'object' && leaf !== null && 'ranges' in leaf,
-      );
+      // The schema is flat, so every top-level entry IS a leaf. With grounding off each
+      // one carries `ranges: null` — a null value, not a missing key. `toHaveProperty`
+      // with an expected value asserts both at once: filtering out leaves that lack
+      // `ranges` would let one that dropped the key pass as if it had been checked.
+      const leaves = Object.values(res.extraction_metadata);
       expect(leaves.length).toBeGreaterThan(0);
       for (const leaf of leaves) {
-        expect(leaf.ranges).toBeNull();
+        expect(leaf).toHaveProperty('ranges', null);
       }
     },
     120_000, // sync call: 2 x REQUEST_TIMEOUT
