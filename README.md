@@ -217,6 +217,8 @@ The response is a `V2ExtractResult`:
 
 By default, unsupported schema fields are skipped and extraction continues. Pass `strict: true` to reject such schemas with an error (HTTP 422) instead.
 
+Pass `grounding: false` to skip the grounding stage: extraction runs as usual and finishes faster, but every `extraction_metadata` field comes back with `ranges: null` instead of pointing into the Markdown. Preview — with grounding off the `extraction` itself can differ slightly from a grounded run. `client.v2.extractJobs.create` takes both options too.
+
 ### Type-Safe Schemas with Zod
 
 Define the schema with [Zod](https://zod.dev) (v4 or later) to get full TypeScript inference for the extracted data:

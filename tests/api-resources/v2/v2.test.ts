@@ -787,6 +787,76 @@ describe('client.v2 routing', () => {
     expect(JSON.parse(String(sentBody))).toMatchObject({ service_tier: 'priority' });
   });
 
+  test('extract folds grounding into options and keeps an explicit false', async () => {
+    let sentBody: unknown;
+    const fetch: Fetch = async (_input, init) => {
+      sentBody = init?.body;
+      return jsonResponse({ extraction: {}, extraction_metadata: {}, markdown: 'm', metadata: {} });
+    };
+    const client = new LandingAIADE({ apikey: 'k', environment: 'staging', maxRetries: 0, fetch });
+    // `grounding: false` skips the grounding stage server-side (every
+    // `extraction_metadata` leaf comes back with `ranges: null`). It folds into
+    // `options.grounding`, the second hand-written top-level shorthand on extract
+    // alongside `strict` -- `Boolean()`, not truthiness, so `false` is SENT rather
+    // than dropped, which is the only value anyone passes this for.
+    await client.v2.extract({ schema: { type: 'object' }, markdown: 'hi', grounding: false });
+    expect(JSON.parse(String(sentBody))['options']).toEqual({ grounding: false });
+  });
+
+  test('extract options carry only the wired shorthands', async () => {
+    let sentBody: unknown;
+    const fetch: Fetch = async (_input, init) => {
+      sentBody = init?.body;
+      return jsonResponse({ extraction: {}, extraction_metadata: {}, markdown: 'm', metadata: {} });
+    };
+    const client = new LandingAIADE({ apikey: 'k', environment: 'staging', maxRetries: 0, fetch });
+    // `V2ExtractOptions` is `additionalProperties: false` upstream and carries exactly
+    // two members, both wired as top-level shorthands. Assert the whole object rather
+    // than one key: the two fold into the SAME nested object, so a regression that
+    // assigns `options` per shorthand would silently drop one, and any third key
+    // riding along would be rejected by the gateway.
+    await client.v2.extract({
+      schema: { type: 'object' },
+      markdown: 'hi',
+      strict: false,
+      grounding: false,
+    });
+    expect(JSON.parse(String(sentBody))['options']).toEqual({ strict: false, grounding: false });
+  });
+
+  test('extract omits options entirely when neither shorthand is given', async () => {
+    let sentBody: unknown;
+    const fetch: Fetch = async (_input, init) => {
+      sentBody = init?.body;
+      return jsonResponse({ extraction: {}, extraction_metadata: {}, markdown: 'm', metadata: {} });
+    };
+    const client = new LandingAIADE({ apikey: 'k', environment: 'staging', maxRetries: 0, fetch });
+    // `null` means "not given" for both, the same as omitting them: there is no null to
+    // send here -- leaving `options` out IS how a caller asks for the server defaults
+    // (`strict` false, `grounding` true).
+    await client.v2.extract({ schema: { type: 'object' }, markdown: 'hi', strict: null, grounding: null });
+    expect(JSON.parse(String(sentBody))).not.toHaveProperty('options');
+  });
+
+  test('extractJobs.create carries both option shorthands', async () => {
+    let sentBody: unknown;
+    const fetch: Fetch = async (_input, init) => {
+      sentBody = init?.body;
+      return jsonResponse({ job_id: 'ej-3' }, 202);
+    };
+    const client = new LandingAIADE({ apikey: 'k', environment: 'staging', maxRetries: 0, fetch });
+    // Same `additionalProperties: false` contract on the async job route, which shares
+    // `buildExtractBody` with the sync one -- including the merge that keeps both
+    // shorthands in one `options` object.
+    await client.v2.extractJobs.create({
+      schema: { type: 'object' },
+      markdown: 'hi',
+      strict: true,
+      grounding: false,
+    });
+    expect(JSON.parse(String(sentBody))['options']).toEqual({ strict: true, grounding: false });
+  });
+
   test('ground (sync) sends a JSON body to the V2 host and returns grounding + metadata', async () => {
     const calls: string[] = [];
     let sentBody: unknown;

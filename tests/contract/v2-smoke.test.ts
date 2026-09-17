@@ -374,4 +374,31 @@ describe('V2 contract (staging)', () => {
     },
     60_000, // list route: 1 x REQUEST_TIMEOUT
   );
+
+  runIf(
+    'extract with grounding:false nulls every range',
+    async () => {
+      const client = stagingClient();
+      // `grounding: false` folds into `options.grounding` and switches the grounding
+      // stage off, so every `extraction_metadata` leaf comes back with `ranges: null`.
+      // That is the whole point of a live check here: a shorthand that never reached
+      // the wire — wrong nesting, a dropped `false`, a name the gateway doesn't know —
+      // is not an error staging reports. `options` is `additionalProperties: false`,
+      // so a misspelled key 422s, but a silently ignored one just grounds anyway and
+      // comes back with real ranges. Assert the ranges, not the status code.
+      const res = await client.v2.extract({
+        schema: { type: 'object', properties: { revenue: { type: 'string' } } },
+        markdown: SAMPLE_MARKDOWN,
+        grounding: false,
+      });
+      const leaves = Object.values(res.extraction_metadata).filter(
+        (leaf): leaf is { ranges: unknown } => typeof leaf === 'object' && leaf !== null && 'ranges' in leaf,
+      );
+      expect(leaves.length).toBeGreaterThan(0);
+      for (const leaf of leaves) {
+        expect(leaf.ranges).toBeNull();
+      }
+    },
+    120_000, // sync call: 2 x REQUEST_TIMEOUT
+  );
 });
