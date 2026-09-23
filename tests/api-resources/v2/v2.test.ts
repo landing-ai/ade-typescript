@@ -164,6 +164,103 @@ describe('client.v2 routing', () => {
     expect(res.metadata?.openapi_spec).toBe('https://example.com/spec.json');
   });
 
+  test('parse (sync) surfaces the spreadsheet grounding address and the sheet name', async () => {
+    // Wired by the V2 spec-sync: a parsed workbook grounds its content by
+    // Excel-style `Grounding.address` rather than by page geometry, and the node
+    // the gateway emits per sheet carries the sheet name in `Page.id`. Both are
+    // optional per spec (neither is in its schema's `required`), and both are
+    // what a caller keys spreadsheet content on, because — unlike an element
+    // `id`, which the contract now calls opaque and per-response — an address is
+    // stable across re-parses of the same file.
+    const box = { xmin: 0, ymin: 0, xmax: 1, ymax: 1 };
+    const { client } = stubClient(() =>
+      jsonResponse({
+        markdown: '| Widgets | 12 |',
+        structure: {
+          type: 'document',
+          children: [
+            {
+              // The sheet name rides on `id`; `page`/`box` still arrive on the
+              // wire for this deploy, so the shipped non-nullable typing holds.
+              id: 'Sales',
+              page: 1,
+              grounding: { page: 1, range: { start: 0, end: 16 }, box, address: 'Sales' },
+              children: [
+                {
+                  type: 'table',
+                  id: 'table-0',
+                  grounding: {
+                    page: 1,
+                    range: { start: 0, end: 16 },
+                    box,
+                    address: 'Sales!C5:F20',
+                  },
+                  children: [
+                    {
+                      type: 'table_cell',
+                      id: 'table_cell-0',
+                      grounding: { page: 1, range: { start: 2, end: 9 }, box, address: 'Sales!C5' },
+                    },
+                    {
+                      // Content parsed out of an embedded image addresses its
+                      // anchor cell, and its box is a fraction of that image.
+                      type: 'figure',
+                      id: 'figure-0',
+                      grounding: { page: 1, range: { start: 10, end: 14 }, box, address: 'Sales!B2' },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        metadata: { range_units: 'unicode_codepoints', failed_pages: [] },
+      }),
+    );
+    const res = await client.v2.parse({ document: await toFile(Buffer.from('PK'), 'book.xlsx') });
+    const sheet = res.structure?.children?.[0];
+    expect(sheet?.id).toBe('Sales');
+    expect(sheet?.grounding?.address).toBe('Sales');
+    const table = sheet?.children?.[0];
+    expect(table?.grounding?.address).toBe('Sales!C5:F20');
+    expect(table?.children?.map((cell) => cell.grounding?.address)).toEqual(['Sales!C5', 'Sales!B2']);
+  });
+
+  test('parse (sync) omits the grounding address and the sheet id for a page-based document', async () => {
+    // The other half of the same contract: `address` is spreadsheet-only and
+    // `Page.id` is sheet-only, so a PDF leaves both keys off the wire entirely.
+    // `undefined`, not `null` — the gateway omits optional keys rather than
+    // sending an explicit null, which is why callers should test with `== null`.
+    const box = { xmin: 0, ymin: 0, xmax: 1, ymax: 1 };
+    const grounding = { page: 3, range: { start: 0, end: 5 }, box };
+    const { client } = stubClient(() =>
+      jsonResponse({
+        markdown: '# doc',
+        structure: {
+          type: 'document',
+          children: [
+            {
+              type: 'page',
+              page: 3,
+              grounding,
+              children: [{ type: 'text', id: 'text-0', grounding, atomic_grounding: [grounding] }],
+            },
+          ],
+        },
+        metadata: { range_units: 'unicode_codepoints', failed_pages: [] },
+      }),
+    );
+    const res = await client.v2.parse({ document: await toFile(Buffer.from('%PDF'), 'a.pdf') });
+    const page = res.structure?.children?.[0];
+    expect(page?.id).toBeUndefined();
+    expect(page?.grounding?.address).toBeUndefined();
+    // A page-based document still locates content the old way.
+    expect(page?.grounding?.page).toBe(3);
+    const el = page?.children?.[0];
+    expect(el?.grounding?.address).toBeUndefined();
+    expect(el?.atomic_grounding?.[0]?.address).toBeUndefined();
+  });
+
   test('parse (sync) surfaces per-word atomic_grounding confidence', async () => {
     // `dpt-3-verity` grounds at word granularity and carries a `confidence` on
     // each `atomic_grounding` entry (the lowest per-character OCR confidence in
