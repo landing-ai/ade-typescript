@@ -166,9 +166,10 @@ and PRs authored by `GITHUB_TOKEN` do not trigger the gate workflows (GitHub ant
 gates would never run on the sync PR.
 
 The pipeline also tracks the **V2** spec (`client.v2`) via a second `spec-sync-v2` job mirroring the
-V1 one. **Two-host rule (do not conflate):** the V2 **spec** is fetched from `aide.[env]/openapi.json`
-(the AIDE gateway), but the SDK and its contract tests call the V2 **API** at `api.ade.[env]`; the SDK
-never talks to `aide`. The `/v2/workflow*` routes **are** shipped (`client.v2.workflow` /
+V1 one. The V2 **spec** is the full customer surface aide publishes to
+`https://ade-specs.s3.amazonaws.com/v2/staging/openapi.json` (the gateway's own `/openapi.json` serves
+only the documented subset, so it is not the drift source); the SDK and its contract tests call the
+V2 **API** at `api.ade.[env]`. The `/v2/workflow*` routes **are** shipped (`client.v2.workflow` /
 `workflowJobs`) but **hand-maintained**: they stay in the tracked spec (so a workflow spec change
 still opens a mechanical spec-sync PR as a signal), but the AI-wiring step **excludes** them — a
 maintainer reconciles workflow spec drift by hand rather than having it auto-drafted.
