@@ -260,6 +260,71 @@ describe('V2 contract (staging)', () => {
   );
 
   runIf(
+    'parse (sync) treats the grounding address, the sheet id, and the element id as the spec now does',
+    async () => {
+      const client = stagingClient();
+      // Wired by the V2 spec-sync, three linked changes to how a node is keyed:
+      //   * `Grounding.address` — the Excel-style reference (`Sales!C5`) of a
+      //     workbook's content, optional and documented as omitted for
+      //     page-based documents;
+      //   * `Page.id` — the sheet name, optional and omitted on a page node;
+      //   * `Element.id` — no longer documented as `<type>-<index>`. It is now
+      //     an OPAQUE string, stable within a response but not across
+      //     re-parses, so the old format is deliberately NOT asserted here —
+      //     pinning a format the contract dropped would fail this gate on a
+      //     legal response, which is the whole reason the spec loosened it.
+      // The sample is a PDF, so the realistic live outcome is that both optional
+      // keys are absent; the bar is absent-or-valid either way, so this does not
+      // turn on whether the staging deploy happens to have spreadsheet support.
+      // Does NOT pin `model`, for the same reason as the tests above. The
+      // populated-value assertions (a real sheet name, a real `Sales!C5:F20`)
+      // live in the mocked test in tests/api-resources/v2/v2.test.ts.
+      const res = await client.v2.parse({
+        document: await toFile(fs.readFileSync(SAMPLE_PDF), 'sample.pdf', { type: 'application/pdf' }),
+        options: { atomic_grounding: true },
+      });
+      const pages = res.structure?.children ?? [];
+      expect(pages.length).toBeGreaterThan(0);
+      // Table cells hold a table's words, so flatten one level down as above.
+      const elements = pages.flatMap((page) =>
+        (page.children ?? []).flatMap((el) => [el, ...(el.children ?? [])]),
+      );
+      expect(elements.length).toBeGreaterThan(0);
+
+      for (const page of pages) {
+        // `== null` covers both an omitted key and an explicit `null`.
+        expect(page.id == null || typeof page.id === 'string').toBe(true);
+      }
+      for (const element of elements) {
+        // `Element.id` IS required, so it is held to more than absent-or-valid:
+        // a non-empty string, of no particular shape.
+        expect(typeof element.id).toBe('string');
+        expect(element.id.length).toBeGreaterThan(0);
+      }
+      // Ids are unique within a response — the one guarantee the loosened
+      // description still makes.
+      const ids = elements.map((element) => element.id);
+      expect(new Set(ids).size).toBe(ids.length);
+
+      const groundings = [
+        ...pages.map((page) => page.grounding),
+        ...elements.map((el) => el.grounding),
+        ...elements.flatMap((el) => el.atomic_grounding ?? []),
+      ];
+      expect(groundings.filter((grounding) => grounding != null).length).toBeGreaterThan(0);
+      for (const grounding of groundings) {
+        if (grounding == null) continue;
+        const address = grounding.address;
+        expect(address == null || typeof address === 'string').toBe(true);
+        if (address != null) {
+          expect(address.length).toBeGreaterThan(0);
+        }
+      }
+    },
+    120_000, // sync call: 2 x REQUEST_TIMEOUT
+  );
+
+  runIf(
     'parse (sync) supports deriving a node-level confidence from atomic_grounding',
     async () => {
       const client = stagingClient();

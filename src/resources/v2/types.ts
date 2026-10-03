@@ -169,6 +169,13 @@ export interface V2GroundingBox {
  * `markdown`, and its bounding `box` in normalized page coordinates. The same
  * shape is used for page nodes, element nodes, and each `atomic_grounding`
  * entry, so any grounding object is self-contained.
+ *
+ * Spreadsheet caveat: the contract now documents `page` and `box` as `null`
+ * when the source is a workbook, which has no page and no visual position —
+ * a sheet locates its content through `address` instead. The two are still
+ * typed non-nullable here (narrowing them is a breaking change a maintainer
+ * has to land deliberately), so code that may see spreadsheet input should
+ * guard them with `== null` before dereferencing.
  */
 export interface V2Grounding {
   page: number;
@@ -178,9 +185,27 @@ export interface V2Grounding {
   /**
    * Bounding box in normalized page coordinates (`0`–`1` fractions of page
    * width/height, at most 5 decimal places). A page node's box is always the
-   * full page `{ xmin: 0, ymin: 0, xmax: 1, ymax: 1 }`.
+   * full page `{ xmin: 0, ymin: 0, xmax: 1, ymax: 1 }`. For content parsed out
+   * of an image embedded in a spreadsheet, the fractions are of that image,
+   * not of a page.
    */
   box: V2GroundingBox;
+
+  /**
+   * Spreadsheet only. The Excel-style reference of the content this grounding
+   * covers, sheet name included: `Sales!C5` for a cell, `Sales!C5:F20` for a
+   * table, and the anchor cell (`Sales!B2`) for content parsed out of an
+   * embedded image.
+   *
+   * Unlike an element `id`, an address is stable across re-parses of the same
+   * file, so it — not `id` — is the handle to key spreadsheet content on.
+   *
+   * Optional per spec (it is not in `Grounding.required`): the gateway omits
+   * the key for page-based documents — PDFs, images, Office text documents —
+   * so it reads back as `undefined` there. The schema also admits an explicit
+   * `null`, so test with `== null` to cover both.
+   */
+  address?: string | null;
 
   /**
    * How sure the model is of the text in this segment, in `[0, 1]`.
@@ -219,6 +244,13 @@ export type V2ElementType =
 export interface V2ParseElement {
   type: V2ElementType;
 
+  /**
+   * Element id, unique within the document. An **opaque** string — do not parse
+   * it or assume a format; the contract no longer documents one. Stable within
+   * a response but not across re-parses of the same document, so it is not a
+   * durable key. For spreadsheet content use `grounding.address`, which is
+   * stable across re-parses.
+   */
   id: string;
 
   span: V2Span;
@@ -259,6 +291,15 @@ export interface V2ParseElement {
 
 export interface V2ParsePage {
   type?: 'page';
+
+  /**
+   * The sheet name, on a node the gateway emitted for one sheet of a parsed
+   * spreadsheet. Optional per spec (it is not in `Page.required`): the gateway
+   * omits the key on a page node, which is identified by its `page` number
+   * instead. The schema also admits an explicit `null`, so test with `== null`
+   * to cover both.
+   */
+  id?: string | null;
 
   page: number;
 
