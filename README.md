@@ -106,6 +106,30 @@ The response is a `V2ParseResponse`:
 
 If some pages cannot be parsed, the request still succeeds (HTTP 206) and `metadata.failed_pages` lists the pages that failed. If a synchronous parse times out, the client throws `V2SyncTimeoutError`; use [jobs](#process-large-documents-asynchronously-jobs) instead.
 
+#### Grounding a spreadsheet
+
+A workbook has no pages and no visual layout, so its content is grounded by cell reference instead. Each `grounding` carries an optional `address` — the Excel-style reference of what it covers, sheet name included — and the node emitted for each sheet carries that sheet's name in its `id`:
+
+```ts
+const book = await client.v2.parse({ document: fs.createReadStream('sales.xlsx') });
+
+for (const sheet of book.structure?.children ?? []) {
+  // `id` is the sheet name on a spreadsheet, and is omitted for a PDF or an
+  // image — an omitted key and an explicit null read alike, so use `== null`.
+  console.log(sheet.id ?? `page ${sheet.page}`);
+  for (const element of sheet.children ?? []) {
+    // `Sales!C5` for a cell, `Sales!C5:F20` for a table, and the anchor cell
+    // (`Sales!B2`) for content parsed out of an embedded image. Omitted for
+    // page-based documents.
+    console.log('  ', element.grounding?.address ?? element.grounding?.box, element.type);
+  }
+}
+```
+
+Prefer `address` over `element.id` whenever you need a durable key. An element `id` is an **opaque** string — it has no documented format, so don't parse it — and it is only stable within a single response; re-parsing the same file can renumber it. An `address` is stable across re-parses.
+
+Two caveats on spreadsheet input. The gateway documents `grounding.page` and `grounding.box` as `null` for a workbook, and the sheet node's `type` as `'sheet'`, but the shipped types still declare `page: number`, `box: V2GroundingBox`, and `type?: 'page'` — narrowing them would break every caller that reads them today, so it is held for a major release. Guard `page` and `box` with `== null` before dereferencing if your input may be a spreadsheet.
+
 `atomic_grounding` segments a leaf element at whichever granularity the model reads at: one entry per visual line for `dpt-3-pro`, and one entry per **word** for `dpt-3-verity` — each with a `confidence` in `[0, 1]`, the lowest per-character OCR confidence in that word, so a word is only as trustworthy as its weakest character. No precision is promised, so compare against a threshold rather than expecting a fixed number of decimal places.
 
 Those per-word segments are the only place a `confidence` appears — node-level `grounding` (element, `table_cell`, `table`, page) is unscored — so scoring a region means walking down to its words:
