@@ -63,7 +63,7 @@ else
 fi
 
 # Upgrade to npm version that supports OIDC Trusted Publishing
-npm install -g npm@11.6.2
+npm install -g npm@12.2.2
 
 # Publish with the appropriate tag
 # yarn run injects npm_config_registry=https://registry.yarnpkg.com into child
